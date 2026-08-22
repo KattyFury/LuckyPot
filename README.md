@@ -5,7 +5,7 @@ each week the pool's yield (not anyone's principal) is raffled off to a handful 
 depositors who kept their funds in for the full week. Nobody who doesn't win loses
 anything — principal is withdrawable at any time.
 
-Full product spec: [`arc-prize-pool-spec.md`](./arc-prize-pool-spec.md).
+Full product spec: `arc-prize-pool-spec.md` (pending — see [`HANDOFF.md`](./HANDOFF.md) for why it's not in the repo yet). Current project status and pending setup steps: [`HANDOFF.md`](./HANDOFF.md).
 
 ## Structure
 
