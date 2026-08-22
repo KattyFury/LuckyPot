@@ -1,0 +1,23 @@
+node_modules/
+dist/
+build/
+.env
+.env.*
+!.env.example
+
+# Hardhat
+contracts/cache/
+contracts/artifacts/
+contracts/typechain-types/
+contracts/ignition/deployments/
+
+# Frontend
+frontend/dist/
+frontend/.vite/
+
+# Automation (commit-reveal secrets between cron runs — cached in CI, never committed)
+automation/state/
+
+# Misc
+*.log
+.DS_Store

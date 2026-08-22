@@ -1,0 +1,74 @@
+import { useState } from "react";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { formatUnits, parseUnits } from "viem";
+import { poolAbi, POOL_ADDRESS } from "../lib/contract";
+import { useUserPosition } from "../hooks/usePoolData";
+import { formatUSDC } from "../lib/format";
+import { ScreenHeader } from "../components/ScreenHeader";
+
+export function Withdraw({ onBack }: { onBack: () => void }) {
+  const { address } = useAccount();
+  const { data: position } = useUserPosition(address);
+  const balance = (position?.[0]?.result as bigint | undefined) ?? 0n;
+  const eligible = (position?.[1]?.result as bigint | undefined) ?? 0n;
+
+  const [amount, setAmount] = useState("");
+  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+
+  const amountBase = amount ? parseUnits(amount, 6) : 0n;
+  const willForfeit = eligible > 0n && amountBase > 0n;
+
+  function handleMax() {
+    setAmount(formatUnits(balance, 6));
+  }
+
+  function handleConfirm() {
+    if (amountBase <= 0n || amountBase > balance) return;
+    writeContract({ address: POOL_ADDRESS, abi: poolAbi, functionName: "withdraw", args: [amountBase] });
+  }
+
+  return (
+    <div style={{ maxWidth: 480, margin: "0 auto", padding: 20, display: "flex", flexDirection: "column", gap: 20 }}>
+      <ScreenHeader title="Withdraw" onBack={onBack} />
+
+      <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
+        Available: <strong style={{ color: "var(--color-text)" }}>${formatUSDC(balance)}</strong>
+      </div>
+
+      <div>
+        <label style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>Amount (USDC)</label>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, borderBottom: "2px solid #000000" }}>
+          <input
+            type="number"
+            min="0"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="0.00"
+            style={{ flex: 1, fontSize: "var(--fs-2)", fontWeight: 700, padding: "12px 0", border: "none", outline: "none" }}
+          />
+          <button onClick={handleMax} style={{ background: "none", fontSize: "var(--fs-5)", fontWeight: 700 }}>
+            MAX
+          </button>
+        </div>
+      </div>
+
+      {willForfeit && (
+        <div className="card" style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
+          Withdrawing now will remove you from this epoch's ticket draw.
+        </div>
+      )}
+
+      <button
+        className="pill-button pill-button--primary"
+        disabled={amountBase <= 0n || amountBase > balance || isPending || isConfirming}
+        onClick={handleConfirm}
+      >
+        {isPending || isConfirming ? "Confirming..." : "Confirm"}
+      </button>
+
+      {isSuccess && <div style={{ color: "var(--color-primary)", fontSize: "var(--fs-5)" }}>Withdrawal confirmed.</div>}
+      {error && <div style={{ color: "#c0392b", fontSize: "var(--fs-5)" }}>{error.message.slice(0, 200)}</div>}
+    </div>
+  );
+}

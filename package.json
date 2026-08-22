@@ -1,0 +1,5 @@
+{
+  "name": "luckystacker",
+  "private": true,
+  "workspaces": ["contracts", "frontend", "automation"]
+}

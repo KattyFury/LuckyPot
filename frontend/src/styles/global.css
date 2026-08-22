@@ -1,0 +1,123 @@
+@import "@fontsource/roboto/400.css";
+@import "@fontsource/roboto/500.css";
+@import "@fontsource/roboto/700.css";
+@import "@fontsource/roboto-condensed/400.css";
+@import "@fontsource/roboto-condensed/700.css";
+
+:root {
+  --color-primary: #16a34a;
+  --color-text: #000000;
+  --color-text-secondary: #8e8e93;
+  --color-banner-bg: #ffcc00;
+  --color-card-bg: #d9d9d9;
+  --color-scrollbar-track: #ffffff;
+  --color-scrollbar-thumb: #8e8e93;
+
+  --radius: 15px;
+  --gap: 10px;
+
+  --fs-1: 35px;
+  --fs-2: 30px;
+  --fs-3: 25px;
+  --fs-4: 20px;
+  --fs-5: 15px;
+
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Roboto", sans-serif;
+  color: var(--color-text);
+  background: #ffffff;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+}
+
+.icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  vertical-align: middle;
+}
+
+.icon-copy {
+  -webkit-mask-image: url("../assets/icons/copy.svg");
+  mask-image: url("../assets/icons/copy.svg");
+}
+
+.icon-back {
+  -webkit-mask-image: url("../assets/icons/back.svg");
+  mask-image: url("../assets/icons/back.svg");
+}
+
+.scroll-panel {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
+}
+
+.scroll-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scroll-panel::-webkit-scrollbar-track {
+  background: var(--color-scrollbar-track);
+  border-radius: 8px;
+}
+
+.scroll-panel::-webkit-scrollbar-thumb {
+  background: var(--color-scrollbar-thumb);
+  border-radius: 8px;
+}
+
+.pill-button {
+  border-radius: 999px;
+  padding: 14px 0;
+  font-size: var(--fs-5);
+  font-weight: 700;
+  text-align: center;
+  width: 100%;
+}
+
+.pill-button--primary {
+  background: #000000;
+  color: #ffffff;
+}
+
+.pill-button--secondary {
+  background: #a0a0a5;
+  color: #ffffff;
+}
+
+.pill-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.card {
+  background: var(--color-card-bg);
+  border-radius: var(--radius);
+  padding: 20px;
+}
