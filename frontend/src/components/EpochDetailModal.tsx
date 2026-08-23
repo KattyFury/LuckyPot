@@ -22,7 +22,7 @@ export function EpochDetailModal({
   const mine = myAddress?.toLowerCase();
 
   return (
-    <Modal title={`Epoch #${epochId.toString().padStart(4, "0")}`} onClose={onClose}>
+    <Modal title={`Epoch #${epochId.toString().padStart(2, "0")}`} onClose={onClose}>
       <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
         Eligible pool:{" "}
         <strong style={{ color: "var(--color-text)" }}>
@@ -36,7 +36,7 @@ export function EpochDetailModal({
 
       {epoch.winners.length === 0 ? (
         <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
-          No winners this epoch — not enough participants or yield funded yet.
+          No winners this epoch – not enough participants or yield funded yet.
         </div>
       ) : (
         <div

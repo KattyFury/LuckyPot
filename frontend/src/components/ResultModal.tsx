@@ -71,7 +71,7 @@ export function ResultModal({
   );
 
   return (
-    <Modal title={`Epoch #${epochId.toString().padStart(4, "0")} — your result`} onClose={onClose}>
+    <Modal title={`Epoch #${epochId.toString().padStart(2, "0")} – your result`} onClose={onClose}>
       {revealed ? <div style={{ height: 200 }}>{panel}</div> : <ScratchCanvas onRevealed={handleReveal}>{panel}</ScratchCanvas>}
 
       {revealed && won && !hasClaimed && (

@@ -75,10 +75,10 @@ export function Dashboard() {
 
         <div className="g-banner">
           {unit === "$ARC" ? (
-            <AnnouncementBanner text="$ARC isn't live yet — figures are the USDC pool." />
+            <AnnouncementBanner text="$ARC isn't live yet – figures are the USDC pool." />
           ) : unscratchedResult ? (
             <AnnouncementBanner
-              text={`Epoch #${unscratchedResult.id.toString().padStart(2, "0")} result is in — tap to scratch`}
+              text={`Epoch #${unscratchedResult.id.toString().padStart(2, "0")} result is in – tap to scratch`}
               onClick={() => setResultEpochId(unscratchedResult.id)}
             />
           ) : (

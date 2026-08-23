@@ -7,7 +7,8 @@ export function AnnouncementBanner({
 }: {
   text: string;
   href?: string;
-  /** Runs before the link opens — used to copy the wallet address. */
+  /** With `href`, runs before the link opens (used to copy the wallet
+   *  address). On its own, makes the whole banner a button. */
   onClick?: () => void;
 }) {
   const style: CSSProperties = {
@@ -15,6 +16,7 @@ export function AnnouncementBanner({
     color: "#000000",
     borderRadius: "var(--radius)",
     height: "100%",
+    width: "100%",
     display: "flex",
     alignItems: "center",
     padding: "0 20px",
@@ -23,21 +25,26 @@ export function AnnouncementBanner({
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
+    textAlign: "left",
   };
 
+  const actionable: CSSProperties = { ...style, textDecoration: "underline", cursor: "pointer" };
+
   if (href) {
-    // Kept as a real anchor so the whole box is a link (middle-click, open in
-    // new tab); onClick only does the copy on its way out.
+    // A real anchor so the whole box behaves like a link (middle-click, open
+    // in a new tab); onClick only does the copy on its way out.
     return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noreferrer"
-        onClick={onClick}
-        style={{ ...style, color: "#000000", textDecoration: "underline" }}
-      >
+      <a href={href} target="_blank" rel="noreferrer" onClick={onClick} style={actionable}>
         {text}
       </a>
+    );
+  }
+
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} style={actionable}>
+        {text}
+      </button>
     );
   }
 
