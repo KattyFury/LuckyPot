@@ -28,6 +28,8 @@
   --mobile-width: 430px;
   --desktop-width: 860px;
 
+  --font-condensed: "Roboto Condensed", sans-serif;
+
   color-scheme: light;
 }
 

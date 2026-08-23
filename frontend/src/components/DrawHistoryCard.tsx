@@ -10,11 +10,14 @@ export function DrawHistoryCard({
 }) {
   return (
     <div className="card" style={{ display: "flex", flexDirection: "column", height: 340, overflow: "hidden" }}>
-      <div style={{ fontSize: "var(--fs-4)", fontWeight: 700, color: "var(--color-primary)", marginBottom: 12 }}>
+      <div style={{ fontSize: "var(--fs-4)", fontWeight: 400, color: "var(--color-primary)", marginBottom: 12 }}>
         DRAW HISTORY
       </div>
 
-      <div className="scroll-panel" style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
+      <div
+        className="scroll-panel"
+        style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14, fontFamily: "var(--font-condensed)" }}
+      >
         {epochs.length === 0 ? (
           <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>No draws yet.</div>
         ) : (

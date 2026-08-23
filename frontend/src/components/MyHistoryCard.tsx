@@ -9,11 +9,14 @@ function formatDate(timestamp: number): string {
 export function MyHistoryCard({ entries, connected }: { entries: HistoryEntry[]; connected: boolean }) {
   return (
     <div className="card" style={{ display: "flex", flexDirection: "column", height: 340, overflow: "hidden" }}>
-      <div style={{ fontSize: "var(--fs-4)", fontWeight: 700, color: "var(--color-primary)", marginBottom: 12 }}>
+      <div style={{ fontSize: "var(--fs-4)", fontWeight: 400, color: "var(--color-primary)", marginBottom: 12 }}>
         MY HISTORY
       </div>
 
-      <div className="scroll-panel" style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
+      <div
+        className="scroll-panel"
+        style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10, fontFamily: "var(--font-condensed)" }}
+      >
         {!connected ? (
           <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
             Connect your wallet to see your history.
