@@ -1,15 +1,15 @@
-# LuckyStacker
+# LuckyStaker
 
 A no-loss weekly prize pool on [Arc](https://arc.io). Depositors pool USDC together;
 each week the pool's yield (not anyone's principal) is raffled off to a handful of
 depositors who kept their funds in for the full week. Nobody who doesn't win loses
 anything — principal is withdrawable at any time.
 
-Full product spec: `arc-prize-pool-spec.md` (pending — see [`HANDOFF.md`](./HANDOFF.md) for why it's not in the repo yet). Current project status and pending setup steps: [`HANDOFF.md`](./HANDOFF.md).
+Full product spec: [`arc-prize-pool-spec.md`](./arc-prize-pool-spec.md). Current project status, deployed addresses, and pending setup steps: [`HANDOFF.md`](./HANDOFF.md).
 
 ## Structure
 
-- **`contracts/`** — `LuckyStackerPool.sol`, a UUPS-upgradeable Hardhat project (viem +
+- **`contracts/`** — `LuckyStakerPool.sol`, a UUPS-upgradeable Hardhat project (viem +
   Hardhat Ignition). Ticket accounting, commit-reveal weekly draw, tiered prize
   splits, self-serve claim + permissionless sweep after 3 days.
 - **`frontend/`** — React + Vite dashboard (wagmi + viem + Privy) matching the
@@ -50,7 +50,7 @@ npm run draw
   the pool — controls upgrades and emergency pause).
 - **Keeper wallet** — a separate EOA funded with testnet USDC via the
   [Circle faucet](https://faucet.circle.com) (Arc Testnet, 20 USDC/day). Grant it
-  `KEEPER_ROLE` after deploy (see `contracts/ignition/modules/LuckyStackerPool.ts`).
+  `KEEPER_ROLE` after deploy (see `contracts/ignition/modules/LuckyStakerPool.ts`).
 - **GitHub Actions secrets** — `KEEPER_PRIVATE_KEY` and `POOL_ADDRESS` on this repo,
   for `.github/workflows/keeper.yml` to run unattended.
 

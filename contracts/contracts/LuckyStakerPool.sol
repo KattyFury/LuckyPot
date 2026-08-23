@@ -9,10 +9,10 @@ import {ReentrancyGuardTransient} from "@openzeppelin/contracts/utils/Reentrancy
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-/// @title LuckyStackerPool
+/// @title LuckyStakerPool
 /// @notice No-loss weekly prize pool. Principal is always withdrawable; only the weekly
 /// yield is raffled off among depositors who kept a full-week eligible balance.
-contract LuckyStackerPool is
+contract LuckyStakerPool is
     Initializable,
     AccessControlUpgradeable,
     ReentrancyGuardTransient,

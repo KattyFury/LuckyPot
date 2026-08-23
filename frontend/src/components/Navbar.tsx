@@ -14,7 +14,7 @@ export function Navbar() {
         borderBottom: "1px solid #000000",
       }}
     >
-      <span style={{ fontSize: "var(--fs-3)", fontWeight: 700, color: "var(--color-primary)" }}>LuckyStacker</span>
+      <span style={{ fontSize: "var(--fs-3)", fontWeight: 700, color: "var(--color-primary)" }}>LuckyStaker</span>
       {USE_PRIVY ? <NavbarPrivy /> : <NavbarInjected />}
     </nav>
   );

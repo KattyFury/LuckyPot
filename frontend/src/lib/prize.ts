@@ -1,4 +1,4 @@
-// Mirrors LuckyStackerPool.prizeForRank (contracts/contracts/LuckyStackerPool.sol) so the
+// Mirrors LuckyStakerPool.prizeForRank (contracts/contracts/LuckyStakerPool.sol) so the
 // UI can render prize breakdowns without an extra RPC round-trip per winner.
 export function prizeForRank(rank: number, numWinners: bigint, weeklyYield: bigint): bigint {
   if (numWinners === 0n) return 0n;

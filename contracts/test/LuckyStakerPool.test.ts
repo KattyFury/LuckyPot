@@ -11,7 +11,7 @@ async function deployFixture() {
   const publicClient = await hre.viem.getPublicClient();
 
   const usdc = await hre.viem.deployContract("MockUSDC");
-  const implementation = await hre.viem.deployContract("LuckyStackerPool");
+  const implementation = await hre.viem.deployContract("LuckyStakerPool");
 
   const initData = encodeFunctionData({
     abi: implementation.abi,
@@ -20,7 +20,7 @@ async function deployFixture() {
   });
 
   const proxy = await hre.viem.deployContract("ERC1967Proxy", [implementation.address, initData]);
-  const pool = await hre.viem.getContractAt("LuckyStackerPool", proxy.address);
+  const pool = await hre.viem.getContractAt("LuckyStakerPool", proxy.address);
 
   for (const user of [alice, bob, carol]) {
     await usdc.write.mint([user.account.address, USDC(10_000)]);
@@ -35,10 +35,10 @@ async function deployFixture() {
 }
 
 function poolAs(pool: any, wallet: any) {
-  return hre.viem.getContractAt("LuckyStackerPool", pool.address, { client: { wallet } });
+  return hre.viem.getContractAt("LuckyStakerPool", pool.address, { client: { wallet } });
 }
 
-describe("LuckyStackerPool", () => {
+describe("LuckyStakerPool", () => {
   it("accepts deposits and tracks withdrawable principal immediately", async () => {
     const { pool, alice } = await deployFixture();
     const alicePool = await poolAs(pool, alice);

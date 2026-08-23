@@ -5,19 +5,19 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 const DEFAULT_USDC_ADDRESS = "0x3600000000000000000000000000000000000000";
 
 /**
- * Deploys LuckyStackerPool behind a UUPS proxy.
+ * Deploys LuckyStakerPool behind a UUPS proxy.
  *
  * Parameters (pass via --parameters or env-backed defaults):
  *   - usdcAddress: ERC20 token used as the pool asset
  *   - adminAddress: Safe multisig granted DEFAULT_ADMIN_ROLE
  *   - keeperAddress: bot wallet granted KEEPER_ROLE
  */
-export default buildModule("LuckyStackerPoolModule", (m) => {
+export default buildModule("LuckyStakerPoolModule", (m) => {
   const usdcAddress = m.getParameter("usdcAddress", DEFAULT_USDC_ADDRESS);
   const adminAddress = m.getParameter("adminAddress");
   const keeperAddress = m.getParameter("keeperAddress");
 
-  const implementation = m.contract("LuckyStackerPool", [], { id: "LuckyStackerPoolImplementation" });
+  const implementation = m.contract("LuckyStakerPool", [], { id: "LuckyStakerPoolImplementation" });
 
   const initData = m.encodeFunctionCall(implementation, "initialize", [
     usdcAddress,
@@ -26,10 +26,10 @@ export default buildModule("LuckyStackerPoolModule", (m) => {
   ]);
 
   const proxy = m.contract("ERC1967Proxy", [implementation, initData], {
-    id: "LuckyStackerPoolProxy",
+    id: "LuckyStakerPoolProxy",
   });
 
-  const pool = m.contractAt("LuckyStackerPool", proxy, { id: "LuckyStackerPool" });
+  const pool = m.contractAt("LuckyStakerPool", proxy, { id: "LuckyStakerPool" });
 
   return { pool, implementation, proxy };
 });

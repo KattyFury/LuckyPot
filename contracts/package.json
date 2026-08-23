@@ -1,13 +1,13 @@
 {
-  "name": "@luckystacker/contracts",
+  "name": "@luckystaker/contracts",
   "version": "0.1.0",
   "private": true,
   "type": "commonjs",
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
-    "deploy:local": "hardhat ignition deploy ignition/modules/LuckyStackerPool.ts --network localhost",
-    "deploy:arcTestnet": "hardhat ignition deploy ignition/modules/LuckyStackerPool.ts --network arcTestnet"
+    "deploy:local": "hardhat ignition deploy ignition/modules/LuckyStakerPool.ts --network localhost",
+    "deploy:arcTestnet": "hardhat ignition deploy ignition/modules/LuckyStakerPool.ts --network arcTestnet"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ignition-viem": "^0.15.9",
