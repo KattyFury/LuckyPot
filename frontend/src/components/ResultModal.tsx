@@ -91,7 +91,6 @@ export function ResultModal({
       {revealed && won && hasClaimed && (
         <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>Already claimed.</div>
       )}
-      {isSuccess && <div style={{ color: "var(--color-primary)", fontSize: "var(--fs-5)" }}>Claim confirmed.</div>}
     </Modal>
   );
 }

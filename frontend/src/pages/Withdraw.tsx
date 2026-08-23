@@ -77,9 +77,6 @@ export function WithdrawModal({ onClose }: { onClose: () => void }) {
           {isPending || isConfirming ? "Confirming..." : "Confirm"}
         </button>
 
-        {isSuccess && (
-          <div style={{ color: "var(--color-primary)", fontSize: "var(--fs-5)" }}>Withdrawal confirmed.</div>
-        )}
         {error && <div style={{ color: "#c0392b", fontSize: "var(--fs-5)" }}>{error.message.slice(0, 200)}</div>}
     </Modal>
   );
