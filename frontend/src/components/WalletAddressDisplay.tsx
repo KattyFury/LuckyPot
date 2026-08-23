@@ -8,13 +8,11 @@ export function WalletAddressDisplay({ address }: { address: `0x${string}` }) {
   return (
     <button
       onClick={handleCopy}
-      style={{ background: "none", display: "flex", alignItems: "center", gap: 6, fontSize: "var(--fs-5)" }}
+      title="Copy address"
+      style={{ background: "none", display: "flex", alignItems: "center", gap: 8, fontSize: "var(--fs-5)" }}
     >
       <span style={{ fontWeight: 700, color: "var(--color-text)" }}>{shortAddress(address)}</span>
-      <span style={{ color: "var(--color-text-secondary)", display: "flex", alignItems: "center", gap: 4 }}>
-        copy
-        <span className="icon icon-copy" style={{ color: "var(--color-text-secondary)" }} />
-      </span>
+      <span className="icon icon-copy" style={{ color: "var(--color-text-secondary)" }} />
     </button>
   );
 }

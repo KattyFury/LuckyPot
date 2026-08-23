@@ -38,13 +38,18 @@ export function Dashboard({
   const myTickets = eligible + pending;
 
   const latestDrawnEpoch = epochs.find((e) => e.epoch.drawn) ?? null;
+  const needsFaucet = Boolean(address) && walletBalance === 0n;
 
   return (
     <div className="app-shell">
       <div style={{ display: "flex", flexDirection: "column", gap: "var(--gap)", padding: 20 }}>
         <Navbar />
 
-        <AnnouncementBanner text="This week's yield is funded." />
+        {needsFaucet ? (
+          <AnnouncementBanner text="Click here to faucet" href="https://faucet.circle.com" />
+        ) : (
+          <AnnouncementBanner text="This week's yield is funded." />
+        )}
 
         <div className="row-epoch-pool">
           <EpochCard

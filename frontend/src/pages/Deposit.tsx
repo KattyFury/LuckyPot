@@ -1,18 +1,27 @@
 import { useState } from "react";
 import { useAccount, useSendTransaction, useWaitForTransactionReceipt } from "wagmi";
-import { encodeFunctionData, parseUnits } from "viem";
+import { encodeFunctionData, formatUnits, parseUnits } from "viem";
 import { erc20Abi } from "../lib/erc20Abi";
 import { poolAbi, POOL_ADDRESS, USDC_ADDRESS } from "../lib/contract";
 import { encodeAggregate3, MULTICALL3_FROM_ADDRESS } from "../lib/multicall3From";
+import { useUserPosition } from "../hooks/usePoolData";
+import { formatUSDC } from "../lib/format";
 import { ScreenHeader } from "../components/ScreenHeader";
 
 export function Deposit({ onBack }: { onBack: () => void }) {
   const { address } = useAccount();
+  const { data: position } = useUserPosition(address);
+  const walletBalance = (position?.[3]?.result as bigint | undefined) ?? 0n;
+
   const [amount, setAmount] = useState("");
   const { sendTransaction, data: hash, isPending, error } = useSendTransaction();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const amountBase = amount ? parseUnits(amount, 6) : 0n;
+
+  function handleMax() {
+    setAmount(formatUnits(walletBalance, 6));
+  }
 
   function handleConfirm() {
     if (!address || amountBase <= 0n) return;
@@ -37,24 +46,32 @@ export function Deposit({ onBack }: { onBack: () => void }) {
       <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 20 }}>
         <ScreenHeader title="Deposit" onBack={onBack} />
 
+        <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
+          Wallet balance: <strong style={{ color: "var(--color-text)" }}>${formatUSDC(walletBalance)}</strong>
+        </div>
+
         <div>
           <label style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>Amount (USDC)</label>
-          <input
-            type="number"
-            min="0"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="0.00"
-            style={{
-              width: "100%",
-              fontSize: "var(--fs-2)",
-              fontWeight: 700,
-              padding: "12px 0",
-              border: "none",
-              borderBottom: "2px solid #000000",
-              outline: "none",
-            }}
-          />
+          <div style={{ display: "flex", alignItems: "center", gap: 12, borderBottom: "2px solid #000000" }}>
+            <input
+              type="number"
+              min="0"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="0.00"
+              style={{
+                flex: 1,
+                fontSize: "var(--fs-2)",
+                fontWeight: 700,
+                padding: "12px 0",
+                border: "none",
+                outline: "none",
+              }}
+            />
+            <button onClick={handleMax} style={{ background: "none", fontSize: "var(--fs-5)", fontWeight: 700 }}>
+              MAX
+            </button>
+          </div>
         </div>
 
         <div style={{ fontSize: "var(--fs-4)" }}>
@@ -67,7 +84,7 @@ export function Deposit({ onBack }: { onBack: () => void }) {
 
         <button
           className="pill-button pill-button--primary"
-          disabled={amountBase <= 0n || isPending || isConfirming}
+          disabled={amountBase <= 0n || amountBase > walletBalance || isPending || isConfirming}
           onClick={handleConfirm}
         >
           {isPending || isConfirming ? "Confirming..." : "Confirm"}

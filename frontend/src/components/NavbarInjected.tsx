@@ -1,4 +1,5 @@
 import { useAccount, useConnect } from "wagmi";
+import { arcTestnet } from "../chains/arcTestnet";
 import { WalletAddressDisplay } from "./WalletAddressDisplay";
 
 export function NavbarInjected() {
@@ -11,7 +12,7 @@ export function NavbarInjected() {
 
   return (
     <button
-      onClick={() => connectors[0] && connect({ connector: connectors[0] })}
+      onClick={() => connectors[0] && connect({ connector: connectors[0], chainId: arcTestnet.id })}
       disabled={isPending || connectors.length === 0}
       style={{
         background: "#000000",
