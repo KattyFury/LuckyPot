@@ -4,6 +4,7 @@ import { formatUnits, parseUnits } from "viem";
 import { poolAbi, POOL_ADDRESS } from "../lib/contract";
 import { useUserPosition } from "../hooks/usePoolData";
 import { useAmount } from "../config/tokenUnit";
+import { useCloseOnSuccess } from "../hooks/useCloseOnSuccess";
 import { Modal } from "../components/Modal";
 
 export function WithdrawModal({ onClose }: { onClose: () => void }) {
@@ -16,6 +17,8 @@ export function WithdrawModal({ onClose }: { onClose: () => void }) {
   const [amount, setAmount] = useState("");
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+
+  useCloseOnSuccess(isSuccess, onClose);
 
   const amountBase = amount ? parseUnits(amount, 6) : 0n;
   const willForfeit = eligible > 0n && amountBase > 0n;

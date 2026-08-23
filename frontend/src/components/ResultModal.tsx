@@ -3,6 +3,7 @@ import { useReadContracts, useWaitForTransactionReceipt, useWriteContract } from
 import { poolAbi, POOL_ADDRESS } from "../lib/contract";
 import { useAmount } from "../config/tokenUnit";
 import { rememberScratched, wasScratched } from "../lib/scratchState";
+import { useCloseOnSuccess } from "../hooks/useCloseOnSuccess";
 import { Modal } from "./Modal";
 import { ScratchCanvas } from "./ScratchCanvas";
 
@@ -30,6 +31,8 @@ export function ResultModal({
 
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+
+  useCloseOnSuccess(isSuccess, onClose);
 
   function handleReveal() {
     rememberScratched(epochId, address);

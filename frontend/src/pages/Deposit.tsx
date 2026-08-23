@@ -6,6 +6,7 @@ import { poolAbi, POOL_ADDRESS, USDC_ADDRESS } from "../lib/contract";
 import { encodeAggregate3, MULTICALL3_FROM_ADDRESS } from "../lib/multicall3From";
 import { useUserPosition } from "../hooks/usePoolData";
 import { useAmount } from "../config/tokenUnit";
+import { useCloseOnSuccess } from "../hooks/useCloseOnSuccess";
 import { Modal } from "../components/Modal";
 
 export function DepositModal({ onClose }: { onClose: () => void }) {
@@ -17,6 +18,8 @@ export function DepositModal({ onClose }: { onClose: () => void }) {
   const [amount, setAmount] = useState("");
   const { sendTransaction, data: hash, isPending, error } = useSendTransaction();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+
+  useCloseOnSuccess(isSuccess, onClose);
 
   const amountBase = amount ? parseUnits(amount, 6) : 0n;
 
