@@ -6,9 +6,9 @@ import { poolAbi, POOL_ADDRESS, USDC_ADDRESS } from "../lib/contract";
 import { encodeAggregate3, MULTICALL3_FROM_ADDRESS } from "../lib/multicall3From";
 import { useUserPosition } from "../hooks/usePoolData";
 import { useAmount } from "../config/tokenUnit";
-import { ScreenHeader } from "../components/ScreenHeader";
+import { Modal } from "../components/Modal";
 
-export function Deposit({ onBack }: { onBack: () => void }) {
+export function DepositModal({ onClose }: { onClose: () => void }) {
   const { address } = useAccount();
   const { data: position } = useUserPosition(address);
   const walletBalance = (position?.[3]?.result as bigint | undefined) ?? 0n;
@@ -43,9 +43,7 @@ export function Deposit({ onBack }: { onBack: () => void }) {
   }
 
   return (
-    <div className="app-shell">
-      <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 20 }}>
-        <ScreenHeader title="Deposit" onBack={onBack} />
+    <Modal title="Deposit" onClose={onClose}>
 
         <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
           Wallet balance: <strong style={{ color: "var(--color-text)" }}>{fmt(walletBalance)}</strong>
@@ -95,7 +93,6 @@ export function Deposit({ onBack }: { onBack: () => void }) {
           <div style={{ color: "var(--color-primary)", fontSize: "var(--fs-5)" }}>Deposit confirmed.</div>
         )}
         {error && <div style={{ color: "#c0392b", fontSize: "var(--fs-5)" }}>{error.message.slice(0, 200)}</div>}
-      </div>
-    </div>
+    </Modal>
   );
 }

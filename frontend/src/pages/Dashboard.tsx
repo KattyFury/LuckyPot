@@ -9,15 +9,17 @@ import { MyHistoryCard, MyHistoryList } from "../components/MyHistoryCard";
 import { EpochDetailModal } from "../components/EpochDetailModal";
 import { ResultModal } from "../components/ResultModal";
 import { Modal } from "../components/Modal";
+import { DepositModal } from "./Deposit";
+import { WithdrawModal } from "./Withdraw";
 import { useCurrentEpochId, useEpoch, useEpochHistory, usePoolTotals, useUserPosition } from "../hooks/usePoolData";
 import { useMyHistory } from "../hooks/useMyHistory";
 import { estimateNumWinners } from "../lib/prize";
 import { useTokenUnit } from "../config/tokenUnit";
 import type { EpochData } from "../hooks/usePoolData";
 
-type Popup = "draw-history" | "my-history" | null;
+type Popup = "draw-history" | "my-history" | "deposit" | "withdraw" | null;
 
-export function Dashboard({ onNavigate }: { onNavigate: (view: "deposit" | "withdraw") => void }) {
+export function Dashboard() {
   const { address } = useAccount();
   const { unit } = useTokenUnit();
   const { data: currentEpochId } = useCurrentEpochId();
@@ -42,7 +44,6 @@ export function Dashboard({ onNavigate }: { onNavigate: (view: "deposit" | "with
   const myTickets = eligible + pending;
 
   const latestDrawnEpoch = epochs.find((e) => e.epoch.drawn) ?? null;
-  const needsFaucet = Boolean(address) && walletBalance === 0n;
 
   function openEpoch(id: bigint, epoch: EpochData) {
     setPopup(null);
@@ -54,8 +55,8 @@ export function Dashboard({ onNavigate }: { onNavigate: (view: "deposit" | "with
       <div className="dashboard-grid">
         <div className="g-navbar">
           <Navbar
-            onDeposit={() => onNavigate("deposit")}
-            onWithdraw={() => onNavigate("withdraw")}
+            onDeposit={() => setPopup("deposit")}
+            onWithdraw={() => setPopup("withdraw")}
             onDrawHistory={() => setPopup("draw-history")}
             onMyHistory={() => setPopup("my-history")}
           />
@@ -64,10 +65,14 @@ export function Dashboard({ onNavigate }: { onNavigate: (view: "deposit" | "with
         <div className="g-banner">
           {unit === "$ARC" ? (
             <AnnouncementBanner text="$ARC isn't live yet — figures are the USDC pool." />
-          ) : needsFaucet ? (
-            <AnnouncementBanner text="Click here to faucet" href="https://faucet.circle.com" />
           ) : (
-            <AnnouncementBanner text="This week's yield is funded." />
+            <AnnouncementBanner
+              text="Tap here if you want to faucet"
+              href="https://faucet.circle.com"
+              onClick={() => {
+                if (address) navigator.clipboard.writeText(address);
+              }}
+            />
           )}
         </div>
 
@@ -86,8 +91,8 @@ export function Dashboard({ onNavigate }: { onNavigate: (view: "deposit" | "with
             depositorsCount={depositorsCount}
             myTickets={myTickets}
             walletBalance={walletBalance}
-            onDeposit={() => onNavigate("deposit")}
-            onWithdraw={() => onNavigate("withdraw")}
+            onDeposit={() => setPopup("deposit")}
+            onWithdraw={() => setPopup("withdraw")}
             onLatestResult={() => latestDrawnEpoch && openEpoch(latestDrawnEpoch.id, latestDrawnEpoch.epoch)}
             latestResultAvailable={Boolean(latestDrawnEpoch)}
           />
@@ -109,6 +114,10 @@ export function Dashboard({ onNavigate }: { onNavigate: (view: "deposit" | "with
           MY HISTORY
         </button>
       </div>
+
+      {popup === "deposit" && <DepositModal onClose={() => setPopup(null)} />}
+
+      {popup === "withdraw" && <WithdrawModal onClose={() => setPopup(null)} />}
 
       {popup === "draw-history" && (
         <Modal title="DRAW HISTORY" onClose={() => setPopup(null)}>

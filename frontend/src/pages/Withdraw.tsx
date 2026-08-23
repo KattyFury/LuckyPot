@@ -4,9 +4,9 @@ import { formatUnits, parseUnits } from "viem";
 import { poolAbi, POOL_ADDRESS } from "../lib/contract";
 import { useUserPosition } from "../hooks/usePoolData";
 import { useAmount } from "../config/tokenUnit";
-import { ScreenHeader } from "../components/ScreenHeader";
+import { Modal } from "../components/Modal";
 
-export function Withdraw({ onBack }: { onBack: () => void }) {
+export function WithdrawModal({ onClose }: { onClose: () => void }) {
   const { address } = useAccount();
   const { data: position } = useUserPosition(address);
   const balance = (position?.[0]?.result as bigint | undefined) ?? 0n;
@@ -30,9 +30,7 @@ export function Withdraw({ onBack }: { onBack: () => void }) {
   }
 
   return (
-    <div className="app-shell">
-      <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 20 }}>
-        <ScreenHeader title="Withdraw" onBack={onBack} />
+    <Modal title="Withdraw" onClose={onClose}>
 
         <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
           Available: <strong style={{ color: "var(--color-text)" }}>{fmt(balance)}</strong>
@@ -80,7 +78,6 @@ export function Withdraw({ onBack }: { onBack: () => void }) {
           <div style={{ color: "var(--color-primary)", fontSize: "var(--fs-5)" }}>Withdrawal confirmed.</div>
         )}
         {error && <div style={{ color: "#c0392b", fontSize: "var(--fs-5)" }}>{error.message.slice(0, 200)}</div>}
-      </div>
-    </div>
+    </Modal>
   );
 }
