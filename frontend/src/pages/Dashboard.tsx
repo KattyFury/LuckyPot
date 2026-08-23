@@ -13,8 +13,9 @@ import { DepositModal } from "./Deposit";
 import { WithdrawModal } from "./Withdraw";
 import { useCurrentEpochId, useEpoch, useEpochHistory, usePoolTotals, useUserPosition } from "../hooks/usePoolData";
 import { useMyHistory } from "../hooks/useMyHistory";
-import { estimateNumWinners } from "../lib/prize";
+import { estimateNumWinners, projectedWeeklyYield } from "../lib/prize";
 import { useTokenUnit } from "../config/tokenUnit";
+import { wasScratched } from "../lib/scratchState";
 import type { EpochData } from "../hooks/usePoolData";
 
 type Popup = "draw-history" | "my-history" | "deposit" | "withdraw" | null;
@@ -32,11 +33,12 @@ export function Dashboard() {
   const [popup, setPopup] = useState<Popup>(null);
   const [selectedEpoch, setSelectedEpoch] = useState<{ id: bigint; epoch: EpochData } | null>(null);
   const [resultEpochId, setResultEpochId] = useState<bigint | null>(null);
+  // Bumped when the result popup closes, so the banner re-reads localStorage.
+  const [scratchTick, setScratchTick] = useState(0);
 
   const totalPool = (totals?.[0]?.result as bigint | undefined) ?? 0n;
   const depositorsCount = Number((totals?.[1]?.result as bigint | undefined) ?? 0n);
-  const pendingYield = (totals?.[2]?.result as bigint | undefined) ?? 0n;
-  const numWinnersEstimate = estimateNumWinners(BigInt(depositorsCount), pendingYield);
+  const numWinnersEstimate = estimateNumWinners(BigInt(depositorsCount), projectedWeeklyYield(totalPool));
 
   const eligible = (position?.[1]?.result as bigint | undefined) ?? 0n;
   const pending = (position?.[2]?.result as bigint | undefined) ?? 0n;
@@ -44,6 +46,15 @@ export function Dashboard() {
   const myTickets = eligible + pending;
 
   const latestDrawnEpoch = epochs.find((e) => e.epoch.drawn) ?? null;
+
+  // Announce a fresh draw to EVERY depositor, not just the winners — saying
+  // who won here would give away the scratch card before it's scratched.
+  const myPoolBalance = (position?.[0]?.result as bigint | undefined) ?? 0n;
+  const unscratchedResult =
+    latestDrawnEpoch && address && myPoolBalance > 0n && !wasScratched(latestDrawnEpoch.id, address)
+      ? latestDrawnEpoch
+      : null;
+  void scratchTick; // re-runs the check above after the popup closes
 
   function openEpoch(id: bigint, epoch: EpochData) {
     setPopup(null);
@@ -65,6 +76,11 @@ export function Dashboard() {
         <div className="g-banner">
           {unit === "$ARC" ? (
             <AnnouncementBanner text="$ARC isn't live yet — figures are the USDC pool." />
+          ) : unscratchedResult ? (
+            <AnnouncementBanner
+              text={`Epoch #${unscratchedResult.id.toString().padStart(2, "0")} result is in — tap to scratch`}
+              onClick={() => setResultEpochId(unscratchedResult.id)}
+            />
           ) : (
             <AnnouncementBanner
               text="Tap here if you want to faucet"
@@ -145,7 +161,14 @@ export function Dashboard() {
       )}
 
       {resultEpochId !== null && address && (
-        <ResultModal epochId={resultEpochId} address={address} onClose={() => setResultEpochId(null)} />
+        <ResultModal
+          epochId={resultEpochId}
+          address={address}
+          onClose={() => {
+            setResultEpochId(null);
+            setScratchTick((n) => n + 1);
+          }}
+        />
       )}
     </div>
   );

@@ -2,30 +2,9 @@ import { useState } from "react";
 import { useReadContracts, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { poolAbi, POOL_ADDRESS } from "../lib/contract";
 import { useAmount } from "../config/tokenUnit";
+import { rememberScratched, wasScratched } from "../lib/scratchState";
 import { Modal } from "./Modal";
 import { ScratchCanvas } from "./ScratchCanvas";
-
-/** Remembers that this wallet already scratched this epoch, so the card is
- *  only ever scratched once — reopening the result just shows it. */
-function scratchKey(epochId: bigint, address: string) {
-  return `luckystaker:scratched:${address.toLowerCase()}:${epochId}`;
-}
-
-function wasScratched(epochId: bigint, address: string) {
-  try {
-    return localStorage.getItem(scratchKey(epochId, address)) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function rememberScratched(epochId: bigint, address: string) {
-  try {
-    localStorage.setItem(scratchKey(epochId, address), "1");
-  } catch {
-    /* private mode / storage blocked — the card just scratches again */
-  }
-}
 
 export function ResultModal({
   epochId,
