@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { formatCountdown } from "../lib/format";
+import { TokenToggle } from "./TokenToggle";
 import type { EpochData } from "../hooks/usePoolData";
 
 export function EpochCard({
@@ -25,9 +26,10 @@ export function EpochCard({
     <div className="card card-rows card-rows--epoch">
       <div
         className="box-header box-header--inline"
-        style={{ fontSize: "var(--fs-4)", fontWeight: 400, color: "var(--color-primary)" }}
+        style={{ fontSize: "var(--fs-4)", fontWeight: 700, justifyContent: "space-between" }}
       >
-        EPOCH {idLabel}
+        <span style={{ color: "var(--color-primary)" }}>EPOCH {idLabel}</span>
+        <TokenToggle />
       </div>
 
       <div

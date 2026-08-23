@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useReadContracts, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { poolAbi, POOL_ADDRESS } from "../lib/contract";
-import { formatUSDC } from "../lib/format";
+import { useAmount } from "../config/tokenUnit";
 import { Modal } from "./Modal";
 import { ScratchCanvas } from "./ScratchCanvas";
 
@@ -36,6 +36,7 @@ export function ResultModal({
   address: `0x${string}`;
   onClose: () => void;
 }) {
+  const amount = useAmount();
   const { data } = useReadContracts({
     contracts: [
       { address: POOL_ADDRESS, abi: poolAbi, functionName: "owedTo", args: [epochId, address] },
@@ -76,7 +77,7 @@ export function ResultModal({
         <>
           <span style={{ fontSize: "var(--fs-5)", fontWeight: 700, textTransform: "uppercase" }}>You won</span>
           <span style={{ fontSize: "var(--fs-1)", fontWeight: 700, fontFamily: "var(--font-condensed)" }}>
-            ${formatUSDC(owed)}
+            {amount(owed)}
           </span>
         </>
       ) : (

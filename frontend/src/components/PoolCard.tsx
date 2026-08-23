@@ -1,4 +1,5 @@
 import { formatUSDC } from "../lib/format";
+import { useAmount } from "../config/tokenUnit";
 
 export function PoolCard({
   totalPool,
@@ -19,18 +20,20 @@ export function PoolCard({
   onLatestResult: () => void;
   latestResultAvailable: boolean;
 }) {
+  const amount = useAmount();
+
   return (
     <div className="card card-rows">
       <div className="two-col box-header">
-        <span style={{ fontSize: "var(--fs-4)", fontWeight: 400, color: "var(--color-primary)" }}>TOTAL POOL</span>
-        <span style={{ fontSize: "var(--fs-4)", fontWeight: 400, color: "var(--color-primary)", textAlign: "left" }}>
+        <span style={{ fontSize: "var(--fs-4)", fontWeight: 700, color: "var(--color-primary)" }}>TOTAL POOL</span>
+        <span style={{ fontSize: "var(--fs-4)", fontWeight: 700, color: "var(--color-primary)", textAlign: "left" }}>
           MY TICKETS
         </span>
       </div>
 
       <div className="two-col" style={{ alignItems: "baseline", fontFamily: "var(--font-condensed)" }}>
         <div style={{ fontSize: "var(--fs-3)", fontWeight: 700 }}>
-          ${formatUSDC(totalPool)}
+          {amount(totalPool)}
           <span style={{ fontSize: "var(--fs-4)", fontWeight: 400, color: "var(--color-text-secondary)" }}>
             /{depositorsCount} depositors
           </span>
@@ -39,7 +42,7 @@ export function PoolCard({
           {formatUSDC(myTickets)}
           <span style={{ fontSize: "var(--fs-4)", fontWeight: 400, color: "var(--color-text-secondary)" }}>
             {" "}
-            (USDC deposited)
+            ($ deposited)
           </span>
         </div>
       </div>
@@ -51,7 +54,7 @@ export function PoolCard({
           fontFamily: "var(--font-condensed)",
         }}
       >
-        My Wallet's Balance: <strong style={{ color: "var(--color-text)" }}>${formatUSDC(walletBalance)}</strong>
+        My Wallet's Balance: <strong style={{ color: "var(--color-text)" }}>{amount(walletBalance)}</strong>
       </div>
 
       <div style={{ display: "flex", gap: 10 }}>

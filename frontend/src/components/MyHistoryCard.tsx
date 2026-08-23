@@ -1,4 +1,4 @@
-import { formatUSDC } from "../lib/format";
+import { useAmount } from "../config/tokenUnit";
 import type { HistoryEntry } from "../hooks/useMyHistory";
 
 function formatDate(timestamp: number): string {
@@ -7,6 +7,8 @@ function formatDate(timestamp: number): string {
 }
 
 export function MyHistoryList({ entries, connected }: { entries: HistoryEntry[]; connected: boolean }) {
+  const amount = useAmount();
+
   if (!connected) {
     return (
       <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
@@ -32,7 +34,7 @@ export function MyHistoryList({ entries, connected }: { entries: HistoryEntry[];
               color: entry.type === "Won" ? "var(--color-primary)" : undefined,
             }}
           >
-            {entry.type} ${formatUSDC(entry.amount)}
+            {entry.type} {amount(entry.amount)}
           </span>
         </div>
       ))}

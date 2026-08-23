@@ -5,13 +5,14 @@ import { erc20Abi } from "../lib/erc20Abi";
 import { poolAbi, POOL_ADDRESS, USDC_ADDRESS } from "../lib/contract";
 import { encodeAggregate3, MULTICALL3_FROM_ADDRESS } from "../lib/multicall3From";
 import { useUserPosition } from "../hooks/usePoolData";
-import { formatUSDC } from "../lib/format";
+import { useAmount } from "../config/tokenUnit";
 import { ScreenHeader } from "../components/ScreenHeader";
 
 export function Deposit({ onBack }: { onBack: () => void }) {
   const { address } = useAccount();
   const { data: position } = useUserPosition(address);
   const walletBalance = (position?.[3]?.result as bigint | undefined) ?? 0n;
+  const fmt = useAmount();
 
   const [amount, setAmount] = useState("");
   const { sendTransaction, data: hash, isPending, error } = useSendTransaction();
@@ -47,7 +48,7 @@ export function Deposit({ onBack }: { onBack: () => void }) {
         <ScreenHeader title="Deposit" onBack={onBack} />
 
         <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
-          Wallet balance: <strong style={{ color: "var(--color-text)" }}>${formatUSDC(walletBalance)}</strong>
+          Wallet balance: <strong style={{ color: "var(--color-text)" }}>{fmt(walletBalance)}</strong>
         </div>
 
         <div>

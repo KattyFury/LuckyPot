@@ -1,3 +1,4 @@
+/** Bare number, no unit. For the unit-aware version see useAmount(). */
 export function formatUSDC(value: bigint, maximumFractionDigits = 0): string {
   const asNumber = Number(value) / 1e6;
   return asNumber.toLocaleString("en-US", { maximumFractionDigits });

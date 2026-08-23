@@ -1,4 +1,5 @@
-import { formatUSDC, shortAddress } from "../lib/format";
+import { shortAddress } from "../lib/format";
+import { useAmount } from "../config/tokenUnit";
 import { prizeForRank } from "../lib/prize";
 import { Modal } from "./Modal";
 import type { EpochData } from "../hooks/usePoolData";
@@ -17,6 +18,7 @@ export function EpochDetailModal({
   onSelectMine?: () => void;
   onClose: () => void;
 }) {
+  const amount = useAmount();
   const mine = myAddress?.toLowerCase();
 
   return (
@@ -24,10 +26,10 @@ export function EpochDetailModal({
       <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
         Eligible pool:{" "}
         <strong style={{ color: "var(--color-text)" }}>
-          ${formatUSDC(epoch.eligiblePoolSnapshot)}/{epoch.eligibleParticipants.toString()} depositors
+          {amount(epoch.eligiblePoolSnapshot)}/{epoch.eligibleParticipants.toString()} depositors
         </strong>{" "}
         &nbsp;·&nbsp; Weekly yield:{" "}
-        <strong style={{ color: "var(--color-text)" }}>${formatUSDC(epoch.weeklyYield)}</strong> &nbsp;·&nbsp; Winners:{" "}
+        <strong style={{ color: "var(--color-text)" }}>{amount(epoch.weeklyYield)}</strong> &nbsp;·&nbsp; Winners:{" "}
         <strong style={{ color: "var(--color-text)" }}>{epoch.numWinners.toString()}</strong>
       </div>
 
@@ -48,7 +50,7 @@ export function EpochDetailModal({
                   {isMine ? "You" : shortAddress(winner)}
                 </span>
                 <span style={{ fontWeight: 700 }}>
-                  ${formatUSDC(prizeForRank(i, epoch.numWinners, epoch.weeklyYield))}
+                  {amount(prizeForRank(i, epoch.numWinners, epoch.weeklyYield))}
                 </span>
               </>
             );

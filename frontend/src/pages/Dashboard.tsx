@@ -12,12 +12,14 @@ import { Modal } from "../components/Modal";
 import { useCurrentEpochId, useEpoch, useEpochHistory, usePoolTotals, useUserPosition } from "../hooks/usePoolData";
 import { useMyHistory } from "../hooks/useMyHistory";
 import { estimateNumWinners } from "../lib/prize";
+import { useTokenUnit } from "../config/tokenUnit";
 import type { EpochData } from "../hooks/usePoolData";
 
 type Popup = "draw-history" | "my-history" | null;
 
 export function Dashboard({ onNavigate }: { onNavigate: (view: "deposit" | "withdraw") => void }) {
   const { address } = useAccount();
+  const { unit } = useTokenUnit();
   const { data: currentEpochId } = useCurrentEpochId();
   const { data: currentEpoch } = useEpoch(currentEpochId as bigint | undefined);
   const { epochs } = useEpochHistory(currentEpochId as bigint | undefined);
@@ -60,7 +62,9 @@ export function Dashboard({ onNavigate }: { onNavigate: (view: "deposit" | "with
         </div>
 
         <div className="g-banner">
-          {needsFaucet ? (
+          {unit === "$ARC" ? (
+            <AnnouncementBanner text="$ARC isn't live yet — figures are the USDC pool." />
+          ) : needsFaucet ? (
             <AnnouncementBanner text="Click here to faucet" href="https://faucet.circle.com" />
           ) : (
             <AnnouncementBanner text="This week's yield is funded." />

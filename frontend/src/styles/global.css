@@ -283,6 +283,7 @@ button {
 .box-header {
   align-self: stretch;
   align-items: center;
+  font-family: var(--font-condensed);
   box-shadow: 0 1px 0 var(--color-text-secondary);
 }
 
@@ -309,7 +310,9 @@ button {
   align-items: center;
   flex: none;
   font-size: var(--fs-4);
+  font-weight: 700;
   color: var(--color-primary);
+  font-family: var(--font-condensed);
   box-shadow: 0 1px 0 var(--color-text-secondary);
 }
 
@@ -395,6 +398,7 @@ button {
   font-size: var(--fs-3);
   font-weight: 700;
   color: var(--color-primary);
+  font-family: var(--font-condensed);
 }
 
 /* Mobile stand-ins for the two history boxes: full-width card-looking
@@ -409,9 +413,35 @@ button {
   border-radius: var(--radius);
   background: var(--color-card-bg);
   font-size: var(--fs-4);
-  font-weight: 400;
+  font-weight: 700;
   color: var(--color-primary);
+  font-family: var(--font-condensed);
   text-align: left;
+}
+
+/* USDC | $ARC segmented switch in the EPOCH box header. */
+.token-toggle {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 2px;
+}
+
+.token-toggle button {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: none;
+  color: var(--color-text-secondary);
+  font-size: var(--fs-5);
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.token-toggle button.is-active {
+  background: var(--color-text);
+  color: #ffffff;
 }
 
 /* Wallet dropdown in the navbar. */

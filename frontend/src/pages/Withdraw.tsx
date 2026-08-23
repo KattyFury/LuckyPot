@@ -3,7 +3,7 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagm
 import { formatUnits, parseUnits } from "viem";
 import { poolAbi, POOL_ADDRESS } from "../lib/contract";
 import { useUserPosition } from "../hooks/usePoolData";
-import { formatUSDC } from "../lib/format";
+import { useAmount } from "../config/tokenUnit";
 import { ScreenHeader } from "../components/ScreenHeader";
 
 export function Withdraw({ onBack }: { onBack: () => void }) {
@@ -11,6 +11,7 @@ export function Withdraw({ onBack }: { onBack: () => void }) {
   const { data: position } = useUserPosition(address);
   const balance = (position?.[0]?.result as bigint | undefined) ?? 0n;
   const eligible = (position?.[1]?.result as bigint | undefined) ?? 0n;
+  const fmt = useAmount();
 
   const [amount, setAmount] = useState("");
   const { writeContract, data: hash, isPending, error } = useWriteContract();
@@ -34,7 +35,7 @@ export function Withdraw({ onBack }: { onBack: () => void }) {
         <ScreenHeader title="Withdraw" onBack={onBack} />
 
         <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
-          Available: <strong style={{ color: "var(--color-text)" }}>${formatUSDC(balance)}</strong>
+          Available: <strong style={{ color: "var(--color-text)" }}>{fmt(balance)}</strong>
         </div>
 
         <div>

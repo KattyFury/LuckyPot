@@ -21,9 +21,11 @@ User rất khắt khe về lưới; đã phải dựng lại 2 lần vì làm sa
 - **Desktop 15 hàng:** 1 navbar · 2 banner · 3-6 EPOCH(1/3) | TOTAL POOL(2/3) · 7-14 DRAW HISTORY(2/3) | MY HISTORY(1/3) · 15 trống.
 - **Mobile 13 hàng:** 1 navbar · 2 banner · 3-6 EPOCH · 7-10 POOL · 11 nút DRAW HISTORY · 12 nút MY HISTORY · 13 trống. Hai box history **thu thành nút 1 hàng, bấm mở popup** (để trang mobile không dài lê thê).
 - **KHÔNG có padding dọc ở lưới trang** (`padding: 0 20px`) — hàng 1 phải bắt đầu từ đúng mép trên trang, nếu không dải trắng phía trên bị mắt hiểu là một phần hàng 1 và navbar trông như bị đẩy xuống dưới tâm. Khoảng trắng đáy do hàng cuối (trống) đảm nhiệm.
-- **Trong box: padding 20px đều 4 phía**, nội dung chia **4 hàng bằng nhau + khe 10px**, mỗi yếu tố 1 hàng (EPOCH: mô tả chiếm 2 hàng cuối).
+- **Trong box:** nội dung chia **4 hàng bằng nhau + khe 10px**, mỗi yếu tố 1 hàng (EPOCH: mô tả chiếm 2 hàng cuối).
 - **Đường kẻ dưới navbar dùng `box-shadow`, KHÔNG dùng `border-bottom`** — border nằm trong hộp nên đẩy nội dung lệch tâm 0.5px.
-- **Thang chữ cố định 35/30/25/20/15** (`--fs-1..5`), chỉ dùng biến, không tự chế cỡ. **Header của box để chữ thường (weight 400)**, nội dung số liệu dùng **Roboto Condensed** (`--font-condensed`).
+- **Thang chữ 35/30/25/20/15** (`--fs-1..5`) + **`--fs-caption: 17px` riêng cho chú thích** (nằm ngoài thang, user chốt "từ nay chú thích là 17"). Chỉ dùng biến, không tự chế cỡ.
+- **Header của box: 20px, BOLD, Roboto Condensed**, có **đường kẻ ngăn với nội dung** (`.box-header` / `.card-list__header`, vẽ bằng `box-shadow`). Nội dung số liệu cũng dùng Condensed (`--font-condensed`).
+- **Trong box KHÔNG có padding trên** (`padding: 0 20px 20px`) — user chốt sau khi thử.
 - Cách kiểm tra: đừng tin mắt, mở Playwright đo `getBoundingClientRect` / `gridTemplateRows` rồi so số (xem mục "Bài học" bên dưới).
 
 ---
@@ -42,9 +44,12 @@ User rất khắt khe về lưới; đã phải dựng lại 2 lần vì làm sa
 - **GitHub:** collaborator `still2412` đã được mời (quyền write, đang chờ accept). Repo đã đổi tên, `gh secret POOL_ADDRESS` đã cập nhật theo địa chỉ mới nhất.
 - **Privy:** App ID thật `cmt43aax701w40cl5r86us72b` nằm ở `frontend/.env` (gitignored). Nếu biến này rỗng, app **tự fallback** sang connector ví injected (MetaMask) thay vì crash — xem `frontend/src/config/authMode.ts`.
 
-### Trạng thái UI hiện tại (phiên 08-23, chiều)
+### Trạng thái UI hiện tại (cuối phiên 08-23)
 
-- **Navbar:** bấm địa chỉ ví → dropdown **nền xanh lá** 5 mục: Deposit · Withdraw · DRAW HISTORY · MY HISTORY · **Disconnect (chữ đỏ)**. Icon copy bấm riêng để copy (có `stopPropagation`), không kèm chữ "copy".
+- **Navbar:** bấm địa chỉ ví → dropdown **nền ĐEN** 5 mục, chữ Title Case đồng bộ: Deposit · Withdraw · Draw History · My History · **Disconnect (chữ đỏ)**. Icon copy bấm riêng để copy (có `stopPropagation`), không kèm chữ "copy".
+- **Đơn vị tiền hiển thị là `0 USDC`, KHÔNG phải `$0`.** Dùng hook `useAmount()` (`config/tokenUnit.tsx`), đừng tự nối `$` + `formatUSDC` nữa.
+- **Toggle `USDC | $ARC`** ở góc phải header box EPOCH (`components/TokenToggle.tsx`) — nút bật qua lại thật, state ở `TokenUnitProvider` bọc trong `App.tsx`, đổi đơn vị toàn app.
+  - ⚠️ Pool thật vẫn giữ USDC, **$ARC chưa tồn tại** (spec mục 4: TGE chưa có ngày). Nên khi bật $ARC, banner tự đổi thành *"$ARC isn't live yet — figures are the USDC pool."* để màn hình không nói sai sự thật. **Chưa được user duyệt dòng này** — hỏi lại, nếu user thấy thừa thì bỏ.
 - **Luồng Latest Result (đã đổi hẳn theo yêu cầu user):** bấm **không** nhảy sang màn cào nữa. Nó mở popup **DRAW HISTORY của epoch vừa quay**; nếu ví đang kết nối có trong danh sách trúng thì dòng đó **highlight xanh + ghi "You"**, bấm vào dòng đó mới ra popup kết quả.
 - **Cào chỉ 1 lần duy nhất:** nhớ bằng `localStorage` khoá `luckystaker:scratched:<addr>:<epochId>`; mở lại lần sau hiện thẳng kết quả. Đã `claim` rồi thì cũng bỏ qua bước cào.
 - **Màn Scratch riêng đã XOÁ** (`frontend/src/pages/Scratch.tsx`) — giờ là `components/ResultModal.tsx`. `App.tsx` chỉ còn 3 view: dashboard / deposit / withdraw.
@@ -97,8 +102,12 @@ User rất khắt khe về lưới; đã phải dựng lại 2 lần vì làm sa
 - **Padding dọc ở lưới TRANG làm navbar trông như bị đẩy xuống đáy** dù nó có căn giữa đúng trong ô của nó — vì dải trắng phía trên mắt hiểu là một phần hàng 1. Hàng 1 phải chạm mép trên trang.
 - **ĐO, ĐỪNG ĐOÁN.** Cách hiệu quả nhất trong phiên này là viết script Playwright in ra `gridTemplateRows`, `getBoundingClientRect`, và so tâm phần tử với tâm dải nhìn thấy. Vài lần suýt sửa nhầm chỗ vì đoán mò. Lưu ý `Number("62px")` → `NaN`, phải `parseFloat`.
 
-## Việc tiếp theo khi quay lại
+## Việc tiếp theo khi quay lại (user hẹn làm tiếp tối 2026-08-23)
 
+0. **Việc UI còn dở / cần user chốt:**
+   - **Dropdown ví chưa ai nhìn thấy bằng ảnh** — nó chỉ hiện khi có ví kết nối, mà Playwright không lái được MetaMask. Cần user bấm thử xem nền đen + chữ đã ổn chưa.
+   - **Banner cảnh báo khi bật $ARC** (xem mục UI ở trên) là tôi tự thêm, chưa được user duyệt.
+   - `($ deposited)` cạnh MY TICKETS: user chốt dùng ký hiệu `$` ở đây trong khi mọi chỗ khác đã đổi sang `USDC` — cố ý, đừng "sửa cho đồng bộ".
 1. Dùng `npm run draw:now` (trong `automation/`) để test nhanh — không cần chờ epoch thật.
 2. **Test bằng ví thật** các luồng chưa verify được tự động: auto switch mạng, dropdown ví, highlight "You", cào, claim.
 3. Theo dõi `still2412` đã accept lời mời GitHub collaborator chưa.
