@@ -75,7 +75,7 @@ export function Dashboard({
             walletBalance={walletBalance}
             onDeposit={() => onNavigate("deposit")}
             onWithdraw={() => onNavigate("withdraw")}
-            onLatestResult={() => latestDrawnEpoch && setSelectedEpoch(latestDrawnEpoch)}
+            onLatestResult={() => onNavigate("scratch")}
             latestResultAvailable={Boolean(latestDrawnEpoch)}
           />
         </div>
