@@ -1,3 +1,4 @@
+import { plural } from "../lib/format";
 import { useAmount } from "../config/tokenUnit";
 import type { EpochData } from "../hooks/usePoolData";
 
@@ -22,7 +23,7 @@ export function DrawHistoryList({
           <span style={{ fontSize: "var(--fs-caption)", fontWeight: 700 }}>
             {amount(epoch.eligiblePoolSnapshot)}
             <span style={{ fontWeight: 400, color: "var(--color-text-secondary)" }}>
-              /{epoch.eligibleParticipants.toString()} depositors
+              /{epoch.eligibleParticipants.toString()} {plural(epoch.eligibleParticipants, "depositor")}
             </span>
           </span>
         </button>

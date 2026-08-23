@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { formatCountdown } from "../lib/format";
+import { formatCountdown, plural } from "../lib/format";
 import { TokenToggle } from "./TokenToggle";
 import type { EpochData } from "../hooks/usePoolData";
 
@@ -7,10 +7,12 @@ export function EpochCard({
   epochId,
   epoch,
   numWinnersEstimate,
+  participantCount,
 }: {
   epochId: bigint | undefined;
   epoch: EpochData | undefined;
   numWinnersEstimate: bigint;
+  participantCount: number;
 }) {
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
 
@@ -56,9 +58,11 @@ export function EpochCard({
           fontFamily: "var(--font-condensed)",
         }}
       >
-        Weekly yield gets raffled off among{" "}
+        Weekly yield goes to{" "}
         <strong style={{ color: "var(--color-text)" }}>{numWinnersEstimate.toString()}</strong>{" "}
-        {numWinnersEstimate === 1n ? "person" : "people"}, 1 dollar = 1 ticket.
+        {plural(numWinnersEstimate, "lucky winner")} out of{" "}
+        <strong style={{ color: "var(--color-text)" }}>{participantCount.toLocaleString("en-US")}</strong>{" "}
+        {plural(participantCount, "participant")}.
       </div>
     </div>
   );

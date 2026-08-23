@@ -4,6 +4,11 @@ export function formatUSDC(value: bigint, maximumFractionDigits = 0): string {
   return asNumber.toLocaleString("en-US", { maximumFractionDigits });
 }
 
+/** Picks the singular or plural noun for a count: plural(1, "depositor"). */
+export function plural(count: number | bigint, singular: string, pluralForm = `${singular}s`): string {
+  return Number(count) === 1 ? singular : pluralForm;
+}
+
 export function shortAddress(address: string): string {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }

@@ -1,4 +1,4 @@
-import { shortAddress } from "../lib/format";
+import { plural, shortAddress } from "../lib/format";
 import { useAmount } from "../config/tokenUnit";
 import { prizeForRank } from "../lib/prize";
 import { Modal } from "./Modal";
@@ -26,7 +26,8 @@ export function EpochDetailModal({
       <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
         Eligible pool:{" "}
         <strong style={{ color: "var(--color-text)" }}>
-          {amount(epoch.eligiblePoolSnapshot)}/{epoch.eligibleParticipants.toString()} depositors
+          {amount(epoch.eligiblePoolSnapshot)}/{epoch.eligibleParticipants.toString()}{" "}
+          {plural(epoch.eligibleParticipants, "depositor")}
         </strong>{" "}
         &nbsp;·&nbsp; Weekly yield:{" "}
         <strong style={{ color: "var(--color-text)" }}>{amount(epoch.weeklyYield)}</strong> &nbsp;·&nbsp; Winners:{" "}

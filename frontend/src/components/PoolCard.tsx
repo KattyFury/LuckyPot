@@ -1,4 +1,4 @@
-import { formatUSDC } from "../lib/format";
+import { formatUSDC, plural } from "../lib/format";
 import { useAmount } from "../config/tokenUnit";
 
 export function PoolCard({
@@ -35,14 +35,14 @@ export function PoolCard({
         <div style={{ fontSize: "var(--fs-3)", fontWeight: 700 }}>
           {amount(totalPool)}
           <span style={{ fontSize: "var(--fs-4)", fontWeight: 400, color: "var(--color-text-secondary)" }}>
-            /{depositorsCount} depositors
+            /{depositorsCount} {plural(depositorsCount, "depositor")}
           </span>
         </div>
         <div style={{ fontSize: "var(--fs-3)", fontWeight: 700, textAlign: "left" }}>
           {formatUSDC(myTickets)}
           <span style={{ fontSize: "var(--fs-4)", fontWeight: 400, color: "var(--color-text-secondary)" }}>
             {" "}
-            ($ deposited)
+            (USDC deposited)
           </span>
         </div>
       </div>
@@ -54,7 +54,7 @@ export function PoolCard({
           fontFamily: "var(--font-condensed)",
         }}
       >
-        My Wallet's Balance: <strong style={{ color: "var(--color-text)" }}>{amount(walletBalance)}</strong>
+        My wallet's balance: <strong style={{ color: "var(--color-text)" }}>{amount(walletBalance)}</strong>
       </div>
 
       <div style={{ display: "flex", gap: 10 }}>

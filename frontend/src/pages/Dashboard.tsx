@@ -76,6 +76,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (view: "deposit" | "with
             epochId={currentEpochId as bigint | undefined}
             epoch={currentEpoch}
             numWinnersEstimate={numWinnersEstimate}
+            participantCount={depositorsCount}
           />
         </div>
 
