@@ -15,17 +15,24 @@ export function MyHistoryList({ entries, connected }: { entries: HistoryEntry[];
     );
   }
   if (entries.length === 0) {
-    return <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>No activity yet.</div>;
+    return <div style={{ fontSize: "var(--fs-caption)", color: "var(--color-text-secondary)" }}>No activity yet.</div>;
   }
 
   return (
     <>
       {entries.map((entry, i) => (
-        <div key={i} className="card-list__row" style={{ fontSize: "var(--fs-5)" }}>
-          <span style={{ color: "var(--color-text-secondary)" }}>{formatDate(entry.timestamp)}</span>
-          <span style={{ fontWeight: 700 }}>{entry.type}</span>
-          <span style={{ fontWeight: 700, color: entry.type === "Won" ? "var(--color-primary)" : undefined }}>
-            ${formatUSDC(entry.amount)}
+        <div key={i} className="card-list__row card-list__row--stacked">
+          <span style={{ fontSize: "var(--fs-caption)", color: "var(--color-text-secondary)" }}>
+            {formatDate(entry.timestamp)}
+          </span>
+          <span
+            style={{
+              fontSize: "var(--fs-4)",
+              fontWeight: 700,
+              color: entry.type === "Won" ? "var(--color-primary)" : undefined,
+            }}
+          >
+            {entry.type} ${formatUSDC(entry.amount)}
           </span>
         </div>
       ))}

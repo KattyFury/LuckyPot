@@ -55,8 +55,8 @@ export function WalletAddressDisplay({
         <div className="wallet-menu">
           <button onClick={() => pick(onDeposit)}>Deposit</button>
           <button onClick={() => pick(onWithdraw)}>Withdraw</button>
-          <button onClick={() => pick(onDrawHistory)}>DRAW HISTORY</button>
-          <button onClick={() => pick(onMyHistory)}>MY HISTORY</button>
+          <button onClick={() => pick(onDrawHistory)}>Draw History</button>
+          <button onClick={() => pick(onMyHistory)}>My History</button>
           <button className="is-danger" onClick={() => pick(onDisconnect)}>
             Disconnect
           </button>

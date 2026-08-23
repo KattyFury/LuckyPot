@@ -19,22 +19,36 @@ export function EpochCard({
   }, []);
 
   const secondsRemaining = epoch ? Number(epoch.endTime) - now : 0;
-  const idLabel = epochId !== undefined ? `#${epochId.toString().padStart(4, "0")}` : "#----";
+  const idLabel = epochId !== undefined ? `#${epochId.toString().padStart(2, "0")}` : "#--";
 
   return (
     <div className="card card-rows card-rows--epoch">
-      <div style={{ fontSize: "var(--fs-4)", fontWeight: 400 }}>
-        <span style={{ color: "var(--color-primary)" }}>EPOCH {idLabel}</span>{" "}
-        <span style={{ color: "var(--color-text-secondary)" }}>end in</span>
-      </div>
-
-      <div style={{ fontSize: "var(--fs-1)", fontWeight: 700, fontFamily: "var(--font-condensed)" }}>
-        {formatCountdown(secondsRemaining)}
+      <div
+        className="box-header box-header--inline"
+        style={{ fontSize: "var(--fs-4)", fontWeight: 400, color: "var(--color-primary)" }}
+      >
+        EPOCH {idLabel}
       </div>
 
       <div
         style={{
-          fontSize: "var(--fs-4)",
+          display: "flex",
+          alignItems: "baseline",
+          gap: 8,
+          fontFamily: "var(--font-condensed)",
+          whiteSpace: "nowrap",
+        }}
+      >
+        <span style={{ fontSize: "var(--fs-4)", color: "var(--color-text-secondary)" }}>end in</span>
+        {/* Tightened word spacing so the d/h/m/s groups sit closer together. */}
+        <span style={{ fontSize: "var(--fs-3)", fontWeight: 700, wordSpacing: "-3px" }}>
+          {formatCountdown(secondsRemaining)}
+        </span>
+      </div>
+
+      <div
+        style={{
+          fontSize: "var(--fs-caption)",
           color: "var(--color-text-secondary)",
           lineHeight: 1.4,
           fontFamily: "var(--font-condensed)",

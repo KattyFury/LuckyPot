@@ -16,10 +16,10 @@ export function DrawHistoryList({
     <>
       {epochs.map(({ id, epoch }) => (
         <button key={id.toString()} className="card-list__row" onClick={() => onSelect(id, epoch)}>
-          <span style={{ fontSize: "var(--fs-3)", fontWeight: 700 }}>Epoch #{id.toString().padStart(4, "0")}</span>
-          <span style={{ fontSize: "var(--fs-4)", fontWeight: 700 }}>
+          <span style={{ fontSize: "var(--fs-4)", fontWeight: 700 }}>Epoch #{id.toString().padStart(2, "0")}</span>
+          <span style={{ fontSize: "var(--fs-caption)", fontWeight: 700 }}>
             ${formatUSDC(epoch.eligiblePoolSnapshot)}
-            <span style={{ fontSize: "var(--fs-5)", fontWeight: 400, color: "var(--color-text-secondary)" }}>
+            <span style={{ fontWeight: 400, color: "var(--color-text-secondary)" }}>
               /{epoch.eligibleParticipants.toString()} depositors
             </span>
           </span>

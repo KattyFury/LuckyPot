@@ -21,7 +21,7 @@ export function PoolCard({
 }) {
   return (
     <div className="card card-rows">
-      <div className="two-col">
+      <div className="two-col box-header">
         <span style={{ fontSize: "var(--fs-4)", fontWeight: 400, color: "var(--color-primary)" }}>TOTAL POOL</span>
         <span style={{ fontSize: "var(--fs-4)", fontWeight: 400, color: "var(--color-primary)", textAlign: "left" }}>
           MY TICKETS
@@ -29,16 +29,28 @@ export function PoolCard({
       </div>
 
       <div className="two-col" style={{ alignItems: "baseline", fontFamily: "var(--font-condensed)" }}>
-        <div style={{ fontSize: "var(--fs-1)", fontWeight: 700 }}>
+        <div style={{ fontSize: "var(--fs-3)", fontWeight: 700 }}>
           ${formatUSDC(totalPool)}
-          <span style={{ fontSize: "var(--fs-5)", fontWeight: 400, color: "var(--color-text-secondary)" }}>
+          <span style={{ fontSize: "var(--fs-4)", fontWeight: 400, color: "var(--color-text-secondary)" }}>
             /{depositorsCount} depositors
           </span>
         </div>
-        <div style={{ fontSize: "var(--fs-1)", fontWeight: 700, textAlign: "left" }}>{formatUSDC(myTickets)}</div>
+        <div style={{ fontSize: "var(--fs-3)", fontWeight: 700, textAlign: "left" }}>
+          {formatUSDC(myTickets)}
+          <span style={{ fontSize: "var(--fs-4)", fontWeight: 400, color: "var(--color-text-secondary)" }}>
+            {" "}
+            (USDC deposited)
+          </span>
+        </div>
       </div>
 
-      <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)", fontFamily: "var(--font-condensed)" }}>
+      <div
+        style={{
+          fontSize: "var(--fs-caption)",
+          color: "var(--color-text-secondary)",
+          fontFamily: "var(--font-condensed)",
+        }}
+      >
         My Wallet's Balance: <strong style={{ color: "var(--color-text)" }}>${formatUSDC(walletBalance)}</strong>
       </div>
 

@@ -23,6 +23,9 @@
   --fs-4: 20px;
   --fs-5: 15px;
 
+  /* Captions / footnotes sit off the main scale, at 17px. */
+  --fs-caption: 17px;
+
   /* Mobile 430px; desktop exactly 2x that (user's call, over the spec's
      1290). Fixed columns, never a fluid stretch — outside is page bg. */
   --mobile-width: 430px;
@@ -256,7 +259,7 @@ button {
   display: grid;
   grid-template-rows: repeat(4, 1fr);
   gap: var(--gap);
-  padding: 20px;
+  padding: 0 20px 20px;
   height: 100%;
   min-height: 0;
 }
@@ -272,12 +275,29 @@ button {
   grid-row: span 2;
 }
 
+/* A rule separates a box's header row from its content. The header
+   stretches to fill row 1 so the line lands on the row boundary rather
+   than hugging the text. Deliberately does NOT set `display`: the two
+   headers differ (EPOCH is an inline run, POOL is a .two-col grid), and
+   forcing one display value broke EPOCH's header onto two lines. */
+.box-header {
+  align-self: stretch;
+  align-items: center;
+  box-shadow: 0 1px 0 var(--color-text-secondary);
+}
+
+/* Header whose content is a plain inline run. */
+.box-header--inline {
+  display: flex;
+  gap: 6px;
+}
+
 /* The history boxes follow the same rule: header owns row 1, then every
    list line is one page row tall, so they line up across the two boxes. */
 .card-list {
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  padding: 0 20px 20px;
   height: 100%;
   min-height: 0;
   overflow: hidden;
@@ -290,6 +310,7 @@ button {
   flex: none;
   font-size: var(--fs-4);
   color: var(--color-primary);
+  box-shadow: 0 1px 0 var(--color-text-secondary);
 }
 
 .card-list__body {
@@ -308,6 +329,15 @@ button {
   width: 100%;
   background: none;
   text-align: left;
+}
+
+/* A two-line entry (date above, action + amount below) takes two rows. */
+.card-list__row--stacked {
+  height: calc(var(--row-h) * 2);
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
 }
 
 .two-col {
@@ -392,8 +422,8 @@ button {
   min-width: 200px;
   padding: 8px;
   border-radius: var(--radius);
-  background: var(--color-primary);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  background: var(--color-text);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
   z-index: 50;
 }
 
@@ -410,7 +440,7 @@ button {
 }
 
 .wallet-menu button:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .wallet-menu button.is-danger {
