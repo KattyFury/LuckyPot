@@ -114,6 +114,20 @@ describe("LuckyStakerPool", () => {
     await alicePool.write.withdraw([USDC(100)]); // must not revert
   });
 
+  it("lets the keeper force-end an epoch early for fast testnet iteration", async () => {
+    const { pool, keeper } = await deployFixture();
+    const keeperPool = await poolAs(pool, keeper);
+
+    await expect(keeperPool.write.forceEndEpoch()).to.be.rejected; // must commit first
+
+    const secret = 42n;
+    await keeperPool.write.commitRandom([await hashSecret(secret)]);
+    await keeperPool.write.forceEndEpoch();
+    await keeperPool.write.revealAndDraw([secret]); // succeeds immediately, no time travel needed
+
+    expect((await pool.read.getEpoch([1n]))[8]).to.equal(true); // drawn
+  });
+
   it("lets anyone sweep unclaimed prizes after the 3-day window", async () => {
     const { pool, usdc, alice, keeper, bob } = await deployFixture();
     const alicePool = await poolAs(pool, alice);

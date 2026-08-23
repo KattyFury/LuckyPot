@@ -150,6 +150,18 @@ contract LuckyStakerPool is
         emit Committed(currentEpochId, commitHash);
     }
 
+    /// @notice Testnet convenience: lets the keeper end the current epoch immediately
+    /// instead of waiting out the full epochDuration, so commit->reveal cycles can be
+    /// exercised on demand while debugging. Must be called after commitRandom (matches
+    /// the normal ordering) and before revealAndDraw. Has no effect on prize fairness —
+    /// the keeper still can't predict blockhash(block.number - 1) at reveal time.
+    function forceEndEpoch() external onlyRole(KEEPER_ROLE) {
+        Epoch storage e = epochs[currentEpochId];
+        require(e.committed, "commit first");
+        require(!e.drawn, "already drawn");
+        e.endTime = uint64(block.timestamp);
+    }
+
     function revealAndDraw(uint256 secret) external nonReentrant onlyRole(KEEPER_ROLE) whenNotPaused {
         uint256 epochId = currentEpochId;
         Epoch storage e = epochs[epochId];
