@@ -10,6 +10,7 @@
   --color-text-secondary: #8e8e93;
   --color-banner-bg: #ffcc00;
   --color-card-bg: #d9d9d9;
+  --color-page-bg: #b8b8bd;
   --color-scrollbar-track: #ffffff;
   --color-scrollbar-thumb: #8e8e93;
 
@@ -21,6 +22,11 @@
   --fs-3: 25px;
   --fs-4: 20px;
   --fs-5: 15px;
+
+  /* Mobile-first design; desktop is exactly 2x the mobile width, not a
+     fluid stretch — everything outside that column is page background. */
+  --mobile-width: 430px;
+  --desktop-width: 860px;
 
   color-scheme: light;
 }
@@ -39,7 +45,21 @@ body {
   margin: 0;
   font-family: "Roboto", sans-serif;
   color: var(--color-text);
+  background: var(--color-page-bg);
+}
+
+.app-shell {
+  width: 100%;
+  max-width: var(--mobile-width);
+  margin: 0 auto;
+  min-height: 100vh;
   background: #ffffff;
+}
+
+@media (min-width: 860px) {
+  .app-shell {
+    max-width: var(--desktop-width);
+  }
 }
 
 button {
@@ -120,4 +140,52 @@ button {
   background: var(--color-card-bg);
   border-radius: var(--radius);
   padding: 20px;
+  min-width: 0;
+}
+
+/* Dashboard row blocks: stacked on mobile, side-by-side on desktop. */
+.row-epoch-pool,
+.row-history {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--gap);
+}
+
+@media (min-width: 860px) {
+  .row-epoch-pool {
+    grid-template-columns: 1fr 2fr;
+  }
+  .row-history {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+/* Each logical line inside EPOCH/POOL gets its own row instead of being
+   crammed together, and shrinks without spilling outside the card. */
+.card-rows {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.card-rows > * {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.card-rows > * + * {
+  margin-top: 12px;
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+  min-width: 0;
+}
+
+.two-col > * {
+  min-width: 0;
+  overflow-wrap: break-word;
 }

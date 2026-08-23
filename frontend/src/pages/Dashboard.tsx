@@ -9,6 +9,7 @@ import { MyHistoryCard } from "../components/MyHistoryCard";
 import { EpochDetailModal } from "../components/EpochDetailModal";
 import { useCurrentEpochId, useEpoch, useEpochHistory, usePoolTotals, useUserPosition } from "../hooks/usePoolData";
 import { useMyHistory } from "../hooks/useMyHistory";
+import { estimateNumWinners } from "../lib/prize";
 import type { EpochData } from "../hooks/usePoolData";
 
 export function Dashboard({
@@ -28,6 +29,8 @@ export function Dashboard({
 
   const totalPool = (totals?.[0]?.result as bigint | undefined) ?? 0n;
   const depositorsCount = Number((totals?.[1]?.result as bigint | undefined) ?? 0n);
+  const pendingYield = (totals?.[2]?.result as bigint | undefined) ?? 0n;
+  const numWinnersEstimate = estimateNumWinners(BigInt(depositorsCount), pendingYield);
 
   const eligible = (position?.[1]?.result as bigint | undefined) ?? 0n;
   const pending = (position?.[2]?.result as bigint | undefined) ?? 0n;
@@ -37,37 +40,18 @@ export function Dashboard({
   const latestDrawnEpoch = epochs.find((e) => e.epoch.drawn) ?? null;
 
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateRows: "repeat(15, 1fr)",
-        gap: "var(--gap)",
-        height: "100vh",
-        maxWidth: 1290,
-        margin: "0 auto",
-        padding: 20,
-      }}
-    >
-      <div style={{ gridRow: "1 / 2" }}>
+    <div className="app-shell">
+      <div style={{ display: "flex", flexDirection: "column", gap: "var(--gap)", padding: 20 }}>
         <Navbar />
-      </div>
 
-      <div style={{ gridRow: "2 / 3" }}>
-        <AnnouncementBanner text="Announcements: this epoch's yield has been funded and is ready to raffle." />
-      </div>
+        <AnnouncementBanner text="This week's yield is funded." />
 
-      <div
-        style={{
-          gridRow: "3 / 7",
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr 1fr",
-          gap: "var(--gap)",
-        }}
-      >
-        <div style={{ gridColumn: "1 / 2" }}>
-          <EpochCard epochId={currentEpochId as bigint | undefined} epoch={currentEpoch} />
-        </div>
-        <div style={{ gridColumn: "2 / 4" }}>
+        <div className="row-epoch-pool">
+          <EpochCard
+            epochId={currentEpochId as bigint | undefined}
+            epoch={currentEpoch}
+            numWinnersEstimate={numWinnersEstimate}
+          />
           <PoolCard
             totalPool={totalPool}
             depositorsCount={depositorsCount}
@@ -79,20 +63,9 @@ export function Dashboard({
             latestResultAvailable={Boolean(latestDrawnEpoch)}
           />
         </div>
-      </div>
 
-      <div
-        style={{
-          gridRow: "7 / 15",
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr 1fr",
-          gap: "var(--gap)",
-        }}
-      >
-        <div style={{ gridColumn: "1 / 3" }}>
+        <div className="row-history">
           <DrawHistoryCard epochs={epochs} onSelect={(id, epoch) => setSelectedEpoch({ id, epoch })} />
-        </div>
-        <div style={{ gridColumn: "3 / 4" }}>
           <MyHistoryCard entries={historyEntries} connected={Boolean(address)} />
         </div>
       </div>

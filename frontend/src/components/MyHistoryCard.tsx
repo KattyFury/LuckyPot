@@ -8,7 +8,7 @@ function formatDate(timestamp: number): string {
 
 export function MyHistoryCard({ entries, connected }: { entries: HistoryEntry[]; connected: boolean }) {
   return (
-    <div className="card" style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+    <div className="card" style={{ display: "flex", flexDirection: "column", height: 340, overflow: "hidden" }}>
       <div style={{ fontSize: "var(--fs-4)", fontWeight: 700, color: "var(--color-primary)", marginBottom: 12 }}>
         MY HISTORY
       </div>

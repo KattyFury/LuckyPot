@@ -41,10 +41,15 @@ export function Scratch({ onBack }: { onBack: () => void }) {
 
   if (!epoch || !epoch.drawn) {
     return (
-      <div style={{ maxWidth: 480, margin: "0 auto", padding: 20 }}>
-        <ScreenHeader title="Latest Result" onBack={onBack} />
-        <div className="card" style={{ marginTop: 20, fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
-          No draw has happened yet.
+      <div className="app-shell">
+        <div style={{ padding: 20 }}>
+          <ScreenHeader title="Latest Result" onBack={onBack} />
+          <div
+            className="card"
+            style={{ marginTop: 20, fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}
+          >
+            No draw has happened yet.
+          </div>
         </div>
       </div>
     );
@@ -90,29 +95,35 @@ export function Scratch({ onBack }: { onBack: () => void }) {
   );
 
   return (
-    <div style={{ maxWidth: 480, margin: "0 auto", padding: 20, display: "flex", flexDirection: "column", gap: 20 }}>
-      <ScreenHeader title="Latest Result" onBack={onBack} />
+    <div className="app-shell">
+      <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 20 }}>
+        <ScreenHeader title="Latest Result" onBack={onBack} />
 
-      {showDirect ? (
-        <div style={{ height: 260 }}>{resultPanel}</div>
-      ) : (
-        <ScratchCanvas onRevealed={() => setScratched(true)}>{resultPanel}</ScratchCanvas>
-      )}
+        {showDirect ? (
+          <div style={{ height: 260 }}>{resultPanel}</div>
+        ) : (
+          <ScratchCanvas onRevealed={() => setScratched(true)}>{resultPanel}</ScratchCanvas>
+        )}
 
-      {won && !hasClaimed && (
-        <button className="pill-button pill-button--primary" disabled={isPending || isConfirming} onClick={handleClaim}>
-          {isPending || isConfirming ? "Confirming..." : "Claim now"}
-        </button>
-      )}
-      {won && hasClaimed && (
-        <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>Already claimed.</div>
-      )}
-      {won && pastSweepWindow && !hasClaimed && (
-        <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
-          Claim window closed — anyone can now trigger the permissionless sweep to send this to your wallet.
-        </div>
-      )}
-      {isSuccess && <div style={{ color: "var(--color-primary)", fontSize: "var(--fs-5)" }}>Claim confirmed.</div>}
+        {won && !hasClaimed && (
+          <button
+            className="pill-button pill-button--primary"
+            disabled={isPending || isConfirming}
+            onClick={handleClaim}
+          >
+            {isPending || isConfirming ? "Confirming..." : "Claim now"}
+          </button>
+        )}
+        {won && hasClaimed && (
+          <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>Already claimed.</div>
+        )}
+        {won && pastSweepWindow && !hasClaimed && (
+          <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
+            Claim window closed — anyone can now trigger the permissionless sweep to send this to your wallet.
+          </div>
+        )}
+        {isSuccess && <div style={{ color: "var(--color-primary)", fontSize: "var(--fs-5)" }}>Claim confirmed.</div>}
+      </div>
     </div>
   );
 }

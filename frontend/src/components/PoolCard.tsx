@@ -20,29 +20,29 @@ export function PoolCard({
   latestResultAvailable: boolean;
 }) {
   return (
-    <div className="card" style={{ display: "flex", flexDirection: "column", gap: 12, height: "100%" }}>
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
+    <div className="card card-rows">
+      <div className="two-col">
         <span style={{ fontSize: "var(--fs-4)", fontWeight: 700, color: "var(--color-primary)" }}>TOTAL POOL</span>
-        <span style={{ fontSize: "var(--fs-4)", fontWeight: 700, color: "var(--color-primary)" }}>
+        <span style={{ fontSize: "var(--fs-4)", fontWeight: 700, color: "var(--color-primary)", textAlign: "left" }}>
           MY TICKETS <span style={{ color: "var(--color-text-secondary)", fontWeight: 400 }}>(USDC deposited)</span>
         </span>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+      <div className="two-col" style={{ alignItems: "baseline" }}>
         <div style={{ fontSize: "var(--fs-1)", fontWeight: 700 }}>
           ${formatUSDC(totalPool)}
           <span style={{ fontSize: "var(--fs-5)", fontWeight: 400, color: "var(--color-text-secondary)" }}>
             /{depositorsCount} depositors
           </span>
         </div>
-        <div style={{ fontSize: "var(--fs-1)", fontWeight: 700 }}>{formatUSDC(myTickets)}</div>
+        <div style={{ fontSize: "var(--fs-1)", fontWeight: 700, textAlign: "left" }}>{formatUSDC(myTickets)}</div>
       </div>
 
       <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
         My Wallet's Balance: <strong style={{ color: "var(--color-text)" }}>${formatUSDC(walletBalance)}</strong>
       </div>
 
-      <div style={{ display: "flex", gap: 10, marginTop: "auto" }}>
+      <div style={{ display: "flex", gap: 10 }}>
         <button className="pill-button pill-button--primary" onClick={onDeposit}>
           Deposit
         </button>

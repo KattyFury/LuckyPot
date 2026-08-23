@@ -9,7 +9,7 @@ export function DrawHistoryCard({
   onSelect: (id: bigint, epoch: EpochData) => void;
 }) {
   return (
-    <div className="card" style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+    <div className="card" style={{ display: "flex", flexDirection: "column", height: 340, overflow: "hidden" }}>
       <div style={{ fontSize: "var(--fs-4)", fontWeight: 700, color: "var(--color-primary)", marginBottom: 12 }}>
         DRAW HISTORY
       </div>

@@ -9,8 +9,7 @@ export function Navbar() {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        height: "100%",
-        padding: "0 4px 10px",
+        padding: "4px 4px 14px",
         borderBottom: "1px solid #000000",
       }}
     >

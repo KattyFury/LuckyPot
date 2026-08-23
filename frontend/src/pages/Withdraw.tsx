@@ -29,46 +29,57 @@ export function Withdraw({ onBack }: { onBack: () => void }) {
   }
 
   return (
-    <div style={{ maxWidth: 480, margin: "0 auto", padding: 20, display: "flex", flexDirection: "column", gap: 20 }}>
-      <ScreenHeader title="Withdraw" onBack={onBack} />
+    <div className="app-shell">
+      <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 20 }}>
+        <ScreenHeader title="Withdraw" onBack={onBack} />
 
-      <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
-        Available: <strong style={{ color: "var(--color-text)" }}>${formatUSDC(balance)}</strong>
-      </div>
-
-      <div>
-        <label style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>Amount (USDC)</label>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, borderBottom: "2px solid #000000" }}>
-          <input
-            type="number"
-            min="0"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="0.00"
-            style={{ flex: 1, fontSize: "var(--fs-2)", fontWeight: 700, padding: "12px 0", border: "none", outline: "none" }}
-          />
-          <button onClick={handleMax} style={{ background: "none", fontSize: "var(--fs-5)", fontWeight: 700 }}>
-            MAX
-          </button>
+        <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
+          Available: <strong style={{ color: "var(--color-text)" }}>${formatUSDC(balance)}</strong>
         </div>
-      </div>
 
-      {willForfeit && (
-        <div className="card" style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
-          Withdrawing now will remove you from this epoch's ticket draw.
+        <div>
+          <label style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>Amount (USDC)</label>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, borderBottom: "2px solid #000000" }}>
+            <input
+              type="number"
+              min="0"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="0.00"
+              style={{
+                flex: 1,
+                fontSize: "var(--fs-2)",
+                fontWeight: 700,
+                padding: "12px 0",
+                border: "none",
+                outline: "none",
+              }}
+            />
+            <button onClick={handleMax} style={{ background: "none", fontSize: "var(--fs-5)", fontWeight: 700 }}>
+              MAX
+            </button>
+          </div>
         </div>
-      )}
 
-      <button
-        className="pill-button pill-button--primary"
-        disabled={amountBase <= 0n || amountBase > balance || isPending || isConfirming}
-        onClick={handleConfirm}
-      >
-        {isPending || isConfirming ? "Confirming..." : "Confirm"}
-      </button>
+        {willForfeit && (
+          <div className="card" style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
+            Withdrawing now will remove you from this epoch's ticket draw.
+          </div>
+        )}
 
-      {isSuccess && <div style={{ color: "var(--color-primary)", fontSize: "var(--fs-5)" }}>Withdrawal confirmed.</div>}
-      {error && <div style={{ color: "#c0392b", fontSize: "var(--fs-5)" }}>{error.message.slice(0, 200)}</div>}
+        <button
+          className="pill-button pill-button--primary"
+          disabled={amountBase <= 0n || amountBase > balance || isPending || isConfirming}
+          onClick={handleConfirm}
+        >
+          {isPending || isConfirming ? "Confirming..." : "Confirm"}
+        </button>
+
+        {isSuccess && (
+          <div style={{ color: "var(--color-primary)", fontSize: "var(--fs-5)" }}>Withdrawal confirmed.</div>
+        )}
+        {error && <div style={{ color: "#c0392b", fontSize: "var(--fs-5)" }}>{error.message.slice(0, 200)}</div>}
+      </div>
     </div>
   );
 }

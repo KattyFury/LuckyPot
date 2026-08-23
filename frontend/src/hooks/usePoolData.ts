@@ -84,6 +84,7 @@ export function usePoolTotals() {
     contracts: [
       { ...poolContract, functionName: "balancesTotal" },
       { ...poolContract, functionName: "participantCount" },
+      { ...poolContract, functionName: "pendingYield" },
     ],
   });
 }
