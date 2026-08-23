@@ -22,7 +22,7 @@ export function EpochCard({
   const idLabel = epochId !== undefined ? `#${epochId.toString().padStart(4, "0")}` : "#----";
 
   return (
-    <div className="card card-rows">
+    <div className="card card-rows card-rows--epoch">
       <div style={{ fontSize: "var(--fs-4)", fontWeight: 400 }}>
         <span style={{ color: "var(--color-primary)" }}>EPOCH {idLabel}</span>{" "}
         <span style={{ color: "var(--color-text-secondary)" }}>end in</span>

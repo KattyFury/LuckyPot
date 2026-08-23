@@ -5,11 +5,15 @@ export function WalletAddressDisplay({
   address,
   onDeposit,
   onWithdraw,
+  onDrawHistory,
+  onMyHistory,
   onDisconnect,
 }: {
   address: `0x${string}`;
   onDeposit: () => void;
   onWithdraw: () => void;
+  onDrawHistory: () => void;
+  onMyHistory: () => void;
   onDisconnect: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -23,10 +27,6 @@ export function WalletAddressDisplay({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
-
-  function handleCopy() {
-    navigator.clipboard.writeText(address);
-  }
 
   function pick(action: () => void) {
     setOpen(false);
@@ -45,53 +45,23 @@ export function WalletAddressDisplay({
           title="Copy address"
           onClick={(e) => {
             e.stopPropagation();
-            handleCopy();
+            navigator.clipboard.writeText(address);
           }}
           style={{ color: "var(--color-text-secondary)" }}
         />
       </button>
 
       {open && (
-        <div
-          className="card"
-          style={{
-            position: "absolute",
-            top: "calc(100% + 8px)",
-            right: 0,
-            background: "#ffffff",
-            padding: 8,
-            minWidth: 160,
-            zIndex: 50,
-            boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
-          }}
-        >
-          <DropdownItem label="Deposit" onClick={() => pick(onDeposit)} />
-          <DropdownItem label="Withdraw" onClick={() => pick(onWithdraw)} />
-          <DropdownItem label="Disconnect" onClick={() => pick(onDisconnect)} />
+        <div className="wallet-menu">
+          <button onClick={() => pick(onDeposit)}>Deposit</button>
+          <button onClick={() => pick(onWithdraw)}>Withdraw</button>
+          <button onClick={() => pick(onDrawHistory)}>DRAW HISTORY</button>
+          <button onClick={() => pick(onMyHistory)}>MY HISTORY</button>
+          <button className="is-danger" onClick={() => pick(onDisconnect)}>
+            Disconnect
+          </button>
         </div>
       )}
     </div>
-  );
-}
-
-function DropdownItem({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        background: "none",
-        display: "block",
-        width: "100%",
-        textAlign: "left",
-        padding: "10px 12px",
-        fontSize: "var(--fs-5)",
-        fontWeight: 700,
-        borderRadius: 8,
-      }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--color-card-bg)")}
-      onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
-    >
-      {label}
-    </button>
   );
 }

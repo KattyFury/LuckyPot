@@ -1,81 +1,82 @@
 import { formatUSDC, shortAddress } from "../lib/format";
 import { prizeForRank } from "../lib/prize";
+import { Modal } from "./Modal";
 import type { EpochData } from "../hooks/usePoolData";
 
 export function EpochDetailModal({
   epochId,
   epoch,
+  myAddress,
+  onSelectMine,
   onClose,
 }: {
   epochId: bigint;
   epoch: EpochData;
+  myAddress?: `0x${string}`;
+  /** Called when the viewer clicks their own highlighted winning row. */
+  onSelectMine?: () => void;
   onClose: () => void;
 }) {
+  const mine = myAddress?.toLowerCase();
+
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.5)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 100,
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="card"
-        style={{
-          width: "min(75vw, 800px)",
-          maxHeight: "80vh",
-          overflowY: "auto",
-          background: "#ffffff",
-          display: "flex",
-          flexDirection: "column",
-          gap: 16,
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontSize: "var(--fs-3)", fontWeight: 700, color: "var(--color-primary)" }}>
-            Epoch #{epochId.toString().padStart(4, "0")}
-          </span>
-          <button onClick={onClose} style={{ background: "none", fontSize: "var(--fs-4)" }}>
-            ✕
-          </button>
-        </div>
-
-        <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
-          Eligible pool:{" "}
-          <strong style={{ color: "var(--color-text)" }}>
-            ${formatUSDC(epoch.eligiblePoolSnapshot)}/{epoch.eligibleParticipants.toString()} depositors
-          </strong>{" "}
-          &nbsp;·&nbsp; Weekly yield:{" "}
-          <strong style={{ color: "var(--color-text)" }}>${formatUSDC(epoch.weeklyYield)}</strong> &nbsp;·&nbsp;
-          Winners: <strong style={{ color: "var(--color-text)" }}>{epoch.numWinners.toString()}</strong>
-        </div>
-
-        {epoch.winners.length === 0 ? (
-          <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
-            No winners this epoch — not enough participants or yield funded yet.
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {epoch.winners.map((winner, i) => (
-              <div
-                key={`${winner}-${i}`}
-                style={{ display: "flex", justifyContent: "space-between", fontSize: "var(--fs-5)" }}
-              >
-                <span>
-                  <span style={{ color: "var(--color-text-secondary)" }}>#{i + 1}</span> {shortAddress(winner)}
-                </span>
-                <span style={{ fontWeight: 700 }}>${formatUSDC(prizeForRank(i, epoch.numWinners, epoch.weeklyYield))}</span>
-              </div>
-            ))}
-          </div>
-        )}
+    <Modal title={`Epoch #${epochId.toString().padStart(4, "0")}`} onClose={onClose}>
+      <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
+        Eligible pool:{" "}
+        <strong style={{ color: "var(--color-text)" }}>
+          ${formatUSDC(epoch.eligiblePoolSnapshot)}/{epoch.eligibleParticipants.toString()} depositors
+        </strong>{" "}
+        &nbsp;·&nbsp; Weekly yield:{" "}
+        <strong style={{ color: "var(--color-text)" }}>${formatUSDC(epoch.weeklyYield)}</strong> &nbsp;·&nbsp; Winners:{" "}
+        <strong style={{ color: "var(--color-text)" }}>{epoch.numWinners.toString()}</strong>
       </div>
-    </div>
+
+      {epoch.winners.length === 0 ? (
+        <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
+          No winners this epoch — not enough participants or yield funded yet.
+        </div>
+      ) : (
+        <div
+          style={{ display: "flex", flexDirection: "column", gap: 8, fontFamily: "var(--font-condensed)" }}
+        >
+          {epoch.winners.map((winner, i) => {
+            const isMine = mine !== undefined && winner.toLowerCase() === mine;
+            const row = (
+              <>
+                <span>
+                  <span style={{ color: isMine ? "#ffffff" : "var(--color-text-secondary)" }}>#{i + 1}</span>{" "}
+                  {isMine ? "You" : shortAddress(winner)}
+                </span>
+                <span style={{ fontWeight: 700 }}>
+                  ${formatUSDC(prizeForRank(i, epoch.numWinners, epoch.weeklyYield))}
+                </span>
+              </>
+            );
+
+            const base: React.CSSProperties = {
+              display: "flex",
+              justifyContent: "space-between",
+              fontSize: "var(--fs-5)",
+              padding: "8px 12px",
+              borderRadius: 8,
+            };
+
+            return isMine ? (
+              <button
+                key={`${winner}-${i}`}
+                onClick={onSelectMine}
+                style={{ ...base, background: "var(--color-primary)", color: "#ffffff", fontWeight: 700 }}
+              >
+                {row}
+              </button>
+            ) : (
+              <div key={`${winner}-${i}`} style={base}>
+                {row}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Modal>
   );
 }

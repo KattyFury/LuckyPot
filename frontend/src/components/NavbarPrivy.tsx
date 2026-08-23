@@ -1,21 +1,14 @@
 import { usePrivy } from "@privy-io/react-auth";
 import { useAccount } from "wagmi";
 import { WalletAddressDisplay } from "./WalletAddressDisplay";
+import type { WalletMenuActions } from "./Navbar";
 
-export function NavbarPrivy({
-  onDeposit,
-  onWithdraw,
-}: {
-  onDeposit: () => void;
-  onWithdraw: () => void;
-}) {
+export function NavbarPrivy(actions: WalletMenuActions) {
   const { ready, authenticated, login, logout } = usePrivy();
   const { address } = useAccount();
 
   if (ready && authenticated && address) {
-    return (
-      <WalletAddressDisplay address={address} onDeposit={onDeposit} onWithdraw={onWithdraw} onDisconnect={logout} />
-    );
+    return <WalletAddressDisplay address={address} {...actions} onDisconnect={logout} />;
   }
 
   return (

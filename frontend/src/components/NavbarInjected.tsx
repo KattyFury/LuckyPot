@@ -1,27 +1,15 @@
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { arcTestnet } from "../chains/arcTestnet";
 import { WalletAddressDisplay } from "./WalletAddressDisplay";
+import type { WalletMenuActions } from "./Navbar";
 
-export function NavbarInjected({
-  onDeposit,
-  onWithdraw,
-}: {
-  onDeposit: () => void;
-  onWithdraw: () => void;
-}) {
+export function NavbarInjected(actions: WalletMenuActions) {
   const { address, isConnected } = useAccount();
   const { connect, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
 
   if (isConnected && address) {
-    return (
-      <WalletAddressDisplay
-        address={address}
-        onDeposit={onDeposit}
-        onWithdraw={onWithdraw}
-        onDisconnect={disconnect}
-      />
-    );
+    return <WalletAddressDisplay address={address} {...actions} onDisconnect={disconnect} />;
   }
 
   return (
