@@ -43,7 +43,7 @@ export function Dashboard({
   return (
     <div className="app-shell">
       <div style={{ display: "flex", flexDirection: "column", gap: "var(--gap)", padding: 20 }}>
-        <Navbar />
+        <Navbar onDeposit={() => onNavigate("deposit")} onWithdraw={() => onNavigate("withdraw")} />
 
         {needsFaucet ? (
           <AnnouncementBanner text="Click here to faucet" href="https://faucet.circle.com" />
