@@ -1,39 +1,46 @@
-// Mirrors LuckyStakerPool.revealAndDraw's numWinners formula (spec 3.3) so the
-// dashboard can say up front how many people this epoch will pay out.
-const MIN_PARTICIPANTS_PER_WINNER = 10n;
-const MIN_PRIZE = 10_000_000n; // $10, 6 decimals
-const ANNUAL_RATE_BPS = 1000n; // 10%
+// Mirrors LuckyStakerPool's yield/prize formulas (technical-spec upgrade, 2026-08-24)
+// so the dashboard can say up front how many people this epoch will pay out, without
+// an extra RPC round-trip per winner. Keep in sync with contracts/contracts/LuckyStakerPool.sol.
 const WEEKS_PER_YEAR = 52n;
+const DOLLARS_PER_WINNER_STEP = 1000n * 1_000_000n; // $1000, 6 decimals
 
-/**
- * The yield this epoch will hold by the time it's drawn — spec 3.4's
- * `max($10, poolBalance x 10% / 52)`.
- *
- * The card has to project it rather than read `pendingYield`: the keeper drips
- * the week's yield in across the epoch, so right after a draw the pot is 0 and
- * reading it live would claim "0 lucky winners" for most of the week.
- */
-export function projectedWeeklyYield(poolBalance: bigint): bigint {
-  const byFormula = (poolBalance * ANNUAL_RATE_BPS) / 10_000n / WEEKS_PER_YEAR;
-  return byFormula > MIN_PRIZE ? byFormula : MIN_PRIZE;
+function sqrtBigint(value: bigint): bigint {
+  if (value < 2n) return value;
+  let x = value;
+  let y = (x + 1n) / 2n;
+  while (y < x) {
+    x = y;
+    y = (x + value / x) / 2n;
+  }
+  return x;
 }
 
-export function estimateNumWinners(participantCount: bigint, weeklyYield: bigint): bigint {
-  if (participantCount === 0n || weeklyYield === 0n) return 0n;
-  const byParticipants = participantCount / MIN_PARTICIPANTS_PER_WINNER;
-  const byPrize = weeklyYield / MIN_PRIZE;
-  const n = byParticipants < byPrize ? byParticipants : byPrize;
+/**
+ * weeklyPrizePool = eligibleTotal * currentAprBps / 10000 / 52 — funded only on the
+ * portion of the pool that's sat a full epoch, not the whole pool (that's
+ * realYieldEarned, which also feeds the vault surplus but isn't shown here).
+ *
+ * The card has to project it rather than read `pendingYield` directly: the keeper
+ * tops the pot up across the epoch, so right after a draw the pot is 0 and reading it
+ * live would claim "0 lucky winners" for most of the week.
+ */
+export function projectedWeeklyYield(eligibleTotal: bigint, aprBps: bigint): bigint {
+  return (eligibleTotal * aprBps) / 10_000n / WEEKS_PER_YEAR;
+}
+
+export function estimateNumWinners(eligibleTotal: bigint, weeklyYield: bigint): bigint {
+  if (eligibleTotal === 0n || weeklyYield === 0n) return 0n;
+  const n = sqrtBigint(eligibleTotal / DOLLARS_PER_WINNER_STEP);
   return n === 0n ? 1n : n;
 }
 
-// Mirrors LuckyStakerPool.prizeForRank (contracts/contracts/LuckyStakerPool.sol) so the
-// UI can render prize breakdowns without an extra RPC round-trip per winner.
+// Mirrors LuckyStakerPool.prizeForRank (contracts/contracts/LuckyStakerPool.sol) —
+// continuous 50/50 jackpot split, replacing the old participant-count tier table.
 export function prizeForRank(rank: number, numWinners: bigint, weeklyYield: bigint): bigint {
   if (numWinners === 0n) return 0n;
   if (numWinners === 1n) return rank === 0 ? weeklyYield : 0n;
 
-  const jackpotBps = numWinners <= 5n ? 5000n : 3300n;
-  const jackpot = (weeklyYield * jackpotBps) / 10000n;
+  const jackpot = weeklyYield / 2n;
   if (rank === 0) return jackpot;
 
   return (weeklyYield - jackpot) / (numWinners - 1n);

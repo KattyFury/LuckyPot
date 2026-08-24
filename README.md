@@ -1,4 +1,4 @@
-# LuckyStaker
+# StableLuck
 
 A no-loss weekly prize pool on [Arc](https://arc.io). Depositors pool USDC together;
 each week the pool's yield (not anyone's principal) is raffled off to a handful of

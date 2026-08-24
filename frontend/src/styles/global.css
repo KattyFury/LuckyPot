@@ -17,14 +17,14 @@
   --radius: 15px;
   --gap: 10px;
 
-  --fs-1: 35px;
-  --fs-2: 30px;
-  --fs-3: 25px;
-  --fs-4: 20px;
-  --fs-5: 15px;
+  --fs-1: 33px;
+  --fs-2: 28px;
+  --fs-3: 23px;
+  --fs-4: 18px;
+  --fs-5: 13px;
 
   /* Captions / footnotes sit off the main scale, at 17px. */
-  --fs-caption: 17px;
+  --fs-caption: 15px;
 
   /* Mobile 430px; desktop exactly 2x that (user's call, over the spec's
      1290). Fixed columns, never a fluid stretch — outside is page bg. */

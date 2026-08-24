@@ -48,6 +48,10 @@ export function useCurrentEpochId() {
   return useReadContract({ ...poolContract, functionName: "currentEpochId" });
 }
 
+export function useCurrentAprBps() {
+  return useReadContract({ ...poolContract, functionName: "currentAprBps" });
+}
+
 export function useEpoch(epochId: bigint | undefined) {
   const { data, ...rest } = useReadContract({
     ...poolContract,

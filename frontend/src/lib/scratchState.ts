@@ -1,7 +1,7 @@
 /** Remembers that a wallet already scratched a given epoch, so the card is
  *  only ever scratched once — reopening the result just shows it. */
 function key(epochId: bigint, address: string) {
-  return `luckystaker:scratched:${address.toLowerCase()}:${epochId}`;
+  return `stableluck:scratched:${address.toLowerCase()}:${epochId}`;
 }
 
 export function wasScratched(epochId: bigint, address: string): boolean {

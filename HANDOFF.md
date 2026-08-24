@@ -1,12 +1,13 @@
-# HANDOFF – LuckyStaker
+# HANDOFF – StableLuck
 
 > No-loss weekly USDC prize pool trên Arc. Gộp tiền gửi của nhiều người vào 1
 > pool, mỗi tuần quay số ngẫu nhiên trao toàn bộ yield của tuần đó cho một vài
 > người, thay vì chia đều lãi cho tất cả. Không ai mất gốc — rút lại 100% USDC
 > đã gửi bất cứ lúc nào.
 
-**Repo:** https://github.com/KattyFury/LuckyStaker (đổi tên từ `LuckyStacker` → `LuckyStaker` ngày 2026-08-23, sửa lỗi chính tả — bao gồm cả redeploy contract để đồng bộ tên)
-**Web đang chạy:** https://luckystaker.pages.dev (Cloudflare Pages, project `luckystaker`, deploy tay bằng `npx wrangler pages deploy dist --project-name=luckystaker --branch=main` — **KHÔNG** auto-deploy từ GitHub)
+**Repo:** https://github.com/KattyFury/StableLuck (đổi tên từ `LuckyStaker` → `StableLuck` ngày 2026-08-24, đổi thương hiệu — repo cũng đã chuyển **Private** cùng ngày vì user chưa muốn lộ dự án sớm)
+**Web đang chạy:** https://stableluck.pages.dev (Cloudflare Pages, project `stableluck`, deploy tay bằng `npx wrangler pages deploy dist --project-name=stableluck --branch=main` — **KHÔNG** auto-deploy từ GitHub. Project Cloudflare cũ `luckystaker` vẫn còn tồn tại nhưng ngừng cập nhật, có thể xoá tay nếu muốn.)
+⚠️ **Contract Solidity CỐ Ý giữ nguyên tên `LuckyStakerPool`, KHÔNG redeploy khi đổi thương hiệu** — spec không yêu cầu tên contract khớp tên sản phẩm, và contract đang giữ dữ liệu thật (685 USDC, lịch sử epoch 3/4 đã quay). Mọi chỗ trong repo nhắc tới `LuckyStakerPool.sol` / `LuckyStakerPool (proxy)` là tên kỹ thuật thật, không phải sai sót quên đổi.
 **Spec gốc:** [`arc-prize-pool-spec.md`](./arc-prize-pool-spec.md) — đã có trong repo, encoding sạch
 
 ---
@@ -23,12 +24,42 @@ User rất khắt khe về lưới; đã phải dựng lại 2 lần vì làm sa
 - **KHÔNG có padding dọc ở lưới trang** (`padding: 0 20px`) — hàng 1 phải bắt đầu từ đúng mép trên trang, nếu không dải trắng phía trên bị mắt hiểu là một phần hàng 1 và navbar trông như bị đẩy xuống dưới tâm. Khoảng trắng đáy do hàng cuối (trống) đảm nhiệm.
 - **Trong box:** nội dung chia **4 hàng bằng nhau + khe 10px**, mỗi yếu tố 1 hàng (EPOCH: mô tả chiếm 2 hàng cuối).
 - **Đường kẻ dưới navbar dùng `box-shadow`, KHÔNG dùng `border-bottom`** — border nằm trong hộp nên đẩy nội dung lệch tâm 0.5px.
-- **Thang chữ 35/30/25/20/15** (`--fs-1..5`) + **`--fs-caption: 17px` riêng cho chú thích** (nằm ngoài thang, user chốt "từ nay chú thích là 17"). Chỉ dùng biến, không tự chế cỡ.
+- **Thang chữ 33/28/23/18/13** (`--fs-1..5`) + **`--fs-caption: 15px` riêng cho chú thích** (nằm ngoài thang). Đã giảm đồng loạt 2pt so với thang gốc 35/30/25/20/15 ngày 2026-08-24, theo yêu cầu user — giữ đúng tỉ lệ tương đối giữa các bậc. Chỉ dùng biến, không tự chế cỡ.
 - **Header của box: 20px, BOLD, Roboto Condensed**, có **đường kẻ ngăn với nội dung** (`.box-header` / `.card-list__header`, vẽ bằng `box-shadow`). Nội dung số liệu cũng dùng Condensed (`--font-condensed`).
 - **Trong box KHÔNG có padding trên** (`padding: 0 20px 20px`) — user chốt sau khi thử.
 - Cách kiểm tra: đừng tin mắt, mở Playwright đo `getBoundingClientRect` / `gridTemplateRows` rồi so số (xem mục "Bài học" bên dưới).
 
 ---
+
+## Trạng thái nghỉ 2026-08-24 (tối) — technical-spec upgrade ĐÃ CHẠY THẬT lên chain
+
+**Đã upgrade contract logic thật trên proxy đang chạy** (`0x88dCB2f36356AA8DADdC2e8fb4A3E122Ba9D0Beb`), không redeploy, không mất dữ liệu cũ (verify lại: `balancesTotal=65 USDC`, `currentEpochId=5` giữ nguyên sau upgrade).
+
+- **Implementation mới:** `0x1fEB6ac87f97B2C080d9BbDA940351116A2A54F0`, deploy qua `contracts/ignition/modules/LuckyStakerPoolV2Implementation.ts` (module CHỈ deploy implementation, không đụng proxy — an toàn deploy bất cứ lúc nào).
+- **Logic mới (theo `stableluck-technical-spec.md` user gửi):**
+  - Yield: `aprBpsUSDC` (mặc định 600 = 6%/năm, khung cứng 400–800) và `aprBpsARC` (300 = 3%/năm, khung 200–400), admin set tay qua `setAprBpsUSDC`/`setAprBpsARC`, rate-limit 7 ngày/lần đổi mỗi token. `currentAprBps()` so `poolToken` với `referenceUSDC` (biến mới, KHÔNG hardcode địa chỉ — set lúc `initializeV2`, hiện trỏ đúng USDC thật `0x3600...0000`) để chọn nhánh.
+  - `weeklyPrizePool` chỉ tính trên `eligibleBalance` (đủ 1 tuần); phần dư giữa số đã funding và weeklyPrizePool là `surplus`, tự động chia 50/50 vào `vaultReserve`/`vaultDev` lúc quay số.
+  - `numWinners = max(1, sqrt(eligibleBalance / $1000))` — công thức liên tục, thay hẳn bảng tier cũ.
+  - Referral: `setReferrer()` set 1 lần vĩnh viễn, `claimReferral()` rút riêng. Lúc `claim`/`sweep`, luôn trừ 5% mọi giải — có ref thì vào `pendingRef[ref]`, không thì chia 50/50 vào 2 vault.
+  - `vaultReserve`/`vaultDev` là **bộ đếm `uint256` bên trong contract chính, KHÔNG phải 2 ví ngoài** — quyết định thiết kế quan trọng, lý do: nếu tiền rời contract ngay khi tích luỹ thì điều kiện `whenPaused` trên `withdrawReserve` mất tác dụng (tiền đã ở ví khác, rút được bất kể pause hay không). `withdrawReserve(amount, to, reason)` chỉ chạy khi `paused`; `withdrawDev(amount, to)` rút tự do; cả 2 nhận `to` làm tham số lúc rút, không có địa chỉ ví cố định lưu sẵn.
+  - `forceEndEpoch()` **CỐ Ý GIỮ LẠI** theo yêu cầu user (dự án còn thay đổi nhiều, cần test nhanh) — KHÔNG bị xoá/khoá dù spec gốc đề xuất nên xoá trước khi có tiền thật.
+  - Đề xuất "nút trả hết tiền cho toàn bộ user" (admin-triggered mass refund) đã bị user từ chối — giữ nguyên nguyên tắc cũ: chỉ từng người tự rút, admin không bao giờ đụng được tiền người khác.
+- **`automation/src/fundYield.ts`** đọc `currentAprBps()` thật từ chain để tính `realYieldEarned = balancesTotal × aprBps/10000/52`, bỏ hẳn sàn `$10` cứng cũ.
+- **`frontend/src/lib/prize.ts`** đổi chữ ký `projectedWeeklyYield(eligibleTotal, aprBps)` và `estimateNumWinners(eligibleTotal, weeklyYield)` (trước nhận `poolBalance`/`participantCount`) — khớp công thức sqrt mới, tránh hiện số ước lượng sai/lỗi thời cho người dùng.
+- **`aprBpsUSDC=600`, `aprBpsARC=300`** đã set qua `initializeV2` trong lúc upgrade — verify on-chain đúng.
+
+### Bài học/gotcha mới trong lần upgrade này
+
+- **Admin Safe đổi từ 2-of-2 sang CÓ THÊM 1 admin ví đơn** — user chọn né bớt việc phải dùng Safe UI liên tục khi đang gấp deadline thuyết trình T5. Đã `grantRole(DEFAULT_ADMIN_ROLE, 0xb0ea48A1979326BA9e0b5027D105C8DF9CCAA12E)` — ví này giờ có toàn quyền admin y hệt Safe (`pause`, `setAprBps*`, `withdrawDev/Reserve`, `_authorizeUpgrade`...). **Safe VẪN CÒN giữ quyền admin** (không bị revoke) — chỉ là thêm 1 đường tắt, không phải thay thế hẳn. Cân nhắc: đây là đánh đổi bảo mật thật (1 ví đơn giờ có thể tự ý upgrade contract), chấp nhận được vì đang testnet/tiền test, nhưng **phải xử lý lại đúng chuẩn trước khi có yield/tiền thật** (xem mục Roadmap).
+- **Tính slot lưu implementation ERC1967 nhớ PHẢI trừ 1** (`keccak256("eip1967.proxy.implementation") - 1`), không phải dùng thẳng hash — đã tính sai 1 lần dẫn tới đọc nhầm storage toàn số 0, tưởng upgrade chưa chạy trong khi thực ra chỉ đọc sai slot.
+- **Safe Transaction Builder mất state đã nhập nếu gặp lỗi RPC rồi user rời trang** — giao dịch upgrade đầu tiên bị soạn xong nhưng KHÔNG nằm trong batch cuối cùng được execute (chỉ có `grantRole` chạy thật), phải làm lại từ đầu. Nếu Safe báo "Error connecting to the blockchain" (rate limit RPC công khai), đợi vài phút rồi thử lại thay vì vội chuyển hướng.
+- **MetaMask không inject `window.ethereum` đáng tin cậy trên trang mở kiểu `file://`** — viết 1 trang HTML gọi thẳng `eth_sendTransaction` để 1 ví đơn (không cần Safe) tự gửi giao dịch upgrade, nhưng phải serve qua `http://localhost` (copy vào `frontend/public/`, chạy `npx vite --port 5183 --host`) thì MetaMask mới kết nối được — mở trực tiếp bằng double-click báo "No wallet found" dù đã cài MetaMask.
+- **Confirm (ký đủ ngưỡng) và Execute (đẩy lên chain) là 2 bước khác nhau trong Safe** — dễ nhầm "đủ chữ ký" là "đã xong việc".
+
+### Roadmap — cần làm trước khi có yield/tiền thật (không phải bây giờ)
+
+1. Đưa quyền admin về lại ĐÚNG chuẩn multisig (thu bớt quyền ví đơn `0xb0ea48A1...`, hoặc ít nhất đảm bảo Safe 2-of-2 vẫn là nơi quyết định cuối cùng) trước khi bật yield thật/nhận tiền thật quy mô lớn.
+2. `IYieldSource` interface đã khai báo sẵn trong contract nhưng chưa có implementation — chờ Arc có nguồn yield DeFi thật đáng tin.
 
 ## Trạng thái nghỉ 2026-08-24 — repo chuyển Private, TOTAL POOL đổi sang eligible/total thật
 
@@ -59,7 +90,7 @@ User rất khắt khe về lưới; đã phải dựng lại 2 lần vì làm sa
 - **Toggle `USDC | $ARC`** ở góc phải header box EPOCH (`components/TokenToggle.tsx`) — nút bật qua lại thật, state ở `TokenUnitProvider` bọc trong `App.tsx`, đổi đơn vị toàn app.
   - ⚠️ Pool thật vẫn giữ USDC, **$ARC chưa tồn tại** (spec mục 4: TGE chưa có ngày). Nên khi bật $ARC, banner tự đổi thành *"$ARC isn't live yet — figures are the USDC pool."* để màn hình không nói sai sự thật. **Chưa được user duyệt dòng này** — hỏi lại, nếu user thấy thừa thì bỏ.
 - **Luồng Latest Result (đã đổi hẳn theo yêu cầu user):** bấm **không** nhảy sang màn cào nữa. Nó mở popup **DRAW HISTORY của epoch vừa quay**; nếu ví đang kết nối có trong danh sách trúng thì dòng đó **highlight xanh + ghi "You"**, bấm vào dòng đó mới ra popup kết quả.
-- **Cào chỉ 1 lần duy nhất:** nhớ bằng `localStorage` khoá `luckystaker:scratched:<addr>:<epochId>`; mở lại lần sau hiện thẳng kết quả. Đã `claim` rồi thì cũng bỏ qua bước cào.
+- **Cào chỉ 1 lần duy nhất:** nhớ bằng `localStorage` khoá `stableluck:scratched:<addr>:<epochId>` (đổi prefix theo rebrand 2026-08-24, key cũ `luckystaker:...` không migrate — vô hại, chỉ khiến thẻ cũ cào lại được 1 lần). Mở lại lần sau hiện thẳng kết quả. Đã `claim` rồi thì cũng bỏ qua bước cào.
 - **Màn Scratch riêng đã XOÁ** (`frontend/src/pages/Scratch.tsx`) — giờ là `components/ResultModal.tsx`. `App.tsx` chỉ còn 3 view: dashboard / deposit / withdraw.
 - **Popup dùng chung** `components/Modal.tsx`: header căn trái ở hàng 1, rộng `75vw` mobile / `645px` desktop (đúng spec §5).
 - Deposit đã có hiển thị số dư ví + nút MAX; banner tự đổi thành **"Click here to faucet"** (link faucet.circle.com) khi ví có 0 USDC; kết nối ví tự động xin chuyển sang Arc Testnet.
@@ -124,10 +155,10 @@ User rất khắt khe về lưới; đã phải dựng lại 2 lần vì làm sa
 ## Lệnh hay dùng
 
 ```bash
-# frontend (D:\Files\Claude\Build on Arc\LuckyStaker\frontend)
+# frontend (D:\Files\Claude\Build on Arc\LuckyStaker\frontend — thư mục local CHƯA đổi tên, bị khoá bởi VS Code lúc rebrand 2026-08-24, tự đổi tay nếu muốn)
 npx vite --port 5183 --host        # dev server (user hay xem ở đây trước khi chốt)
 ./node_modules/.bin/tsc -b --noEmit  # typecheck (đừng dùng `npx tsc`, npx kéo nhầm gói tsc rác)
-npx vite build && npx wrangler pages deploy dist --project-name=luckystaker --branch=main --commit-dirty=true
+npx vite build && npx wrangler pages deploy dist --project-name=stableluck --branch=main --commit-dirty=true
 
 # contracts
 npx hardhat test

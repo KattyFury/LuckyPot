@@ -12,6 +12,7 @@ import { Modal } from "../components/Modal";
 import { DepositModal } from "./Deposit";
 import { WithdrawModal } from "./Withdraw";
 import {
+  useCurrentAprBps,
   useCurrentEpochId,
   useEligiblePoolTotal,
   useEpoch,
@@ -45,8 +46,12 @@ export function Dashboard() {
 
   const totalPool = (totals?.[0]?.result as bigint | undefined) ?? 0n;
   const depositorsCount = Number((totals?.[1]?.result as bigint | undefined) ?? 0n);
-  const numWinnersEstimate = estimateNumWinners(BigInt(depositorsCount), projectedWeeklyYield(totalPool));
   const { total: eligiblePoolTotal } = useEligiblePoolTotal(depositorsCount);
+  const { data: aprBps } = useCurrentAprBps();
+  const numWinnersEstimate = estimateNumWinners(
+    eligiblePoolTotal,
+    projectedWeeklyYield(eligiblePoolTotal, (aprBps as bigint | undefined) ?? 0n),
+  );
 
   const eligible = (position?.[1]?.result as bigint | undefined) ?? 0n;
   const pending = (position?.[2]?.result as bigint | undefined) ?? 0n;

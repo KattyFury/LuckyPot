@@ -8,10 +8,19 @@ import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Pau
 import {ReentrancyGuardTransient} from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+
+/// @notice Declared for a future real yield source; no implementation wired in yet
+/// (spec 1) — Arc doesn't have a trustworthy on-chain yield source to point this at today.
+interface IYieldSource {
+    function getAPY() external view returns (uint256 bps);
+}
 
 /// @title LuckyStakerPool
-/// @notice No-loss weekly prize pool. Principal is always withdrawable; only the weekly
-/// yield is raffled off among depositors who kept a full-week eligible balance.
+/// @notice No-loss weekly prize pool (product name: StableLuck). Principal is always
+/// withdrawable; only the weekly yield is raffled off among depositors who kept a
+/// full-week eligible balance. Contract name kept as-is across the StableLuck rebrand
+/// (2026-08-24) — this is a display-only rename, nothing on-chain changed for it.
 contract LuckyStakerPool is
     Initializable,
     AccessControlUpgradeable,
@@ -25,9 +34,17 @@ contract LuckyStakerPool is
 
     uint256 public constant EPOCH_DURATION = 7 days;
     uint256 public constant SWEEP_DELAY = 3 days;
-    // MVP constants (spec 3.3): K=10 participants per extra winner, $10 minimum prize.
-    uint256 public constant MIN_PARTICIPANTS_PER_WINNER = 10;
-    uint256 public constant MIN_PRIZE = 10e6;
+
+    // Referral cut taken from every prize at claim time (spec 3), regardless of tier.
+    uint256 public constant REFERRAL_BPS = 500; // 5%
+
+    // Hard bands admin-set APRs must stay inside, plus a per-token cooldown between
+    // changes so nobody can vote themselves a better rate right before a draw.
+    uint256 public constant APR_BPS_USDC_MIN = 400;
+    uint256 public constant APR_BPS_USDC_MAX = 800;
+    uint256 public constant APR_BPS_ARC_MIN = 200;
+    uint256 public constant APR_BPS_ARC_MAX = 400;
+    uint256 public constant APR_UPDATE_COOLDOWN = 7 days;
 
     IERC20 public poolToken;
 
@@ -46,7 +63,7 @@ contract LuckyStakerPool is
         uint64 drawnAt;
         uint256 eligiblePoolSnapshot;
         uint256 eligibleParticipants;
-        uint256 weeklyYield;
+        uint256 weeklyYield; // = weeklyPrizePool (tech-spec naming); field name kept for ABI stability.
         uint256 numWinners;
         bytes32 commitHash;
         bool committed;
@@ -58,7 +75,32 @@ contract LuckyStakerPool is
     uint256 public currentEpochId;
     mapping(uint256 => Epoch) private epochs;
     // USDC funded by the keeper bot for the epoch currently in progress; consumed at draw time.
+    // Must cover at least that epoch's weeklyPrizePool — see revealAndDraw.
     uint256 public pendingYield;
+
+    // --- Added in the StableLuck technical-spec upgrade (2026-08-24, applied via UUPS
+    // upgrade on the live proxy, NOT a redeploy) — appended after pendingYield so the
+    // existing storage layout is untouched. ---
+
+    // Admin-set benchmark APRs (bps) used until Arc has a real yield source to read from.
+    uint256 public aprBpsUSDC;
+    uint256 public aprBpsARC;
+    uint256 public lastAprUpdateUSDC;
+    uint256 public lastAprUpdateARC;
+    // The token address treated as "USDC" for currentAprBps()'s branch. Set explicitly
+    // (rather than hardcoding Arc's USDC address) so it isn't tied to one chain/deployment.
+    address public referenceUSDC;
+
+    // Set once at first use, permanent. No self-referral.
+    mapping(address => address) public refBy;
+    // Accrued referral cuts, pulled by the referrer via claimReferral().
+    mapping(address => uint256) public pendingRef;
+
+    // Internal accounting only — funds stay inside this contract until withdrawn, so
+    // `whenPaused` on withdrawReserve actually gates something. `to` is chosen by the
+    // multisig at withdrawal time; there is no fixed vault wallet address on-chain.
+    uint256 public vaultReserve;
+    uint256 public vaultDev;
 
     event Deposited(address indexed user, uint256 amount, uint256 newBalance);
     event Withdrawn(address indexed user, uint256 amount, uint256 newBalance, bool forfeitedTicket);
@@ -67,6 +109,12 @@ contract LuckyStakerPool is
     event Drawn(uint256 indexed epochId, address[] winners, uint256 weeklyYield, bytes32 resultHash);
     event Claimed(uint256 indexed epochId, address indexed winner, uint256 amount);
     event Swept(uint256 indexed epochId, address indexed winner, uint256 amount);
+    event AprUpdated(bool indexed isUsdc, uint256 newBps);
+    event ReferrerSet(address indexed user, address indexed referrer);
+    event ReferralAccrued(address indexed referrer, uint256 amount);
+    event ReferralClaimed(address indexed referrer, uint256 amount);
+    event VaultAccrued(uint256 reserveAmount, uint256 devAmount);
+    event VaultWithdrawn(bool indexed isReserve, address indexed to, uint256 amount, string reason);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -84,6 +132,17 @@ contract LuckyStakerPool is
         currentEpochId = 1;
         epochs[1].startTime = uint64(block.timestamp);
         epochs[1].endTime = uint64(block.timestamp + EPOCH_DURATION);
+    }
+
+    /// @notice Sets the StableLuck technical-spec state added on top of the live pool.
+    /// Called once, in the same multisig transaction that upgrades the implementation
+    /// (`upgradeToAndCall(newImpl, abi.encodeCall(initializeV2, (...)))`).
+    function initializeV2(uint256 aprUSDC, uint256 aprARC, address usdcAddress) external reinitializer(2) {
+        require(aprUSDC >= APR_BPS_USDC_MIN && aprUSDC <= APR_BPS_USDC_MAX, "aprUSDC out of band");
+        require(aprARC >= APR_BPS_ARC_MIN && aprARC <= APR_BPS_ARC_MAX, "aprARC out of band");
+        aprBpsUSDC = aprUSDC;
+        aprBpsARC = aprARC;
+        referenceUSDC = usdcAddress;
     }
 
     function _authorizeUpgrade(address) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
@@ -126,8 +185,53 @@ contract LuckyStakerPool is
     }
 
     // ---------------------------------------------------------------------
-    // Yield funding — off-chain script computes the live formula (spec 3.4)
-    // and transfers that amount in; the contract just holds it for the draw.
+    // Referral — set once, permanent. Payout happens as a cut at claim time.
+    // ---------------------------------------------------------------------
+
+    function setReferrer(address referrer) external {
+        require(refBy[msg.sender] == address(0), "referrer already set");
+        require(referrer != address(0), "zero address");
+        require(referrer != msg.sender, "no self-referral");
+        refBy[msg.sender] = referrer;
+        emit ReferrerSet(msg.sender, referrer);
+    }
+
+    function claimReferral() external nonReentrant {
+        uint256 amount = pendingRef[msg.sender];
+        require(amount > 0, "nothing to claim");
+        pendingRef[msg.sender] = 0;
+        poolToken.safeTransfer(msg.sender, amount);
+        emit ReferralClaimed(msg.sender, amount);
+    }
+
+    // ---------------------------------------------------------------------
+    // Admin-set benchmark yield, bounded + rate-limited (spec 1). Replaced by
+    // IYieldSource once Arc has a real, trustworthy on-chain yield source.
+    // ---------------------------------------------------------------------
+
+    function setAprBpsUSDC(uint256 bps) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(bps >= APR_BPS_USDC_MIN && bps <= APR_BPS_USDC_MAX, "out of band");
+        require(block.timestamp >= lastAprUpdateUSDC + APR_UPDATE_COOLDOWN, "rate limited");
+        aprBpsUSDC = bps;
+        lastAprUpdateUSDC = block.timestamp;
+        emit AprUpdated(true, bps);
+    }
+
+    function setAprBpsARC(uint256 bps) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(bps >= APR_BPS_ARC_MIN && bps <= APR_BPS_ARC_MAX, "out of band");
+        require(block.timestamp >= lastAprUpdateARC + APR_UPDATE_COOLDOWN, "rate limited");
+        aprBpsARC = bps;
+        lastAprUpdateARC = block.timestamp;
+        emit AprUpdated(false, bps);
+    }
+
+    function currentAprBps() public view returns (uint256) {
+        return address(poolToken) == referenceUSDC ? aprBpsUSDC : aprBpsARC;
+    }
+
+    // ---------------------------------------------------------------------
+    // Yield funding — the keeper tops pendingYield up to (at least) the current
+    // epoch's weeklyPrizePool target; the contract itself never computes a transfer.
     // ---------------------------------------------------------------------
 
     function fundYield(uint256 amount) external nonReentrant onlyRole(KEEPER_ROLE) {
@@ -155,6 +259,7 @@ contract LuckyStakerPool is
     /// exercised on demand while debugging. Must be called after commitRandom (matches
     /// the normal ordering) and before revealAndDraw. Has no effect on prize fairness —
     /// the keeper still can't predict blockhash(block.number - 1) at reveal time.
+    /// MUST be locked out (see revokeRole) before this pool accepts real depositor funds.
     function forceEndEpoch() external onlyRole(KEEPER_ROLE) {
         Epoch storage e = epochs[currentEpochId];
         require(e.committed, "commit first");
@@ -187,17 +292,35 @@ contract LuckyStakerPool is
         e.eligiblePoolSnapshot = totalWeight;
         e.eligibleParticipants = eligibleCount;
 
+        // weeklyPrizePool is funded only on the portion that sat a full epoch. The keeper
+        // funds pendingYield off-chain toward realYieldEarned = balancesTotal * aprBps /
+        // 10000 / 52 (the whole pool, incl. pending/mid-week deposits) — that target isn't
+        // needed in the math below, only the actually-funded amount is. Winners are always
+        // paid weeklyPrizePool in full; anything funded beyond it is surplus, split 50/50
+        // into the two internal vault counters (spec 1).
+        uint256 weeklyPrizePool = (totalWeight * currentAprBps()) / 10000 / 52;
+
+        uint256 funded = pendingYield;
+        require(funded >= weeklyPrizePool, "yield not funded");
+        pendingYield = 0;
+
+        uint256 surplus = funded - weeklyPrizePool;
+        if (surplus > 0) {
+            uint256 half = surplus / 2;
+            vaultReserve += half;
+            vaultDev += surplus - half;
+            emit VaultAccrued(half, surplus - half);
+        }
+
         uint256 numWinners;
-        uint256 yieldAvailable = pendingYield;
-        if (eligibleCount > 0 && yieldAvailable > 0) {
-            uint256 byParticipants = eligibleCount / MIN_PARTICIPANTS_PER_WINNER;
-            uint256 byPrize = yieldAvailable / MIN_PRIZE;
-            numWinners = byParticipants < byPrize ? byParticipants : byPrize;
+        if (eligibleCount > 0 && weeklyPrizePool > 0) {
+            numWinners = Math.sqrt(totalWeight / (1000 * 1e6));
             if (numWinners == 0) numWinners = 1;
+        }
 
-            e.weeklyYield = yieldAvailable;
-            pendingYield = 0;
+        e.weeklyYield = weeklyPrizePool;
 
+        if (numWinners > 0) {
             for (uint256 w = 0; w < numWinners; w++) {
                 uint256 point = uint256(keccak256(abi.encodePacked(resultHash, w))) % totalWeight;
                 uint256 cum;
@@ -227,22 +350,23 @@ contract LuckyStakerPool is
     }
 
     // ---------------------------------------------------------------------
-    // Prize tiers (spec 3.3b)
+    // Prize split — continuous jackpot/50-50 split (spec 2), replacing the old
+    // participant-count tier table entirely.
     // ---------------------------------------------------------------------
 
-    function prizeForRank(uint256 rank, uint256 numWinners, uint256 weeklyYield) public pure returns (uint256) {
+    function prizeForRank(uint256 rank, uint256 numWinners, uint256 weeklyPrizePool) public pure returns (uint256) {
         if (numWinners == 0) return 0;
-        if (numWinners == 1) return rank == 0 ? weeklyYield : 0;
+        if (numWinners == 1) return rank == 0 ? weeklyPrizePool : 0;
 
-        uint256 jackpotBps = numWinners <= 5 ? 5000 : 3300;
-        uint256 jackpot = (weeklyYield * jackpotBps) / 10000;
+        uint256 jackpot = weeklyPrizePool / 2;
         if (rank == 0) return jackpot;
 
-        return (weeklyYield - jackpot) / (numWinners - 1);
+        return (weeklyPrizePool - jackpot) / (numWinners - 1);
     }
 
     // ---------------------------------------------------------------------
     // Claim (self-serve, first 3 days) / Sweep (permissionless, after 3 days)
+    // Both settle through _settle so the referral cut applies identically.
     // ---------------------------------------------------------------------
 
     function claim(uint256 epochId) external nonReentrant {
@@ -250,12 +374,12 @@ contract LuckyStakerPool is
         require(e.drawn, "not drawn");
         require(block.timestamp < e.drawnAt + SWEEP_DELAY, "past claim window, use sweep");
 
-        uint256 total = _payoutOwed(e, msg.sender);
-        require(total > 0, "nothing to claim");
+        uint256 gross = _payoutOwed(e, msg.sender);
+        require(gross > 0, "nothing to claim");
         e.claimed[msg.sender] = true;
 
-        poolToken.safeTransfer(msg.sender, total);
-        emit Claimed(epochId, msg.sender, total);
+        uint256 net = _settle(msg.sender, gross);
+        emit Claimed(epochId, msg.sender, net);
     }
 
     function sweep(uint256 epochId) external nonReentrant {
@@ -266,12 +390,34 @@ contract LuckyStakerPool is
         for (uint256 i = 0; i < e.winners.length; i++) {
             address winner = e.winners[i];
             if (e.claimed[winner]) continue;
-            uint256 total = _payoutOwed(e, winner);
-            if (total == 0) continue;
+            uint256 gross = _payoutOwed(e, winner);
+            if (gross == 0) continue;
             e.claimed[winner] = true;
-            poolToken.safeTransfer(winner, total);
-            emit Swept(epochId, winner, total);
+            uint256 net = _settle(winner, gross);
+            emit Swept(epochId, winner, net);
         }
+    }
+
+    /// @dev Takes the 5% referral cut out of a gross prize, routes it to the referrer's
+    /// pending balance (or split 50/50 into the two vault counters if unreferred), and
+    /// transfers the remainder to the winner. Returns the net amount paid to the winner.
+    function _settle(address winner, uint256 gross) private returns (uint256) {
+        uint256 cut = (gross * REFERRAL_BPS) / 10000;
+        uint256 net = gross - cut;
+
+        address ref = refBy[winner];
+        if (ref != address(0)) {
+            pendingRef[ref] += cut;
+            emit ReferralAccrued(ref, cut);
+        } else {
+            uint256 half = cut / 2;
+            vaultReserve += half;
+            vaultDev += cut - half;
+            emit VaultAccrued(half, cut - half);
+        }
+
+        poolToken.safeTransfer(winner, net);
+        return net;
     }
 
     function _payoutOwed(Epoch storage e, address user) private view returns (uint256) {
@@ -283,6 +429,36 @@ contract LuckyStakerPool is
             }
         }
         return total;
+    }
+
+    // ---------------------------------------------------------------------
+    // Vault withdrawals — internal counters only; funds leave the contract only here.
+    // ---------------------------------------------------------------------
+
+    /// @notice Compensates incidents (hack, bug that lost funds). Locked to only work
+    /// while paused, so touching reserve forces the multisig to publicly pause first —
+    /// no silent draw-down while the pool looks normal.
+    function withdrawReserve(uint256 amount, address to, string calldata reason)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+        whenPaused
+        nonReentrant
+    {
+        require(to != address(0), "zero address");
+        require(amount <= vaultReserve, "insufficient reserve");
+        vaultReserve -= amount;
+        poolToken.safeTransfer(to, amount);
+        emit VaultWithdrawn(true, to, amount, reason);
+    }
+
+    /// @notice Regular, predictable operating costs (server, community, marketing).
+    /// No pause condition — this is expected to move often.
+    function withdrawDev(uint256 amount, address to) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
+        require(to != address(0), "zero address");
+        require(amount <= vaultDev, "insufficient dev balance");
+        vaultDev -= amount;
+        poolToken.safeTransfer(to, amount);
+        emit VaultWithdrawn(false, to, amount, "");
     }
 
     // ---------------------------------------------------------------------

@@ -1,6 +1,11 @@
 import { pool, publicClient, keeperWalletClient, keeperAddress, USDC_ADDRESS } from "./client";
 
-// spec 3.4: weeklyYield = max($10, poolBalance * 10% / 52).
+// Technical-spec upgrade (2026-08-24): realYieldEarned = balancesTotal * currentAprBps()
+// / 10000 / 52 — read live from the contract, since aprBps is now admin-adjustable
+// within a hard band rather than a fixed 10%/year. No dollar floor anymore (that was
+// the old tier system); the contract itself only requires funding to reach that
+// epoch's weeklyPrizePool (the smaller, eligible-only figure) — funding the full
+// realYieldEarned target is what makes the surplus-to-vault split honest.
 //
 // Each run TOPS THE POT UP to that week's figure rather than adding a fixed
 // slice of it. Same effect over a week, but the prize pot is correct the whole
@@ -8,8 +13,6 @@ import { pool, publicClient, keeperWalletClient, keeperAddress, USDC_ADDRESS } f
 // run refills it within the hour. It's also self-healing — a failed run costs
 // nothing, the next one still tops up to the same target — and it keeps a
 // force-ended epoch (draw:now) from paying out a part-filled prize.
-const MIN_WEEKLY_YIELD = 10_000_000n; // $10, 6 decimals
-const ANNUAL_RATE_BPS = 1000n; // 10%
 const WEEKS_PER_YEAR = 52n;
 
 const erc20Abi = [
@@ -45,9 +48,9 @@ const erc20Abi = [
 async function main() {
   const poolBalance = (await publicClient.readContract({ ...pool, functionName: "balancesTotal" })) as bigint;
   const alreadyFunded = (await publicClient.readContract({ ...pool, functionName: "pendingYield" })) as bigint;
+  const aprBps = (await publicClient.readContract({ ...pool, functionName: "currentAprBps" })) as bigint;
 
-  const formulaYield = (poolBalance * ANNUAL_RATE_BPS) / 10_000n / WEEKS_PER_YEAR;
-  const weeklyYield = formulaYield > MIN_WEEKLY_YIELD ? formulaYield : MIN_WEEKLY_YIELD;
+  const weeklyYield = (poolBalance * aprBps) / 10_000n / WEEKS_PER_YEAR;
   const amount = weeklyYield > alreadyFunded ? weeklyYield - alreadyFunded : 0n;
 
   if (amount <= 0n) {
