@@ -19,8 +19,8 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
       <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <span>{title}</span>
-          <button onClick={onClose} style={{ background: "none", fontSize: "var(--fs-4)" }}>
-            ✕
+          <button onClick={onClose} style={{ background: "none", padding: 0, lineHeight: 0 }}>
+            <span className="icon icon-x" style={{ fontSize: "var(--fs-4)" }} />
           </button>
         </div>
         {children}
