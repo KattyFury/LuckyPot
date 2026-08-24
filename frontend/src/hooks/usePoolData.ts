@@ -120,8 +120,13 @@ export function useEligiblePoolTotal(participantCount: number | undefined) {
     (sum, r) => (r.status === "success" ? sum + (r.result as bigint) : sum),
     0n,
   );
+  // Only counts people who actually hold an eligible (full-epoch) balance right now —
+  // not everyone who has ever deposited, which is what participantCount() returns.
+  const eligibleCount = (eligibleData ?? []).filter(
+    (r) => r.status === "success" && (r.result as bigint) > 0n,
+  ).length;
 
-  return { total, ...rest };
+  return { total, eligibleCount, ...rest };
 }
 
 export function useUserPosition(address: `0x${string}` | undefined) {

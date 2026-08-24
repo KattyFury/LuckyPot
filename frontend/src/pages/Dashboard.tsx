@@ -46,7 +46,7 @@ export function Dashboard() {
 
   const totalPool = (totals?.[0]?.result as bigint | undefined) ?? 0n;
   const depositorsCount = Number((totals?.[1]?.result as bigint | undefined) ?? 0n);
-  const { total: eligiblePoolTotal } = useEligiblePoolTotal(depositorsCount);
+  const { total: eligiblePoolTotal, eligibleCount } = useEligiblePoolTotal(depositorsCount);
   const { data: aprBps } = useCurrentAprBps();
   const numWinnersEstimate = estimateNumWinners(
     eligiblePoolTotal,
@@ -54,15 +54,13 @@ export function Dashboard() {
   );
 
   const eligible = (position?.[1]?.result as bigint | undefined) ?? 0n;
-  const pending = (position?.[2]?.result as bigint | undefined) ?? 0n;
   const walletBalance = (position?.[3]?.result as bigint | undefined) ?? 0n;
-  const myTickets = eligible + pending;
+  const myPoolBalance = (position?.[0]?.result as bigint | undefined) ?? 0n;
 
   const latestDrawnEpoch = epochs.find((e) => e.epoch.drawn) ?? null;
 
   // Announce a fresh draw to EVERY depositor, not just the winners — saying
   // who won here would give away the scratch card before it's scratched.
-  const myPoolBalance = (position?.[0]?.result as bigint | undefined) ?? 0n;
   const unscratchedResult =
     latestDrawnEpoch && address && myPoolBalance > 0n && !wasScratched(latestDrawnEpoch.id, address)
       ? latestDrawnEpoch
@@ -110,7 +108,7 @@ export function Dashboard() {
             epochId={currentEpochId as bigint | undefined}
             epoch={currentEpoch}
             numWinnersEstimate={numWinnersEstimate}
-            participantCount={depositorsCount}
+            participantCount={eligibleCount}
           />
         </div>
 
@@ -118,7 +116,8 @@ export function Dashboard() {
           <PoolCard
             totalPool={totalPool}
             eligiblePoolTotal={eligiblePoolTotal}
-            myTickets={myTickets}
+            myEligible={eligible}
+            myDeposited={myPoolBalance}
             walletBalance={walletBalance}
             onDeposit={() => setPopup("deposit")}
             onWithdraw={() => setPopup("withdraw")}

@@ -141,7 +141,7 @@ button {
 }
 
 .pill-button--secondary {
-  background: #a0a0a5;
+  background: var(--color-primary);
   color: #ffffff;
 }
 

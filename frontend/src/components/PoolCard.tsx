@@ -6,7 +6,8 @@ import { Modal } from "./Modal";
 export function PoolCard({
   totalPool,
   eligiblePoolTotal,
-  myTickets,
+  myEligible,
+  myDeposited,
   walletBalance,
   onDeposit,
   onWithdraw,
@@ -15,7 +16,8 @@ export function PoolCard({
 }: {
   totalPool: bigint;
   eligiblePoolTotal: bigint;
-  myTickets: bigint;
+  myEligible: bigint;
+  myDeposited: bigint;
   walletBalance: bigint;
   onDeposit: () => void;
   onWithdraw: () => void;
@@ -24,6 +26,7 @@ export function PoolCard({
 }) {
   const amount = useAmount();
   const [showEligibleInfo, setShowEligibleInfo] = useState(false);
+  const [showMyEligibleInfo, setShowMyEligibleInfo] = useState(false);
 
   return (
     <div className="card card-rows">
@@ -35,23 +38,27 @@ export function PoolCard({
       </div>
 
       <div className="two-col" style={{ alignItems: "baseline", fontFamily: "var(--font-condensed)" }}>
-        <div style={{ fontSize: "var(--fs-3)", fontWeight: 700, display: "flex", alignItems: "baseline", gap: 6 }}>
+        <div style={{ fontSize: "var(--fs-3)", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
           {formatUSDC(eligiblePoolTotal)}/{amount(totalPool)}
           <button
             type="button"
             aria-label="Why is the eligible pool different from the total pool?"
             onClick={() => setShowEligibleInfo(true)}
-            style={{ background: "none", padding: 0, lineHeight: 0 }}
+            style={{ background: "none", padding: 0, lineHeight: 0, display: "inline-flex", alignItems: "center" }}
           >
             <span className="icon icon-info" style={{ fontSize: "var(--fs-caption)", color: "var(--color-text-secondary)" }} />
           </button>
         </div>
-        <div style={{ fontSize: "var(--fs-3)", fontWeight: 700, textAlign: "left" }}>
-          {formatUSDC(myTickets)}
-          <span style={{ fontSize: "var(--fs-4)", fontWeight: 400, color: "var(--color-text-secondary)" }}>
-            {" "}
-            (USDC deposited)
-          </span>
+        <div style={{ fontSize: "var(--fs-3)", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+          {formatUSDC(myEligible)}/{amount(myDeposited)}
+          <button
+            type="button"
+            aria-label="Why is my eligible amount different from what I deposited?"
+            onClick={() => setShowMyEligibleInfo(true)}
+            style={{ background: "none", padding: 0, lineHeight: 0, display: "inline-flex", alignItems: "center" }}
+          >
+            <span className="icon icon-info" style={{ fontSize: "var(--fs-caption)", color: "var(--color-text-secondary)" }} />
+          </button>
         </div>
       </div>
 
@@ -65,6 +72,26 @@ export function PoolCard({
             <p>
               <strong style={{ color: "var(--color-text)" }}>{formatUSDC(eligiblePoolTotal)}</strong> is the slice of
               that pool eligible for this week's draw. A deposit only counts once it has sat in the pool for one full
+              epoch without being withdrawn; a fresh deposit rolls into eligibility at the next draw.
+            </p>
+            <p>
+              Tip: deposit right after a draw happens so your funds start their full week immediately, instead of
+              depositing right before the current epoch ends.
+            </p>
+          </div>
+        </Modal>
+      )}
+
+      {showMyEligibleInfo && (
+        <Modal title="Your eligible balance vs. your deposit" onClose={() => setShowMyEligibleInfo(false)}>
+          <div style={{ fontSize: "var(--fs-caption)", color: "var(--color-text-secondary)", lineHeight: 1.5 }}>
+            <p>
+              <strong style={{ color: "var(--color-text)" }}>{amount(myDeposited)}</strong> is everything you've
+              deposited – it's always safe and withdrawable anytime.
+            </p>
+            <p>
+              <strong style={{ color: "var(--color-text)" }}>{formatUSDC(myEligible)}</strong> is the slice of your
+              deposit eligible for this week's draw. A deposit only counts once it has sat in the pool for one full
               epoch without being withdrawn; a fresh deposit rolls into eligibility at the next draw.
             </p>
             <p>
