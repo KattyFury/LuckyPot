@@ -30,6 +30,14 @@ User rất khắt khe về lưới; đã phải dựng lại 2 lần vì làm sa
 
 ---
 
+## Trạng thái nghỉ 2026-08-24 — repo chuyển Private, TOTAL POOL đổi sang eligible/total thật
+
+- **Repo đã chuyển từ Public sang Private** (`gh repo edit --visibility private --accept-visibility-change-consequences`) — user không muốn lộ sớm vì thấy dự án tiềm năng. **Hệ quả cần nhớ:** GitHub Pages/Actions dùng repo private vẫn chạy bình thường (đã có secrets sẵn), nhưng link repo không còn xem công khai được nữa — nếu sau này cần mời ai xem thì phải add làm collaborator (giống `still2412`), không share link suông được nữa. `still2412` (đã là collaborator từ trước) vẫn giữ quyền truy cập bình thường khi repo private.
+- **TOTAL POOL đổi cách hiển thị:** từ `"685 USDC/3 depositors"` sang `"eligible/total USDC"` (vd `65/685 USDC`) — bỏ số depositor vì box EPOCH đã hiện participant count rồi, tránh trùng lặp. Số eligible **cộng thật từ on-chain** (`eligibleBalance(address)` của từng participant trong mảng `participants`, không có getter tổng sẵn nên phải tự cộng ở frontend — xem `useEligiblePoolTotal()` trong `hooks/usePoolData.ts`). Có icon `info.svg` (mask-image, cùng kỹ thuật `copy.svg`/`back.svg`) mở popup giải thích: tổng pool luôn an toàn/rút được, phần eligible là phần đã nằm đủ 1 epoch (7 ngày) nên được tính vé; tiền mới gửi tự cuộn vào eligible ở lần quay kế tiếp; khuyên gửi ngay sau khi vừa quay để được tính đủ tuần ngay.
+  - ⚠️ **Epoch KHÔNG neo theo lịch dương** (không phải "luôn bắt đầu/kết thúc đúng 0h UTC thứ Hai") — nó chạy cuốn chiếu 7 ngày kể từ lần `revealAndDraw()` trước đó. Nội dung popup viết đúng theo cơ chế thật này, **không** dùng chữ "thứ Hai" như yêu cầu ban đầu của user vì sẽ sai sự thật.
+- **Toggle `USDC | $ARC` giờ đã KHOÁ nút `$ARC`** (`disabled`, mờ đi, có tooltip "chưa launch") — trước đó bấm vào chỉ đổi nhãn còn số vẫn là USDC (gây hiểu lầm), user xác nhận nên khoá hẳn thay vì để bấm được.
+- Đã build + typecheck + test bằng Playwright thật trên `vite preview` (đọc số liệu on-chain thật `65/685`, không phải giả lập) trước khi deploy. Deploy Cloudflare Pages + push GitHub commit `0d0b3c5`.
+
 ## Trạng thái nghỉ 2026-08-23 — ĐÃ DEPLOY THẬT LÊN ARC TESTNET (bản có forceEndEpoch để test nhanh)
 
 **Toàn bộ pipeline chạy thật end-to-end, verify trực tiếp on-chain.**
