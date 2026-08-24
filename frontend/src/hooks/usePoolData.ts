@@ -88,6 +88,38 @@ export function usePoolTotals() {
   });
 }
 
+/**
+ * Sums eligibleBalance() across every participant, i.e. the slice of the pool that has
+ * sat through a full epoch and actually counts toward this week's draw. There's no
+ * single on-chain getter for this total, so it's assembled from `participants(i)` plus
+ * one `eligibleBalance` read per address – fine at this participant count.
+ */
+export function useEligiblePoolTotal(participantCount: number | undefined) {
+  const count = participantCount ?? 0;
+  const indices = count > 0 ? Array.from({ length: count }, (_, i) => i) : [];
+
+  const { data: addressData } = useReadContracts({
+    contracts: indices.map((i) => ({ ...poolContract, functionName: "participants", args: [BigInt(i)] as const })),
+    query: { enabled: indices.length > 0 },
+  });
+
+  const addresses = (addressData ?? [])
+    .map((r) => (r.status === "success" ? (r.result as `0x${string}`) : null))
+    .filter((a): a is `0x${string}` => a !== null);
+
+  const { data: eligibleData, ...rest } = useReadContracts({
+    contracts: addresses.map((a) => ({ ...poolContract, functionName: "eligibleBalance", args: [a] as const })),
+    query: { enabled: addresses.length > 0 },
+  });
+
+  const total = (eligibleData ?? []).reduce(
+    (sum, r) => (r.status === "success" ? sum + (r.result as bigint) : sum),
+    0n,
+  );
+
+  return { total, ...rest };
+}
+
 export function useUserPosition(address: `0x${string}` | undefined) {
   return useReadContracts({
     contracts: [

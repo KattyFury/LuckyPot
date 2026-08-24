@@ -11,7 +11,14 @@ import { ResultModal } from "../components/ResultModal";
 import { Modal } from "../components/Modal";
 import { DepositModal } from "./Deposit";
 import { WithdrawModal } from "./Withdraw";
-import { useCurrentEpochId, useEpoch, useEpochHistory, usePoolTotals, useUserPosition } from "../hooks/usePoolData";
+import {
+  useCurrentEpochId,
+  useEligiblePoolTotal,
+  useEpoch,
+  useEpochHistory,
+  usePoolTotals,
+  useUserPosition,
+} from "../hooks/usePoolData";
 import { useMyHistory } from "../hooks/useMyHistory";
 import { estimateNumWinners, projectedWeeklyYield } from "../lib/prize";
 import { useTokenUnit } from "../config/tokenUnit";
@@ -39,6 +46,7 @@ export function Dashboard() {
   const totalPool = (totals?.[0]?.result as bigint | undefined) ?? 0n;
   const depositorsCount = Number((totals?.[1]?.result as bigint | undefined) ?? 0n);
   const numWinnersEstimate = estimateNumWinners(BigInt(depositorsCount), projectedWeeklyYield(totalPool));
+  const { total: eligiblePoolTotal } = useEligiblePoolTotal(depositorsCount);
 
   const eligible = (position?.[1]?.result as bigint | undefined) ?? 0n;
   const pending = (position?.[2]?.result as bigint | undefined) ?? 0n;
@@ -104,7 +112,7 @@ export function Dashboard() {
         <div className="g-pool">
           <PoolCard
             totalPool={totalPool}
-            depositorsCount={depositorsCount}
+            eligiblePoolTotal={eligiblePoolTotal}
             myTickets={myTickets}
             walletBalance={walletBalance}
             onDeposit={() => setPopup("deposit")}

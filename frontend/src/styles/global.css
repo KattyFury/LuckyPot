@@ -101,6 +101,11 @@ button {
   mask-image: url("../assets/icons/back.svg");
 }
 
+.icon-info {
+  -webkit-mask-image: url("../assets/icons/info.svg");
+  mask-image: url("../assets/icons/info.svg");
+}
+
 .scroll-panel {
   overflow-y: auto;
   scrollbar-width: thin;
@@ -445,6 +450,11 @@ button {
 .token-toggle button.is-active {
   background: var(--color-text);
   color: #ffffff;
+}
+
+.token-toggle button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 /* Wallet dropdown in the navbar. */

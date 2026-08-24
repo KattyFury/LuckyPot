@@ -7,17 +7,22 @@ export function TokenToggle() {
 
   return (
     <span className="token-toggle" role="group" aria-label="Display token">
-      {UNITS.map((u) => (
-        <button
-          key={u}
-          type="button"
-          className={u === unit ? "is-active" : undefined}
-          aria-pressed={u === unit}
-          onClick={() => setUnit(u)}
-        >
-          {u}
-        </button>
-      ))}
+      {UNITS.map((u) => {
+        const disabled = u === "$ARC";
+        return (
+          <button
+            key={u}
+            type="button"
+            className={u === unit ? "is-active" : undefined}
+            aria-pressed={u === unit}
+            disabled={disabled}
+            title={disabled ? "$ARC hasn't launched yet – the pool only holds USDC" : undefined}
+            onClick={() => setUnit(u)}
+          >
+            {u}
+          </button>
+        );
+      })}
     </span>
   );
 }
