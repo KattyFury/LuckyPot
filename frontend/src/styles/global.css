@@ -160,9 +160,12 @@ button {
    for that: the desktop needs 15 rows + 14 gaps, so a shorter window
    scrolls rather than compressing the rows.
 
-   Desktop: 15 rows — 1 navbar, 2 banner, 3-6 EPOCH | TOTAL POOL,
-   7-14 DRAW HISTORY | MY HISTORY, 15 empty. Columns are thirds — EPOCH
+   Desktop: 13 rows – 1 navbar, 2 banner, 3-6 EPOCH | TOTAL POOL,
+   7-12 DRAW HISTORY | MY HISTORY, 13 empty. Columns are thirds: EPOCH
    takes 1/3 and POOL 2/3; DRAW HISTORY takes 2/3 and MY HISTORY 1/3.
+   The history row is 6 rows to the cards' 4, i.e. 1.5x their height
+   (350px vs 230px), which keeps the whole page inside one laptop frame
+   at 13*50 + 12*10 = 770px instead of needing a scroll.
 
    Mobile: the two history boxes would make the page endless, so each
    collapses to a one-row button that opens the same content as a popup.
@@ -207,7 +210,7 @@ button {
 @media (min-width: 1024px) {
   .dashboard-grid {
     grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(15, var(--row-h));
+    grid-template-rows: repeat(13, var(--row-h));
   }
 
   .g-draw-history,
@@ -242,11 +245,11 @@ button {
   }
   .g-draw-history {
     grid-column: 1 / 3;
-    grid-row: 7 / 15;
+    grid-row: 7 / 13;
   }
   .g-my-history {
     grid-column: 3 / 4;
-    grid-row: 7 / 15;
+    grid-row: 7 / 13;
   }
 }
 
