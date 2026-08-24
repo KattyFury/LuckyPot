@@ -23,7 +23,7 @@ export function Navbar(actions: WalletMenuActions) {
         boxShadow: "0 1px 0 #000000",
       }}
     >
-      <span style={{ fontSize: "var(--fs-4)", fontWeight: 700, color: "var(--color-primary)" }}>StableLuck</span>
+      <span style={{ fontSize: "var(--fs-4)", fontWeight: 700, color: "var(--color-primary)" }}>LuckyPot</span>
       {USE_PRIVY ? <NavbarPrivy {...actions} /> : <NavbarInjected {...actions} />}
     </nav>
   );

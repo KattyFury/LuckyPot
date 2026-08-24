@@ -1,12 +1,12 @@
-# HANDOFF – StableLuck
+# HANDOFF – LuckyPot
 
 > No-loss weekly USDC prize pool trên Arc. Gộp tiền gửi của nhiều người vào 1
 > pool, mỗi tuần quay số ngẫu nhiên trao toàn bộ yield của tuần đó cho một vài
 > người, thay vì chia đều lãi cho tất cả. Không ai mất gốc — rút lại 100% USDC
 > đã gửi bất cứ lúc nào.
 
-**Repo:** https://github.com/KattyFury/StableLuck (đổi tên từ `LuckyStaker` → `StableLuck` ngày 2026-08-24, đổi thương hiệu — repo cũng đã chuyển **Private** cùng ngày vì user chưa muốn lộ dự án sớm)
-**Web đang chạy:** https://stableluck.pages.dev (Cloudflare Pages, project `stableluck`, deploy tay bằng `npx wrangler pages deploy dist --project-name=stableluck --branch=main` — **KHÔNG** auto-deploy từ GitHub. Project Cloudflare cũ `luckystaker` vẫn còn tồn tại nhưng ngừng cập nhật, có thể xoá tay nếu muốn.)
+**Repo:** https://github.com/KattyFury/LuckyPot (đổi tên từ `LuckyStaker` → `LuckyPot` ngày 2026-08-24, đổi thương hiệu — repo cũng đã chuyển **Private** cùng ngày vì user chưa muốn lộ dự án sớm)
+**Web đang chạy:** https://luckypot.pages.dev (Cloudflare Pages, project `luckypot`, deploy tay bằng `npx wrangler pages deploy dist --project-name=luckypot --branch=main` — **KHÔNG** auto-deploy từ GitHub. Project Cloudflare cũ `luckystaker` vẫn còn tồn tại nhưng ngừng cập nhật, có thể xoá tay nếu muốn.)
 ⚠️ **Contract Solidity CỐ Ý giữ nguyên tên `LuckyStakerPool`, KHÔNG redeploy khi đổi thương hiệu** — spec không yêu cầu tên contract khớp tên sản phẩm, và contract đang giữ dữ liệu thật (685 USDC, lịch sử epoch 3/4 đã quay). Mọi chỗ trong repo nhắc tới `LuckyStakerPool.sol` / `LuckyStakerPool (proxy)` là tên kỹ thuật thật, không phải sai sót quên đổi.
 **Spec gốc:** [`arc-prize-pool-spec.md`](./arc-prize-pool-spec.md) — đã có trong repo, encoding sạch
 
@@ -36,7 +36,7 @@ User rất khắt khe về lưới; đã phải dựng lại 2 lần vì làm sa
 **Đã upgrade contract logic thật trên proxy đang chạy** (`0x88dCB2f36356AA8DADdC2e8fb4A3E122Ba9D0Beb`), không redeploy, không mất dữ liệu cũ (verify lại: `balancesTotal=65 USDC`, `currentEpochId=5` giữ nguyên sau upgrade).
 
 - **Implementation mới:** `0x1fEB6ac87f97B2C080d9BbDA940351116A2A54F0`, deploy qua `contracts/ignition/modules/LuckyStakerPoolV2Implementation.ts` (module CHỈ deploy implementation, không đụng proxy — an toàn deploy bất cứ lúc nào).
-- **Logic mới (theo `stableluck-technical-spec.md` user gửi):**
+- **Logic mới (theo `luckypot-technical-spec.md` user gửi):**
   - Yield: `aprBpsUSDC` (mặc định 600 = 6%/năm, khung cứng 400–800) và `aprBpsARC` (300 = 3%/năm, khung 200–400), admin set tay qua `setAprBpsUSDC`/`setAprBpsARC`, rate-limit 7 ngày/lần đổi mỗi token. `currentAprBps()` so `poolToken` với `referenceUSDC` (biến mới, KHÔNG hardcode địa chỉ — set lúc `initializeV2`, hiện trỏ đúng USDC thật `0x3600...0000`) để chọn nhánh.
   - `weeklyPrizePool` chỉ tính trên `eligibleBalance` (đủ 1 tuần); phần dư giữa số đã funding và weeklyPrizePool là `surplus`, tự động chia 50/50 vào `vaultReserve`/`vaultDev` lúc quay số.
   - `numWinners = max(1, sqrt(eligibleBalance / $1000))` — công thức liên tục, thay hẳn bảng tier cũ.
@@ -90,7 +90,7 @@ User rất khắt khe về lưới; đã phải dựng lại 2 lần vì làm sa
 - **Toggle `USDC | $ARC`** ở góc phải header box EPOCH (`components/TokenToggle.tsx`) — nút bật qua lại thật, state ở `TokenUnitProvider` bọc trong `App.tsx`, đổi đơn vị toàn app.
   - ⚠️ Pool thật vẫn giữ USDC, **$ARC chưa tồn tại** (spec mục 4: TGE chưa có ngày). Nên khi bật $ARC, banner tự đổi thành *"$ARC isn't live yet — figures are the USDC pool."* để màn hình không nói sai sự thật. **Chưa được user duyệt dòng này** — hỏi lại, nếu user thấy thừa thì bỏ.
 - **Luồng Latest Result (đã đổi hẳn theo yêu cầu user):** bấm **không** nhảy sang màn cào nữa. Nó mở popup **DRAW HISTORY của epoch vừa quay**; nếu ví đang kết nối có trong danh sách trúng thì dòng đó **highlight xanh + ghi "You"**, bấm vào dòng đó mới ra popup kết quả.
-- **Cào chỉ 1 lần duy nhất:** nhớ bằng `localStorage` khoá `stableluck:scratched:<addr>:<epochId>` (đổi prefix theo rebrand 2026-08-24, key cũ `luckystaker:...` không migrate — vô hại, chỉ khiến thẻ cũ cào lại được 1 lần). Mở lại lần sau hiện thẳng kết quả. Đã `claim` rồi thì cũng bỏ qua bước cào.
+- **Cào chỉ 1 lần duy nhất:** nhớ bằng `localStorage` khoá `luckypot:scratched:<addr>:<epochId>` (đổi prefix theo rebrand 2026-08-24, key cũ `luckystaker:...` không migrate — vô hại, chỉ khiến thẻ cũ cào lại được 1 lần). Mở lại lần sau hiện thẳng kết quả. Đã `claim` rồi thì cũng bỏ qua bước cào.
 - **Màn Scratch riêng đã XOÁ** (`frontend/src/pages/Scratch.tsx`) — giờ là `components/ResultModal.tsx`. `App.tsx` chỉ còn 3 view: dashboard / deposit / withdraw.
 - **Popup dùng chung** `components/Modal.tsx`: header căn trái ở hàng 1, rộng `75vw` mobile / `645px` desktop (đúng spec §5).
 - Deposit đã có hiển thị số dư ví + nút MAX; banner tự đổi thành **"Click here to faucet"** (link faucet.circle.com) khi ví có 0 USDC; kết nối ví tự động xin chuyển sang Arc Testnet.
@@ -158,7 +158,7 @@ User rất khắt khe về lưới; đã phải dựng lại 2 lần vì làm sa
 # frontend (D:\Files\Claude\Build on Arc\LuckyStaker\frontend — thư mục local CHƯA đổi tên, bị khoá bởi VS Code lúc rebrand 2026-08-24, tự đổi tay nếu muốn)
 npx vite --port 5183 --host        # dev server (user hay xem ở đây trước khi chốt)
 ./node_modules/.bin/tsc -b --noEmit  # typecheck (đừng dùng `npx tsc`, npx kéo nhầm gói tsc rác)
-npx vite build && npx wrangler pages deploy dist --project-name=stableluck --branch=main --commit-dirty=true
+npx vite build && npx wrangler pages deploy dist --project-name=luckypot --branch=main --commit-dirty=true
 
 # contracts
 npx hardhat test

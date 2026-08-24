@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LuckyPot — no-loss weekly USDC prize pool</title>
+<meta name="description" content="Deposit USDC, hold it a week, and you're in the draw. One winner takes the week's yield — everyone else still gets their full principal back, any time." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --color-primary: #16a34a;
+    --color-primary-dark: #0f7a37;
+    --color-text: #1a1a1a;
+    --color-text-secondary: #6b6b70;
+    --color-card-bg: #ffffff;
+    --color-page-bg: #f4f4f5;
+    --color-yellow: #ffcc00;
+    --max-width: 720px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Roboto", sans-serif;
+    background: var(--color-page-bg);
+    color: var(--color-text);
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: var(--max-width); margin: 0 auto; padding: 0 20px; }
+  .condensed { font-family: "Roboto Condensed", sans-serif; }
+
+  header.top {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 0;
+  }
+  header.top .brand { font-size: 22px; font-weight: 700; color: var(--color-primary); }
+  header.top a.enter-app {
+    background: #000; color: #fff; text-decoration: none; font-weight: 700;
+    padding: 10px 20px; border-radius: 999px; font-size: 14px;
+  }
+
+  .hero { padding: 40px 0 30px; }
+  .hero h1 {
+    font-size: 34px; line-height: 1.25; margin: 0 0 20px;
+  }
+  .hero h1 strong { color: var(--color-primary); }
+  .cta-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn-primary {
+    background: var(--color-primary); color: #fff; text-decoration: none; font-weight: 700;
+    padding: 14px 28px; border-radius: 999px; font-size: 16px; display: inline-block;
+  }
+  .btn-secondary {
+    background: none; color: var(--color-text); text-decoration: none; font-weight: 700;
+    padding: 14px 20px; border-radius: 999px; font-size: 16px; display: inline-block;
+    border: 2px solid #000;
+  }
+
+  section { padding: 36px 0; border-top: 1px solid #e2e2e5; }
+  section h2 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--color-text-secondary); margin: 0 0 20px; font-weight: 700;
+  }
+
+  .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 16px; }
+  .steps li { display: flex; gap: 14px; align-items: flex-start; font-size: 17px; line-height: 1.5; }
+  .steps .num {
+    flex: 0 0 auto; width: 28px; height: 28px; border-radius: 50%; background: var(--color-primary);
+    color: #fff; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center;
+  }
+
+  .live-card {
+    background: var(--color-card-bg); border-radius: 16px; padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .live-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .live-stat .label { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 4px; }
+  .live-stat .value { font-family: "Roboto Condensed", sans-serif; font-size: 26px; font-weight: 700; }
+  .live-note { font-size: 13px; color: var(--color-text-secondary); margin-top: 16px; }
+  .live-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--color-primary);
+    margin-right: 6px; animation: pulse 1.6s infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+  details.deep {
+    border-radius: 12px; background: var(--color-card-bg); padding: 16px 20px; margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  details.deep summary {
+    font-weight: 700; cursor: pointer; font-size: 16px; list-style: none;
+  }
+  details.deep summary::-webkit-details-marker { display: none; }
+  details.deep summary::before { content: "+ "; color: var(--color-primary); }
+  details.deep[open] summary::before { content: "– "; }
+  details.deep .body { padding-top: 12px; font-size: 15px; line-height: 1.6; color: var(--color-text-secondary); }
+  details.deep .body code {
+    background: #eee; padding: 1px 5px; border-radius: 4px; font-size: 13px; color: var(--color-text);
+  }
+  details.deep .body pre {
+    background: #1a1a1a; color: #d9f7e3; padding: 12px 14px; border-radius: 8px; overflow-x: auto;
+    font-size: 13px; line-height: 1.5;
+  }
+  .invariant-list { margin: 0; padding-left: 18px; }
+  .invariant-list li { margin-bottom: 8px; }
+
+  .honesty {
+    background: #fff8dd; border: 1px solid var(--color-yellow); border-radius: 12px; padding: 18px 20px;
+    font-size: 14px; line-height: 1.6;
+  }
+
+  footer {
+    padding: 30px 0 50px; display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center;
+    font-size: 14px;
+  }
+  footer a { color: var(--color-text-secondary); text-decoration: underline; }
+  footer .enter-app-footer {
+    background: #000; color: #fff; text-decoration: none; font-weight: 700;
+    padding: 10px 20px; border-radius: 999px; font-size: 14px; margin-right: auto;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <span class="brand">LuckyPot</span>
+    <a class="enter-app" href="/app/">Enter App</a>
+  </header>
+
+  <section class="hero" style="border-top: none; padding-top: 10px;">
+    <h1 class="condensed">
+      Deposit USDC, hold it <strong>one week</strong>, and you're in the draw.
+      One winner takes the week's yield — everyone else still gets their <strong>full principal back</strong>, any time.
+    </h1>
+    <div class="cta-row">
+      <a class="btn-primary" href="/app/">Enter App</a>
+      <a class="btn-secondary" href="#how-it-works">How it works ↓</a>
+    </div>
+  </section>
+
+  <section id="how-it-works">
+    <h2>How it works</h2>
+    <ol class="steps">
+      <li><span class="num">1</span><span>Deposit USDC into the pool.</span></li>
+      <li><span class="num">2</span><span>Hold it for a full week — that's what makes it a ticket.</span></li>
+      <li><span class="num">3</span><span>At week's end, a winner is drawn — verifiable on-chain, nobody (not even the admin) can pick who wins ahead of time.</span></li>
+      <li><span class="num">4</span><span>Won? Scratch the card to claim. Didn't win? Withdraw your principal — any time, no conditions.</span></li>
+    </ol>
+  </section>
+
+  <section id="live">
+    <h2>Live right now</h2>
+    <div class="live-card">
+      <div class="live-grid">
+        <div class="live-stat">
+          <div class="label"><span class="live-dot"></span>Total pool</div>
+          <div class="value" id="stat-pool">…</div>
+        </div>
+        <div class="live-stat">
+          <div class="label">Current epoch</div>
+          <div class="value" id="stat-epoch">…</div>
+        </div>
+        <div class="live-stat">
+          <div class="label">Last winner</div>
+          <div class="value" id="stat-winner">…</div>
+        </div>
+        <div class="live-stat">
+          <div class="label">Last prize</div>
+          <div class="value" id="stat-prize">…</div>
+        </div>
+      </div>
+      <div class="live-note">Read directly from the contract on Arc Testnet — not a screenshot, not a static number.</div>
+    </div>
+  </section>
+
+  <section id="deep-dive">
+    <h2>Learn more</h2>
+
+    <details class="deep">
+      <summary>Tickets &amp; the draw</summary>
+      <div class="body">
+        <p>Every USDC you deposit becomes ticket weight proportional to your share of the pool.</p>
+        <p>You only have a ticket once your deposit has sat in the pool for a full epoch (7 days). Withdraw mid-week and you forfeit that week's ticket — never your money.</p>
+        <p>Randomness is two-layer commit-reveal: the keeper commits a hashed secret at the start of the week, reveals it at the end, and it's mixed with a future blockhash unknowable at commit time — so nobody, not even the keeper or the admin, can predict or steer the outcome.</p>
+      </div>
+    </details>
+
+    <details class="deep">
+      <summary>Yield</summary>
+      <div class="body">
+        <pre>aprBps          = variable, read from the current yield source
+                  (USDC ~6%/year, $ARC ~3%/year — staking is
+                  safer than lending, so it pays less)
+realYieldEarned = totalPool × aprBps / 10000 / 52
+weeklyPrizePool = eligibleBalance × aprBps / 10000 / 52
+surplus         = realYieldEarned − weeklyPrizePool → flows to the vault</pre>
+        <p><strong>Why only <code>eligibleBalance</code>, not the whole pool?</strong> The draw runs weekly, and only money that's sat a full week has a ticket that week. The prize has to be computed on that exact same slice — not the whole pool — because counting fresh mid-week deposits would inflate the prize for people who don't yet have a shot at winning it. Same weekly cycle, same pool of money: tickets and prizes always follow the same logic. The yield those fresh deposits still earn is real — it just isn't split with anyone that week, so it flows into the vault instead.</p>
+      </div>
+    </details>
+
+    <details class="deep">
+      <summary>Splitting the prize</summary>
+      <div class="body">
+        <pre>numWinners = max(1, floor(sqrt(eligibleBalance / 1000)))
+
+numWinners = 1:  winner takes 100% of weeklyPrizePool
+numWinners > 1:  1st place takes 50%, the rest splits evenly
+                 among (numWinners − 1) people</pre>
+        <p>Winner count and prize size scale automatically with pool size — no fixed thresholds, no contract changes needed as the pool grows.</p>
+      </div>
+    </details>
+
+    <details class="deep">
+      <summary>Claiming</summary>
+      <div class="body">
+        <pre>cut = prize × 5%
+has a referrer → referrer gets the cut
+no referrer    → cut splits evenly into vaultReserve / vaultDev</pre>
+      </div>
+    </details>
+
+    <details class="deep">
+      <summary>The vault</summary>
+      <div class="body">
+        <p><strong>vaultReserve</strong> — withdrawable only while the contract is paused, reserved for compensating an incident (a hack, a bug that loses funds). There's no way to withdraw it for any other purpose.</p>
+        <p><strong>vaultDev</strong> — withdrawable normally, funds ongoing costs: servers, community, marketing.</p>
+      </div>
+    </details>
+
+    <details class="deep">
+      <summary>Where the yield comes from (once Arc has real DeFi)</summary>
+      <div class="body">
+        <p>Spread across multiple reputable lending markets (Aave, Morpho, Compound...) instead of concentrated in one — if one has an issue, only that slice is affected; the vault and the rest of the yield sources keep standing. Today (no sufficiently trustworthy DeFi on Arc Testnet yet), the admin funds the pool by hand, following the exact formula above.</p>
+      </div>
+    </details>
+
+    <details class="deep">
+      <summary>What never changes, no matter how big the pool gets</summary>
+      <div class="body">
+        <ul class="invariant-list">
+          <li>Principal is never at risk and withdrawable any time — no lockups.</li>
+          <li>No hidden fees — every cut is shown publicly.</li>
+          <li>Admin is a 2-of-2 Safe multisig, not a single wallet.</li>
+          <li><strong>Scratching the card is just for fun — it's never a condition for getting paid.</strong> Winnings always land in the winner's wallet: scratch immediately for the suspense, or don't bother — after 3 days, anyone (not just the admin) can call <code>sweep()</code> to push the prize to the winner automatically. No deadline ever costs you a prize.</li>
+          <li>Pausing only blocks new deposits and new draws — it never locks withdrawals.</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <section id="honesty">
+    <h2>Honest boundaries</h2>
+    <div class="honesty">
+      Running on Arc Testnet. Current yield follows a fixed formula — it's not real DeFi yield yet. Not audited.
+      See the exact formulas and contract source on GitHub.
+    </div>
+  </section>
+
+  <footer>
+    <a class="enter-app-footer" href="/app/">Enter App</a>
+    <a href="https://github.com/KattyFury/LuckyPot" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://testnet.arcscan.app/address/0x88dCB2f36356AA8DADdC2e8fb4A3E122Ba9D0Beb" target="_blank" rel="noopener">Contract</a>
+    <a href="https://app.safe.global/home?safe=arc-testnet:0x0f5514fCA02b639229528a5521dafd0a61bb27ef" target="_blank" rel="noopener">Safe multisig</a>
+  </footer>
+</div>
+
+<script type="module">
+import { createPublicClient, http, formatUnits } from "https://esm.sh/viem@2.21.0";
+
+const POOL = "0x88dCB2f36356AA8DADdC2e8fb4A3E122Ba9D0Beb";
+const abi = [
+  { type: "function", name: "balancesTotal", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
+  { type: "function", name: "currentEpochId", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
+  {
+    type: "function", name: "getEpoch", stateMutability: "view",
+    inputs: [{ name: "epochId", type: "uint256" }],
+    outputs: [
+      { name: "startTime", type: "uint64" }, { name: "endTime", type: "uint64" }, { name: "drawnAt", type: "uint64" },
+      { name: "eligiblePoolSnapshot", type: "uint256" }, { name: "eligibleParticipants", type: "uint256" },
+      { name: "weeklyYield", type: "uint256" }, { name: "numWinners", type: "uint256" },
+      { name: "committed", type: "bool" }, { name: "drawn", type: "bool" }, { name: "winners", type: "address[]" },
+    ],
+  },
+];
+
+const client = createPublicClient({
+  chain: { id: 5042002, name: "Arc Testnet", nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 6 }, rpcUrls: { default: { http: ["https://rpc.testnet.arc.io"] } } },
+  transport: http(),
+});
+
+function fmt(n) {
+  return Number(formatUnits(n, 6)).toLocaleString("en-US", { maximumFractionDigits: 0 });
+}
+function shortAddr(a) {
+  return a.slice(0, 6) + "…" + a.slice(-4);
+}
+
+(async () => {
+  try {
+    const [pool, epochId] = await Promise.all([
+      client.readContract({ address: POOL, abi, functionName: "balancesTotal" }),
+      client.readContract({ address: POOL, abi, functionName: "currentEpochId" }),
+    ]);
+    document.getElementById("stat-pool").textContent = fmt(pool) + " USDC";
+    document.getElementById("stat-epoch").textContent = "#" + epochId.toString().padStart(2, "0");
+
+    let found = false;
+    for (let id = epochId - 1n; id >= 1n && epochId - id <= 10n; id--) {
+      const e = await client.readContract({ address: POOL, abi, functionName: "getEpoch", args: [id] });
+      if (e[8]) {
+        const winners = e[9];
+        document.getElementById("stat-winner").textContent = winners.length ? shortAddr(winners[0]) : "no winner";
+        document.getElementById("stat-prize").textContent = fmt(e[5]) + " USDC";
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      document.getElementById("stat-winner").textContent = "—";
+      document.getElementById("stat-prize").textContent = "—";
+    }
+  } catch (err) {
+    console.error(err);
+    ["stat-pool", "stat-epoch", "stat-winner", "stat-prize"].forEach((id) => {
+      document.getElementById(id).textContent = "—";
+    });
+  }
+})();
+</script>
+
+</body>
+</html>

@@ -1,4 +1,4 @@
-# LuckyStaker – mô tả dự án (bản as-built)
+# LuckyPot – mô tả dự án (bản as-built)
 
 > Tài liệu này mô tả **những gì đã build và đang chạy thật**, để dùng làm nguyên
 > liệu thảo luận core belief, viết landing page và trang GitHub.
@@ -7,7 +7,7 @@
 > là spec thiết kế lúc chưa build (Bước 1–4), [`HANDOFF.md`](./HANDOFF.md) là
 > trạng thái làm việc cho phiên sau. File này là bản chốt "sản phẩm là gì".
 
-**Link:** https://luckystaker.pages.dev · **Repo:** https://github.com/KattyFury/LuckyStaker
+**Link:** https://luckypot.cc · **Repo:** https://github.com/KattyFury/LuckyPot
 
 ---
 

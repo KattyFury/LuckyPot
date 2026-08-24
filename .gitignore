@@ -13,6 +13,7 @@ contracts/ignition/deployments/
 
 # Frontend
 frontend/dist/
+frontend/dist-site/
 frontend/.vite/
 frontend/*.tsbuildinfo
 

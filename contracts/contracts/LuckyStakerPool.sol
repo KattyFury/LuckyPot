@@ -17,9 +17,9 @@ interface IYieldSource {
 }
 
 /// @title LuckyStakerPool
-/// @notice No-loss weekly prize pool (product name: StableLuck). Principal is always
+/// @notice No-loss weekly prize pool (product name: LuckyPot). Principal is always
 /// withdrawable; only the weekly yield is raffled off among depositors who kept a
-/// full-week eligible balance. Contract name kept as-is across the StableLuck rebrand
+/// full-week eligible balance. Contract name kept as-is across the LuckyPot rebrand
 /// (2026-08-24) — this is a display-only rename, nothing on-chain changed for it.
 contract LuckyStakerPool is
     Initializable,
@@ -78,7 +78,7 @@ contract LuckyStakerPool is
     // Must cover at least that epoch's weeklyPrizePool — see revealAndDraw.
     uint256 public pendingYield;
 
-    // --- Added in the StableLuck technical-spec upgrade (2026-08-24, applied via UUPS
+    // --- Added in the LuckyPot technical-spec upgrade (2026-08-24, applied via UUPS
     // upgrade on the live proxy, NOT a redeploy) — appended after pendingYield so the
     // existing storage layout is untouched. ---
 
@@ -134,7 +134,7 @@ contract LuckyStakerPool is
         epochs[1].endTime = uint64(block.timestamp + EPOCH_DURATION);
     }
 
-    /// @notice Sets the StableLuck technical-spec state added on top of the live pool.
+    /// @notice Sets the LuckyPot technical-spec state added on top of the live pool.
     /// Called once, in the same multisig transaction that upgrades the implementation
     /// (`upgradeToAndCall(newImpl, abi.encodeCall(initializeV2, (...)))`).
     function initializeV2(uint256 aprUSDC, uint256 aprARC, address usdcAddress) external reinitializer(2) {
