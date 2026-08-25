@@ -77,11 +77,7 @@ export function DepositModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div style={{ fontSize: "var(--fs-4)" }}>
-          Tickets you'll receive: <strong>{amount || "0"}</strong>
-        </div>
-
-        <div className="card" style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
-          Keep this deposited for the full week to count toward this epoch's draw.
+          Tickets you may receive after 1 week: <strong>{amount || "0"}</strong>
         </div>
 
         <button
