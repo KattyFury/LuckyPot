@@ -66,18 +66,11 @@ export function PoolCard({
         <Modal title="Eligible pool vs. total pool" onClose={() => setShowEligibleInfo(false)}>
           <div style={{ fontSize: "var(--fs-caption)", color: "var(--color-text-secondary)", lineHeight: 1.5 }}>
             <p>
-              <strong style={{ color: "var(--color-text)" }}>{amount(totalPool)}</strong> is everything currently
-              deposited – it's always safe and withdrawable anytime.
+              <strong style={{ color: "var(--color-text)" }}>{amount(totalPool)}</strong> deposited, always
+              withdrawable. Only <strong style={{ color: "var(--color-text)" }}>{formatUSDC(eligiblePoolTotal)}</strong> has
+              sat a full week and counts toward this draw – fresh deposits roll in next epoch.
             </p>
-            <p>
-              <strong style={{ color: "var(--color-text)" }}>{formatUSDC(eligiblePoolTotal)}</strong> is the slice of
-              that pool eligible for this week's draw. A deposit only counts once it has sat in the pool for one full
-              epoch without being withdrawn; a fresh deposit rolls into eligibility at the next draw.
-            </p>
-            <p>
-              Tip: deposit right after a draw happens so your funds start their full week immediately, instead of
-              depositing right before the current epoch ends.
-            </p>
+            <p>Tip: deposit right after a draw so your week starts immediately.</p>
           </div>
         </Modal>
       )}
@@ -86,18 +79,11 @@ export function PoolCard({
         <Modal title="Your eligible balance vs. your deposit" onClose={() => setShowMyEligibleInfo(false)}>
           <div style={{ fontSize: "var(--fs-caption)", color: "var(--color-text-secondary)", lineHeight: 1.5 }}>
             <p>
-              <strong style={{ color: "var(--color-text)" }}>{amount(myDeposited)}</strong> is everything you've
-              deposited – it's always safe and withdrawable anytime.
+              <strong style={{ color: "var(--color-text)" }}>{amount(myDeposited)}</strong> deposited, always
+              withdrawable. Only <strong style={{ color: "var(--color-text)" }}>{formatUSDC(myEligible)}</strong> has
+              sat a full week and counts toward this draw – fresh deposits roll in next epoch.
             </p>
-            <p>
-              <strong style={{ color: "var(--color-text)" }}>{formatUSDC(myEligible)}</strong> is the slice of your
-              deposit eligible for this week's draw. A deposit only counts once it has sat in the pool for one full
-              epoch without being withdrawn; a fresh deposit rolls into eligibility at the next draw.
-            </p>
-            <p>
-              Tip: deposit right after a draw happens so your funds start their full week immediately, instead of
-              depositing right before the current epoch ends.
-            </p>
+            <p>Tip: deposit right after a draw so your week starts immediately.</p>
           </div>
         </Modal>
       )}
