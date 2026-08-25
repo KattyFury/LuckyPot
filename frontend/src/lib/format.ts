@@ -1,5 +1,11 @@
-/** Bare number, no unit. For the unit-aware version see useAmount(). */
-export function formatUSDC(value: bigint, maximumFractionDigits = 0): string {
+/**
+ * Bare number, no unit. For the unit-aware version see useAmount().
+ *
+ * Default max 2 decimals, not 0 — whole numbers still print clean (1,127, not
+ * 1,127.00) since maximumFractionDigits is a ceiling, not a fixed width, but
+ * small prizes (e.g. 0.075 USDC) no longer round away to a misleading "0".
+ */
+export function formatUSDC(value: bigint, maximumFractionDigits = 2): string {
   const asNumber = Number(value) / 1e6;
   return asNumber.toLocaleString("en-US", { maximumFractionDigits });
 }

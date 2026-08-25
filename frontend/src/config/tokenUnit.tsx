@@ -23,5 +23,5 @@ export function useTokenUnit() {
 /** Formats a pool amount with the currently selected unit, e.g. "18,600 USDC". */
 export function useAmount() {
   const { unit } = useTokenUnit();
-  return (value: bigint, maximumFractionDigits = 0) => `${formatUSDC(value, maximumFractionDigits)} ${unit}`;
+  return (value: bigint, maximumFractionDigits = 2) => `${formatUSDC(value, maximumFractionDigits)} ${unit}`;
 }
