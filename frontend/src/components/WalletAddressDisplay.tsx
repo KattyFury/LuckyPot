@@ -17,6 +17,7 @@ export function WalletAddressDisplay({
   onDisconnect: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,13 +42,15 @@ export function WalletAddressDisplay({
       >
         <span style={{ fontWeight: 700, color: "var(--color-text)" }}>{shortAddress(address)}</span>
         <span
-          className="icon icon-copy"
+          className={copied ? "icon icon-check" : "icon icon-copy"}
           title="Copy address"
           onClick={(e) => {
             e.stopPropagation();
             navigator.clipboard.writeText(address);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
           }}
-          style={{ color: "var(--color-text-secondary)" }}
+          style={{ color: copied ? "var(--color-primary)" : "var(--color-text-secondary)" }}
         />
       </button>
 

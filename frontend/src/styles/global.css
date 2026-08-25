@@ -111,6 +111,11 @@ button {
   mask-image: url("../assets/icons/x.svg");
 }
 
+.icon-check {
+  -webkit-mask-image: url("../assets/icons/check.svg");
+  mask-image: url("../assets/icons/check.svg");
+}
+
 .scroll-panel {
   overflow-y: auto;
   scrollbar-width: thin;
