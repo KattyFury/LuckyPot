@@ -31,6 +31,53 @@ User rất khắt khe về lưới; đã phải dựng lại 2 lần vì làm sa
 
 ---
 
+## Tổng hợp — những việc lớn CHƯA từng ghi vào HANDOFF (bổ sung 2026-08-25)
+
+Các việc này đã làm xong và push từ trước nhưng chưa được note lại ở đây:
+
+- **Rebrand LuckyStaker → StableLuck → LuckyPot (tên CUỐI CÙNG).** Đổi tên repo GitHub,
+  text trong app, package name, localStorage key prefix (`luckypot:...`), 2 lần liền —
+  contract Solidity vẫn giữ tên cũ `LuckyStakerPool.sol` (xem cảnh báo đầu file).
+- **Landing page mới** ở `frontend/landing/index.html` — file HTML tĩnh riêng, KHÔNG qua
+  Vite build, đọc dữ liệu on-chain thật bằng `viem` import trực tiếp từ `esm.sh` (không
+  cần bundler vì đây không phải React app). Domain `luckypot.cc` trỏ root vào landing,
+  `/app` vào dashboard React — cấu hình bằng `vite.config.ts` (`base: "/app/"`,
+  `build.outDir: "dist-site/app"`) + script `frontend/scripts/build-site.mjs` copy landing
+  vào `dist-site/` sau khi build app. Lệnh build đúng giờ là `npm run build:site`
+  (KHÔNG PHẢI `npm run build` — lệnh đó chỉ build app, thiếu landing).
+  - Domain `luckypot.cc` gắn qua Cloudflare API trực tiếp (không có `wrangler pages domain`
+    command ở bản wrangler đang dùng) — token ở `EZwallet/.env.txt` (`CF_API_TOKEN`,
+    `CF_ACCOUNT_ID`), xem lệnh trong lịch sử chat nếu cần gắn domain khác.
+  - Toàn bộ icon (kể cả landing) phải lấy từ `D:\Files\Claude\Icons`, copy vào
+    `frontend/landing/icons/` (landing) hoặc `frontend/src/assets/icons/` (app) — **không
+    dùng ký tự unicode/emoji giả icon** (đã từng sai với "✕", "↓", dấu "+/–" ở accordion,
+    user nhắc rất gắt vụ này).
+  - Logo chính thức `luckypot.svg` (lọ vàng + lá tứ diệp xanh, 2 màu — dùng thẳng `<img>`,
+    KHÔNG dùng kỹ thuật mask 1 màu) — cũng là favicon.svg + apple-touch-icon.png (render
+    bằng Playwright screenshot 180×180 vì máy không có công cụ convert SVG→PNG khác).
+- **Fix bug nghiêm trọng: "Buffer is not defined" khi deposit qua Privy.** Privy SDK +
+  vài dependency wallet-connect của nó cần `Buffer`/`process`/`global` (biến Node.js),
+  Vite (khác webpack) không tự polyfill. Fix bằng `vite-plugin-node-polyfills` trong
+  `vite.config.ts`, scope đúng 3 biến đó.
+- **Modal.tsx giờ render qua React Portal (`createPortal` vào `document.body`)** — trước
+  đó Modal là con trực tiếp của 1 container `display:grid` (dashboard-grid hoặc card's
+  own row-grid), khiến `position:fixed` bị "kẹt" trong ô grid thay vì phủ toàn màn hình
+  → click ra ngoài để đóng popup KHÔNG hoạt động đúng (backdrop chỉ to bằng cái box mở
+  popup đó). Đây là lỗi ẩn ảnh hưởng MỌI popup trong app, không riêng popup nào — đã fix
+  1 lần cho tất cả qua Portal.
+- **`formatUSDC` đổi mặc định `maximumFractionDigits` 0 → 2** — số nguyên vẫn hiện gọn
+  (không thêm `.00` thừa), nhưng số lẻ nhỏ (giải thưởng 0.075 USDC) không còn hiện sai
+  thành "0 USDC".
+- **Icon copy trên navbar giờ animate:** bấm copy địa chỉ → đổi sang `check.svg` màu xanh
+  1.5s rồi tự về lại `copy.svg`.
+- **README.md và PROJECT.md đã viết lại toàn bộ** cho khớp logic mới nhất (yield `aprBps`,
+  chia giải `sqrt`, referral, vault) — README giờ mở đầu bằng core belief thay vì đi thẳng
+  vào cấu trúc thư mục.
+- **Git identity đổi sang tài khoản `still2412`** cho repo này (LOCAL config, không phải
+  global — các project khác của user vẫn dùng KattyFury bình thường). `gh` active account
+  cũng là `still2412`, hiện đã có quyền **admin** trên repo (cấp qua API sau khi UI web
+  không cho đổi role trực tiếp — xem lịch sử chat nếu cần lặp lại thao tác này).
+
 ## Trạng thái nghỉ 2026-08-25 — epoch giờ neo đúng lịch Thứ Hai 00:00 UTC
 
 **Upgrade thứ 3 lên proxy** (`0xD2F9562f31eb6a1eA89D296e7a5aBf4a0E3fEA56`, module
@@ -110,37 +157,23 @@ biến mới nên không cần `initializeV2`/reinitializer, upgrade bằng
 - **Toggle `USDC | $ARC` giờ đã KHOÁ nút `$ARC`** (`disabled`, mờ đi, có tooltip "chưa launch") — trước đó bấm vào chỉ đổi nhãn còn số vẫn là USDC (gây hiểu lầm), user xác nhận nên khoá hẳn thay vì để bấm được.
 - Đã build + typecheck + test bằng Playwright thật trên `vite preview` (đọc số liệu on-chain thật `65/685`, không phải giả lập) trước khi deploy. Deploy Cloudflare Pages + push GitHub commit `0d0b3c5`.
 
-## Trạng thái nghỉ 2026-08-23 — ĐÃ DEPLOY THẬT LÊN ARC TESTNET (bản có forceEndEpoch để test nhanh)
+## Lịch sử tóm tắt (chi tiết đầy đủ nằm trong git log / chat cũ nếu cần đào lại)
 
-**Toàn bộ pipeline chạy thật end-to-end, verify trực tiếp on-chain.**
-
-- **Contract đã deploy:** proxy **`0x88dCB2f36356AA8DADdC2e8fb4A3E122Ba9D0Beb`** trên Arc Testnet (chainId 5042002). Implementation `0x9b59644e4475B894c83c9e66962ca80171d3eB16`. Verify on-chain: `currentEpochId` tăng đúng, Safe có `DEFAULT_ADMIN_ROLE`, ví bot có `KEEPER_ROLE`.
-  - ⚠️ **2 địa chỉ cũ đã bỏ** (không dùng nữa): `0x182a77...` (tên contract cũ `LuckyStackerPool`) và `0xCaC33b...` (bản đổi tên nhưng chưa có `forceEndEpoch`). Mỗi lần đổi contract = redeploy toàn bộ, không có cách "sửa tại chỗ".
-  - **Tính năng mới: `forceEndEpoch()` (chỉ `KEEPER_ROLE` gọi được)** — cho phép kết thúc epoch hiện tại NGAY LẬP TỨC (bỏ qua chờ 7 ngày thật), miễn là đã `commitRandom` trước đó. Mục đích: test/fix bug nhanh, KHÔNG dùng cho sản xuất thật (sẽ phá vỡ tính công bằng "phải giữ đủ 1 tuần" nếu dùng bừa khi có người gửi tiền thật — cân nhắc revoke `KEEPER_ROLE` khỏi ví bot hoặc bỏ hẳn hàm này trước khi có depositor thật).
-- **Script test nhanh: `npm run draw:now`** (trong `automation/`) — chạy `commitRandom` → `forceEndEpoch` → `revealAndDraw` liên tiếp trong 1 lệnh, xổ số ngay lập tức, không cần chờ gì cả. Đã test **2 lần liên tiếp thành công** (epoch 1 và epoch 2), lặp lại được thoải mái để debug. Script `npm run draw` (bản thật, tôn trọng thời gian epoch) vẫn giữ nguyên cho production/cron.
-- **Admin Safe 2-of-2:** `0x0f5514fCA02b639229528a5521dafd0a61bb27ef` — 2 owner là 2 ví cá nhân của user (`0xEb2D222d28F35fE7BeB5387f8Bc4eBF65f2652F6` và `0xb0ea48A1979326BA9e0b5027D105C8DF9CCAA12E`), tạo qua app.safe.global. Có 120 USDC test. Không đổi qua các lần redeploy.
-- **Ví bot (deploy + keeper):** `0x4672A3B3C14727629107711D9853B52e8E1E26B1`. Private key trong `contracts/.env` + `automation/.env` (gitignored) và GitHub Secrets (`KEEPER_PRIVATE_KEY`) — KHÔNG in ra chat. USDC còn lại giảm dần theo mỗi lần deploy/test (theo dõi qua faucet nếu cạn).
-- **Frontend:** trỏ `VITE_POOL_ADDRESS` vào contract mới nhất, đã deploy lên Cloudflare Pages, verify bằng Playwright — 0 lỗi console.
-- **GitHub:** collaborator `still2412` đã được mời (quyền write, đang chờ accept). Repo đã đổi tên, `gh secret POOL_ADDRESS` đã cập nhật theo địa chỉ mới nhất.
-- **Privy:** App ID thật `cmt43aax701w40cl5r86us72b` nằm ở `frontend/.env` (gitignored). Nếu biến này rỗng, app **tự fallback** sang connector ví injected (MetaMask) thay vì crash — xem `frontend/src/config/authMode.ts`.
-
-### Trạng thái UI hiện tại (cuối phiên 08-23)
-
-- **Navbar:** bấm địa chỉ ví → dropdown **nền ĐEN** 5 mục, chữ Title Case đồng bộ: Deposit · Withdraw · Draw History · My History · **Disconnect (chữ đỏ)**. Icon copy bấm riêng để copy (có `stopPropagation`), không kèm chữ "copy".
-- **Đơn vị tiền hiển thị là `0 USDC`, KHÔNG phải `$0`.** Dùng hook `useAmount()` (`config/tokenUnit.tsx`), đừng tự nối `$` + `formatUSDC` nữa.
-- **Toggle `USDC | $ARC`** ở góc phải header box EPOCH (`components/TokenToggle.tsx`) — nút bật qua lại thật, state ở `TokenUnitProvider` bọc trong `App.tsx`, đổi đơn vị toàn app.
-  - ⚠️ Pool thật vẫn giữ USDC, **$ARC chưa tồn tại** (spec mục 4: TGE chưa có ngày). Nên khi bật $ARC, banner tự đổi thành *"$ARC isn't live yet — figures are the USDC pool."* để màn hình không nói sai sự thật. **Chưa được user duyệt dòng này** — hỏi lại, nếu user thấy thừa thì bỏ.
-- **Luồng Latest Result (đã đổi hẳn theo yêu cầu user):** bấm **không** nhảy sang màn cào nữa. Nó mở popup **DRAW HISTORY của epoch vừa quay**; nếu ví đang kết nối có trong danh sách trúng thì dòng đó **highlight xanh + ghi "You"**, bấm vào dòng đó mới ra popup kết quả.
-- **Cào chỉ 1 lần duy nhất:** nhớ bằng `localStorage` khoá `luckypot:scratched:<addr>:<epochId>` (đổi prefix theo rebrand 2026-08-24, key cũ `luckystaker:...` không migrate — vô hại, chỉ khiến thẻ cũ cào lại được 1 lần). Mở lại lần sau hiện thẳng kết quả. Đã `claim` rồi thì cũng bỏ qua bước cào.
-- **Màn Scratch riêng đã XOÁ** (`frontend/src/pages/Scratch.tsx`) — giờ là `components/ResultModal.tsx`. `App.tsx` chỉ còn 3 view: dashboard / deposit / withdraw.
-- **Popup dùng chung** `components/Modal.tsx`: header căn trái ở hàng 1, rộng `75vw` mobile / `645px` desktop (đúng spec §5).
-- Deposit đã có hiển thị số dư ví + nút MAX; banner tự đổi thành **"Click here to faucet"** (link faucet.circle.com) khi ví có 0 USDC; kết nối ví tự động xin chuyển sang Arc Testnet.
-
-**Còn lại — không khẩn:**
-1. Dùng `npm run draw:now` để test lặp lại các luồng claim/sweep/UI bao nhiêu lần tuỳ ý trong lúc còn debug.
-2. **Chưa test bằng ví thật:** toàn bộ luồng cần ví (auto switch mạng, dropdown, highlight "You", cào, claim) mới chỉ verify bằng code + Playwright — **Playwright không giả lập được MetaMask**, user phải tự bấm thử.
-3. Theo dõi `still2412` đã accept lời mời GitHub collaborator chưa.
-4. **Trước khi có depositor thật / lên thật:** cân nhắc revoke quyền gọi `forceEndEpoch` của ví bot (hoặc bỏ hẳn hàm này khỏi contract bằng 1 bản redeploy sạch) để không ai phá được nhịp "đủ 1 tuần" của epoch thật.
+- **2026-08-23:** Deploy thật đầu tiên lên Arc Testnet, dựng xong toàn bộ UI theo spec,
+  luồng cào thẻ/claim/sweep. `still2412` được mời làm collaborator (write), sau đó
+  (08-25) nâng lên admin và trở thành tài khoản `gh`/git chính cho repo này.
+- **2026-08-24 → 08-25:** Rebrand 2 lần (→ StableLuck → LuckyPot), chuyển repo Private,
+  nâng cấp contract 3 lần (technical-spec yield/prize/referral/vault → Monday-anchor
+  epoch), thêm landing page + domain `luckypot.cc`, fix hàng loạt bug UI (xem mục
+  "Tổng hợp" phía trên).
+- **Việc còn treo, chưa khẩn:**
+  1. Siết lại quyền admin về đúng chuẩn Safe 2-of-2 (hiện có thêm 1 ví đơn ngang quyền,
+     xem mục Roadmap ở section Monday-anchor phía trên) — trước khi có tiền/yield thật.
+  2. `IYieldSource` interface đã khai báo, chưa có implementation thật (chờ Arc có DeFi
+     đáng tin).
+  3. Banner cảnh báo `$ARC isn't live yet...` là tự thêm, chưa hỏi lại user có muốn giữ
+     nguyên câu chữ đó không (giờ toggle $ARC đã khoá cứng nên banner này gần như không
+     bao giờ hiện nữa — có thể coi là hết cần thiết).
 
 ---
 
@@ -197,14 +230,19 @@ biến mới nên không cần `initializeV2`/reinitializer, upgrade bằng
 
 ```bash
 # frontend (D:\Files\Claude\Build on Arc\LuckyStaker\frontend — thư mục local CHƯA đổi tên, bị khoá bởi VS Code lúc rebrand 2026-08-24, tự đổi tay nếu muốn)
-npx vite --port 5183 --host        # dev server (user hay xem ở đây trước khi chốt)
+npx vite --port 5183 --host        # dev server (chỉ phục vụ app, KHÔNG có landing page)
 ./node_modules/.bin/tsc -b --noEmit  # typecheck (đừng dùng `npx tsc`, npx kéo nhầm gói tsc rác)
-npx vite build && npx wrangler pages deploy dist --project-name=luckypot --branch=main --commit-dirty=true
+npm run build:site                 # build app + copy landing vào dist-site/ — dùng lệnh này, KHÔNG dùng `npm run build` suông
+npx wrangler pages deploy dist-site --project-name=luckypot --branch=main --commit-dirty=true
 
-# contracts
+# gắn/kiểm tra domain luckypot.cc (không có lệnh wrangler cho việc này, phải gọi API)
+# xem CF_API_TOKEN/CF_ACCOUNT_ID trong D:\Files\Claude\Build on Arc\EZwallet\.env.txt
+
+# contracts — deploy CHỈ implementation mới (an toàn, không đụng proxy đang chạy):
 npx hardhat test
-echo "y" | npx hardhat ignition deploy ignition/modules/LuckyStakerPool.ts --network arcTestnet --deployment-id <id-moi> --parameters '<json>'
+echo "y" | npx hardhat ignition deploy ignition/modules/LuckyStakerPoolV<n>Implementation.ts --network arcTestnet --deployment-id luckypot-v<n>-impl
+# rồi tính calldata upgradeToAndCall + để ví admin (Safe hoặc 0xb0ea48A1...) tự ký qua 1 trang HTML nhỏ gọi eth_sendTransaction (xem lịch sử chat để lấy lại mẫu)
 
 # automation
-npm run fund-yield && npm run draw:now
+npm run fund-yield && npm run draw:now   # draw:now cần secret local, nếu epoch đã commit bởi cron thì phải trigger `gh workflow run keeper.yml` thay vì draw:now
 ```
