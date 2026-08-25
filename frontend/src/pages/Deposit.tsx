@@ -77,7 +77,8 @@ export function DepositModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div style={{ fontSize: "var(--fs-4)" }}>
-          Tickets you may receive after 1 week: <strong>{amount || "0"}</strong>
+          Tickets you'll receive once this sits in the pool from this epoch's start to its
+          end: <strong>{amount || "0"}</strong>
         </div>
 
         <button
