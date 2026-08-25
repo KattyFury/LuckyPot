@@ -345,8 +345,25 @@ contract LuckyStakerPool is
         }
 
         currentEpochId = epochId + 1;
-        epochs[currentEpochId].startTime = uint64(block.timestamp);
-        epochs[currentEpochId].endTime = uint64(block.timestamp + EPOCH_DURATION);
+        uint64 newStart = e.endTime;
+        epochs[currentEpochId].startTime = newStart;
+        epochs[currentEpochId].endTime = uint64(_nextMondayUTC(newStart));
+    }
+
+    /// @dev Next Monday 00:00 UTC strictly after `timestamp`. Epoch boundaries
+    /// anchor to calendar weeks (Monday 00:00 UTC -> the following Monday
+    /// 00:00 UTC) by chaining off the PREVIOUS epoch's scheduled endTime here,
+    /// not block.timestamp at reveal time — so the schedule never drifts even
+    /// if the keeper calls revealAndDraw late. Once an epoch's endTime lands
+    /// on a Monday, every epoch after it does too, automatically (this
+    /// function just adds 7 days in that steady state). Unix epoch 0
+    /// (1970-01-01) was a Thursday, so weekday (Monday=0) = (daysSinceEpoch + 3) % 7.
+    function _nextMondayUTC(uint256 timestamp) internal pure returns (uint256) {
+        uint256 daysSinceEpoch = timestamp / 1 days;
+        uint256 dayStart = daysSinceEpoch * 1 days;
+        uint256 weekday = (daysSinceEpoch + 3) % 7;
+        uint256 daysToAdd = weekday == 0 ? 7 : 7 - weekday;
+        return dayStart + daysToAdd * 1 days;
     }
 
     // ---------------------------------------------------------------------

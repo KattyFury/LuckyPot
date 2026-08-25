@@ -6,7 +6,7 @@
 > đã gửi bất cứ lúc nào.
 
 **Repo:** https://github.com/KattyFury/LuckyPot (đổi tên từ `LuckyStaker` → `LuckyPot` ngày 2026-08-24, đổi thương hiệu — repo cũng đã chuyển **Private** cùng ngày vì user chưa muốn lộ dự án sớm)
-**Web đang chạy:** https://luckypot.pages.dev (Cloudflare Pages, project `luckypot`, deploy tay bằng `npx wrangler pages deploy dist --project-name=luckypot --branch=main` — **KHÔNG** auto-deploy từ GitHub. Project Cloudflare cũ `luckystaker` vẫn còn tồn tại nhưng ngừng cập nhật, có thể xoá tay nếu muốn.)
+**Web đang chạy:** https://luckypot.cc (custom domain gắn vào Cloudflare Pages project `luckypot`) — landing page ở root, dashboard ở `/app`. Deploy tay bằng `cd frontend && npm run build:site && npx wrangler pages deploy dist-site --project-name=luckypot --branch=main` — **KHÔNG** auto-deploy từ GitHub. Project Cloudflare cũ `luckystaker`/`stableluck` vẫn còn tồn tại nhưng ngừng cập nhật.
 ⚠️ **Contract Solidity CỐ Ý giữ nguyên tên `LuckyStakerPool`, KHÔNG redeploy khi đổi thương hiệu** — spec không yêu cầu tên contract khớp tên sản phẩm, và contract đang giữ dữ liệu thật (685 USDC, lịch sử epoch 3/4 đã quay). Mọi chỗ trong repo nhắc tới `LuckyStakerPool.sol` / `LuckyStakerPool (proxy)` là tên kỹ thuật thật, không phải sai sót quên đổi.
 **Spec gốc:** [`arc-prize-pool-spec.md`](./arc-prize-pool-spec.md) — đã có trong repo, encoding sạch
 
@@ -30,6 +30,47 @@ User rất khắt khe về lưới; đã phải dựng lại 2 lần vì làm sa
 - Cách kiểm tra: đừng tin mắt, mở Playwright đo `getBoundingClientRect` / `gridTemplateRows` rồi so số (xem mục "Bài học" bên dưới).
 
 ---
+
+## Trạng thái nghỉ 2026-08-25 — epoch giờ neo đúng lịch Thứ Hai 00:00 UTC
+
+**Upgrade thứ 3 lên proxy** (`0xD2F9562f31eb6a1eA89D296e7a5aBf4a0E3fEA56`, module
+`LuckyStakerPoolV3Implementation.ts`) — chỉ sửa logic `revealAndDraw`, KHÔNG thêm
+biến mới nên không cần `initializeV2`/reinitializer, upgrade bằng
+`upgradeToAndCall(newImpl, "0x")` (data rỗng).
+
+- **Vấn đề cũ:** `epochs[currentEpochId].endTime = block.timestamp + 7 ngày` —
+  tính theo giờ bot thực sự gọi `revealAndDraw`, nên trôi dần theo thời gian,
+  không neo theo lịch dương.
+- **Fix:** `newStart = epoch_cũ.endTime` (không phải `block.timestamp`) +
+  `newEnd = _nextMondayUTC(newStart)` — hàm mới `_nextMondayUTC()` tính đúng
+  0h00 UTC Thứ Hai kế tiếp (Unix epoch 0 = Thứ Năm, nên `weekday = (ngày + 3) % 7`
+  với Thứ Hai = 0). Vì dùng `endTime` CŨ làm gốc (không phải giờ thực), epoch đầu
+  tiên sau upgrade tự "snap" về đúng Thứ Hai gần nhất (dù ngắn hơn 7 ngày), và
+  MỌI epoch sau đó tự động đúng trọn 7 ngày Thứ Hai → Thứ Hai mãi mãi — không
+  cần can thiệp gì thêm.
+  - ⚠️ **`forceEndEpoch()` phá chuỗi neo lịch này** — nó ghi đè `endTime = now`,
+    nên nếu dùng để test nhanh, epoch NGAY SAU đó sẽ lại lệch lịch 1 lần nữa
+    (rồi tự neo lại đúng từ epoch sau nữa). Đây là đánh đổi đã biết của hàm test,
+    không phải bug.
+- **Đã thực hiện thật:** force-end epoch #06 (quay ra 1 người trúng
+  `0x24425EE2...c10`, quỹ 1.300384 USDC) → epoch #07 xác nhận kết thúc đúng
+  **Thứ Hai 31/08/2026, 00:00:00 UTC** (epoch chuyển tiếp, ngắn hơn 7 ngày do bắt
+  đầu giữa tuần) — từ epoch #08 trở đi sẽ luôn trọn 7 ngày Thứ Hai → Thứ Hai.
+  Tiền không suy chuyển: 1,217 USDC trước/sau đều khớp.
+- Test mới `"anchors epoch boundaries to Monday 00:00 UTC..."` verify cả 2 case:
+  epoch đầu tự snap đúng Monday, epoch kế tiếp cách đúng 7×86400 giây.
+
+### Bài học/gotcha đã sửa cùng đợt này
+
+- **`formatUSDC` mặc định `maximumFractionDigits=0`** làm giải thưởng nhỏ
+  (0.075 USDC) hiện thành "0 USDC" — đổi mặc định thành 2, số nguyên vẫn hiện
+  gọn (`toLocaleString` không thêm `.00` thừa vì đây là max, không phải fixed).
+- **Khoản ~9.925 USDC "thừa" vào vault ở epoch #05** — KHÔNG phải bug công thức
+  mới. Epoch 5 đang chạy dở lúc upgrade lần 2 (aprBps) hạ cánh; `pendingYield`
+  khi đó đã tích luỹ sẵn theo công thức CŨ (`max($10, pool×10%/52)`) từ cron
+  chạy trước upgrade. Logic mới đúng nhận phần dư đó là `surplus`, quét vào
+  vault đúng như thiết kế — chỉ là tàn dư 1 lần từ lúc chuyển đổi, đã sạch từ
+  epoch #06. Code hiện không còn `$10`/`MIN_PRIZE` ở bất kỳ đâu (đã grep xác nhận).
 
 ## Trạng thái nghỉ 2026-08-24 (tối) — technical-spec upgrade ĐÃ CHẠY THẬT lên chain
 

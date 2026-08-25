@@ -326,6 +326,45 @@ describe("LuckyStakerPool", () => {
     await adminPool.write.withdrawReserve([reserve, admin.account.address, "incident payout"]);
     expect(await pool.read.vaultReserve()).to.equal(0n);
   });
+
+  it("anchors epoch boundaries to Monday 00:00 UTC, self-correcting on the first draw after deploy", async () => {
+    const { pool, keeper } = await deployFixture();
+    const keeperPool = await poolAs(pool, keeper);
+
+    // Fixture's epoch 1 was NOT Monday-aligned (started at fixture deploy time),
+    // so this first draw is the "transition" — its result should still land
+    // exactly on the next Monday, proving the self-correction.
+    const secret1 = 111n;
+    await keeperPool.write.commitRandom([await hashSecret(secret1)]);
+    await keeperPool.write.forceEndEpoch();
+    await keeperPool.write.revealAndDraw([secret1]);
+
+    const epoch2 = await pool.read.getEpoch([2n]);
+    const endTime1 = Number(epoch2[1]);
+    const end1 = new Date(endTime1 * 1000);
+    expect(end1.getUTCDay()).to.equal(1); // Monday
+    expect(end1.getUTCHours()).to.equal(0);
+    expect(end1.getUTCMinutes()).to.equal(0);
+    expect(end1.getUTCSeconds()).to.equal(0);
+
+    // Second draw, now already Monday-aligned: next boundary must be exactly
+    // 7 days later, still a Monday — proving the steady state holds forever.
+    // Uses real time travel to the actual scheduled endTime rather than
+    // forceEndEpoch(), since forceEndEpoch overwrites endTime to "now" —
+    // fine for skipping the wait, but it would clobber the real Monday
+    // schedule this test is trying to verify.
+    const secret2 = 222n;
+    await keeperPool.write.commitRandom([await hashSecret(secret2)]);
+    await hre.network.provider.send("evm_setNextBlockTimestamp", [endTime1]);
+    await hre.network.provider.send("evm_mine");
+    await keeperPool.write.revealAndDraw([secret2]);
+
+    const epoch3 = await pool.read.getEpoch([3n]);
+    const endTime2 = Number(epoch3[1]);
+    expect(endTime2 - endTime1).to.equal(7 * 24 * 60 * 60);
+    const end2 = new Date(endTime2 * 1000);
+    expect(end2.getUTCDay()).to.equal(1);
+  });
 });
 
 async function hashSecret(secret: bigint) {
