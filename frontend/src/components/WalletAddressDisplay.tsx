@@ -38,7 +38,7 @@ export function WalletAddressDisplay({
     <div ref={rootRef} style={{ position: "relative" }}>
       <button
         onClick={() => setOpen((v) => !v)}
-        style={{ background: "none", display: "flex", alignItems: "center", gap: 8, fontSize: "var(--fs-sm)" }}
+        style={{ background: "none", display: "flex", alignItems: "center", gap: 8, fontSize: "var(--fs-2)" }}
       >
         <span style={{ fontWeight: 700, color: "var(--color-text)" }}>{shortAddress(address)}</span>
         <span

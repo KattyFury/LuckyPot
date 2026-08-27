@@ -28,7 +28,7 @@ export function EpochCard({
     <div className="card card-rows card-rows--epoch">
       <div
         className="box-header box-header--inline"
-        style={{ fontSize: "var(--fs-sm)", fontWeight: 700, justifyContent: "space-between" }}
+        style={{ fontSize: "var(--fs-2)", fontWeight: 700, justifyContent: "space-between" }}
       >
         <span style={{ color: "var(--color-primary)" }}>EPOCH {idLabel}</span>
         <TokenToggle />
@@ -43,16 +43,16 @@ export function EpochCard({
           whiteSpace: "nowrap",
         }}
       >
-        <span style={{ fontSize: "var(--fs-sm)", color: "var(--color-text-secondary)" }}>end in</span>
+        <span style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>end in</span>
         {/* Tightened word spacing so the d/h/m/s groups sit closer together. */}
-        <span style={{ fontSize: "var(--fs-xl)", fontWeight: 700, wordSpacing: "-3px" }}>
+        <span style={{ fontSize: "var(--fs-4)", fontWeight: 700, wordSpacing: "-3px" }}>
           {formatCountdown(secondsRemaining)}
         </span>
       </div>
 
       <div
         style={{
-          fontSize: "var(--fs-md)",
+          fontSize: "var(--fs-1)",
           color: "var(--color-text-secondary)",
           lineHeight: 1.4,
           fontFamily: "var(--font-condensed)",

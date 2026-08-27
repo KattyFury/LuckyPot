@@ -102,7 +102,7 @@ export function FaucetOrSellBanner() {
               marginTop: 6,
               background: "#c0392b",
               color: "#fff",
-              fontSize: "var(--fs-sm)",
+              fontSize: "var(--fs-1)",
               padding: "6px 10px",
               borderRadius: "var(--radius)",
               zIndex: 10,

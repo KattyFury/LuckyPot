@@ -17,15 +17,13 @@
   --radius: 15px;
   --gap: 10px;
 
-  /* 5-step scale, user-defined 2026-08-27: sm = UI/metadata, md = body/
-     supporting text, lg = heading/important label, xl = primary number,
-     2xl = exceptional (jackpot) number. 33px dropped from everyday UI -
-     nothing currently uses it; reintroduce only for a genuinely huge hero. */
-  --fs-sm: 13px;
-  --fs-md: 15px;
-  --fs-lg: 18px;
-  --fs-xl: 23px;
-  --fs-2xl: 28px;
+  /* 4-step scale, user-revised 2026-08-27: 15/18/22/27, numbered smallest
+     to largest: 1 = UI/metadata/body text (the floor), 2 = heading/
+     important label, 3 = primary number, 4 = exceptional (jackpot) number. */
+  --fs-1: 15px;
+  --fs-2: 18px;
+  --fs-3: 22px;
+  --fs-4: 27px;
 
   /* Mobile 430px; desktop exactly 2x that (user's call, over the spec's
      1290). Fixed columns, never a fluid stretch — outside is page bg. */
@@ -140,7 +138,7 @@ button {
 .pill-button {
   border-radius: 999px;
   padding: 14px 0;
-  font-size: var(--fs-sm);
+  font-size: var(--fs-1);
   font-weight: 700;
   text-align: center;
   width: 100%;
@@ -354,7 +352,7 @@ button {
   display: flex;
   align-items: center;
   flex: none;
-  font-size: var(--fs-lg);
+  font-size: var(--fs-2);
   font-weight: 700;
   color: var(--color-primary);
   font-family: var(--font-condensed);
@@ -440,7 +438,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: var(--gap);
-  font-size: var(--fs-lg);
+  font-size: var(--fs-2);
   font-weight: 700;
   color: var(--color-primary);
   font-family: var(--font-condensed);
@@ -457,7 +455,7 @@ button {
   padding: 0 20px;
   border-radius: var(--radius);
   background: var(--color-card-bg);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-1);
   font-weight: 700;
   color: var(--color-primary);
   font-family: var(--font-condensed);
@@ -478,7 +476,7 @@ button {
   border-radius: 999px;
   background: none;
   color: var(--color-text-secondary);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-1);
   font-weight: 700;
   line-height: 1.2;
   white-space: nowrap;
@@ -515,7 +513,7 @@ button {
   border-radius: 8px;
   background: none;
   color: #ffffff;
-  font-size: var(--fs-sm);
+  font-size: var(--fs-1);
   font-weight: 700;
 }
 

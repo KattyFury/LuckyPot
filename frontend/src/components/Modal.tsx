@@ -20,7 +20,7 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
         <div className="modal-header">
           <span>{title}</span>
           <button onClick={onClose} style={{ background: "none", padding: 0, lineHeight: 0 }}>
-            <span className="icon icon-x" style={{ fontSize: "var(--fs-sm)" }} />
+            <span className="icon icon-x" style={{ fontSize: "var(--fs-1)" }} />
           </button>
         </div>
         {children}

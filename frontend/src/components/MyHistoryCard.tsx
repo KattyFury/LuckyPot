@@ -11,25 +11,25 @@ export function MyHistoryList({ entries, connected }: { entries: HistoryEntry[];
 
   if (!connected) {
     return (
-      <div style={{ fontSize: "var(--fs-md)", color: "var(--color-text-secondary)" }}>
+      <div style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>
         Connect your wallet to see your history.
       </div>
     );
   }
   if (entries.length === 0) {
-    return <div style={{ fontSize: "var(--fs-md)", color: "var(--color-text-secondary)" }}>No activity yet.</div>;
+    return <div style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>No activity yet.</div>;
   }
 
   return (
     <>
       {entries.map((entry, i) => (
         <div key={i} className="card-list__row card-list__row--stacked">
-          <span style={{ fontSize: "var(--fs-sm)", color: "var(--color-text-secondary)" }}>
+          <span style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>
             {formatDate(entry.timestamp)}
           </span>
           <span
             style={{
-              fontSize: "var(--fs-md)",
+              fontSize: "var(--fs-1)",
               fontWeight: 700,
               color: entry.type === "Won" ? "var(--color-primary)" : undefined,
             }}

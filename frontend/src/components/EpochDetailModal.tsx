@@ -23,7 +23,7 @@ export function EpochDetailModal({
 
   return (
     <Modal title={`Epoch #${epochId.toString().padStart(2, "0")}`} onClose={onClose}>
-      <div style={{ fontSize: "var(--fs-md)", color: "var(--color-text-secondary)" }}>
+      <div style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>
         Eligible pool:{" "}
         <strong style={{ color: "var(--color-text)" }}>
           {amount(epoch.eligiblePoolSnapshot)}/{epoch.eligibleParticipants.toString()}{" "}
@@ -35,7 +35,7 @@ export function EpochDetailModal({
       </div>
 
       {epoch.winners.length === 0 ? (
-        <div style={{ fontSize: "var(--fs-md)", color: "var(--color-text-secondary)" }}>
+        <div style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>
           No winners this epoch – not enough participants or yield funded yet.
         </div>
       ) : (
@@ -59,7 +59,7 @@ export function EpochDetailModal({
             const base: React.CSSProperties = {
               display: "flex",
               justifyContent: "space-between",
-              fontSize: "var(--fs-sm)",
+              fontSize: "var(--fs-1)",
               padding: "8px 12px",
               borderRadius: 8,
             };

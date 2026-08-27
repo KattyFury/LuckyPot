@@ -57,15 +57,15 @@ export function ResultModal({
     >
       {won ? (
         <>
-          <span style={{ fontSize: "var(--fs-sm)", fontWeight: 700, textTransform: "uppercase" }}>You won</span>
-          <span style={{ fontSize: "var(--fs-2xl)", fontWeight: 700, fontFamily: "var(--font-condensed)" }}>
+          <span style={{ fontSize: "var(--fs-1)", fontWeight: 700, textTransform: "uppercase" }}>You won</span>
+          <span style={{ fontSize: "var(--fs-4)", fontWeight: 700, fontFamily: "var(--font-condensed)" }}>
             {amount(owed)}
           </span>
         </>
       ) : (
         <>
-          <span style={{ fontSize: "var(--fs-lg)", fontWeight: 700 }}>Good luck next epoch</span>
-          <span style={{ fontSize: "var(--fs-sm)", color: "var(--color-text-secondary)" }}>
+          <span style={{ fontSize: "var(--fs-2)", fontWeight: 700 }}>Good luck next epoch</span>
+          <span style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>
             Your principal is safe and still deposited.
           </span>
         </>
@@ -89,7 +89,7 @@ export function ResultModal({
         </button>
       )}
       {revealed && won && hasClaimed && (
-        <div style={{ fontSize: "var(--fs-sm)", color: "var(--color-text-secondary)" }}>Already claimed.</div>
+        <div style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>Already claimed.</div>
       )}
     </Modal>
   );

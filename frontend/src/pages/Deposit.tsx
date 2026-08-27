@@ -77,12 +77,12 @@ export function DepositModal({ onClose }: { onClose: () => void }) {
   return (
     <Modal title="Deposit" onClose={onClose}>
 
-        <div style={{ fontSize: "var(--fs-sm)", color: "var(--color-text-secondary)" }}>
+        <div style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>
           Wallet balance: <strong style={{ color: "var(--color-text)" }}>{fmt(walletBalance)}</strong>
         </div>
 
         <div>
-          <label style={{ fontSize: "var(--fs-sm)", color: "var(--color-text-secondary)" }}>Amount (USDC)</label>
+          <label style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>Amount (USDC)</label>
           <div style={{ display: "flex", alignItems: "center", gap: 12, borderBottom: "2px solid #000000" }}>
             <input
               type="number"
@@ -92,20 +92,20 @@ export function DepositModal({ onClose }: { onClose: () => void }) {
               placeholder="0.00"
               style={{
                 flex: 1,
-                fontSize: "var(--fs-xl)",
+                fontSize: "var(--fs-4)",
                 fontWeight: 700,
                 padding: "12px 0",
                 border: "none",
                 outline: "none",
               }}
             />
-            <button onClick={handleMax} style={{ background: "none", fontSize: "var(--fs-sm)", fontWeight: 700 }}>
+            <button onClick={handleMax} style={{ background: "none", fontSize: "var(--fs-1)", fontWeight: 700 }}>
               MAX
             </button>
           </div>
         </div>
 
-        <div style={{ fontSize: "var(--fs-sm)" }}>
+        <div style={{ fontSize: "var(--fs-1)" }}>
           Tickets you'll receive once this sits in the pool from this epoch's start to its
           end: <strong>{amount || "0"}</strong>
         </div>
@@ -118,7 +118,7 @@ export function DepositModal({ onClose }: { onClose: () => void }) {
           {isPending || isConfirming ? "Confirming..." : "Confirm"}
         </button>
 
-        {error && <div style={{ color: "#c0392b", fontSize: "var(--fs-sm)" }}>{error.message.slice(0, 200)}</div>}
+        {error && <div style={{ color: "#c0392b", fontSize: "var(--fs-1)" }}>{error.message.slice(0, 200)}</div>}
     </Modal>
   );
 }
