@@ -75,19 +75,18 @@
   .icon-down { -webkit-mask-image: url("icons/down.svg"); mask-image: url("icons/down.svg"); }
   .icon-chevron { -webkit-mask-image: url("icons/down2.svg"); mask-image: url("icons/down2.svg"); }
 
-  /* Navbar – same look as the app's (Navbar.tsx / global.css), but sticky since
-     this page scrolls and the app's dashboard doesn't. */
-  /* The underline sits inset 20px from each edge, same as the app: there,
-     the inset comes from .dashboard-grid's own padding pushing the whole
-     navbar inward before its box-shadow is drawn. Here the sticky bar needs
-     to stay full-bleed (so it covers scrolling content underneath), so the
-     padding + shadow move to an inner wrapper instead of the bar itself. */
+  /* Navbar – same look as the app's (Navbar.tsx / global.css): sticky, full-bleed
+     background AND separator line (the app reaches full-bleed via a negative
+     margin on the nav that cancels .dashboard-grid's 20px padding; here it's
+     native since this bar was never inside a padded grid to begin with). Only
+     .nav-inner's own content gets the 20px inset, via padding, not the bar. */
   nav.top {
     position: sticky;
     top: 0;
     z-index: 20;
     height: var(--row-h);
     background: #ffffff;
+    box-shadow: 0 1px 0 #000000;
   }
   nav.top .nav-inner {
     height: 100%;
@@ -95,7 +94,6 @@
     align-items: center;
     justify-content: space-between;
     padding: 0 20px;
-    box-shadow: 0 1px 0 #000000;
   }
   nav.top .brand { display: flex; align-items: center; gap: 6px; font-size: var(--fs-4); font-weight: 700; color: var(--color-primary); }
   nav.top .brand img { height: 24px; width: 24px; }
