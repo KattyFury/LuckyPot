@@ -200,6 +200,9 @@ button {
 
 .g-navbar {
   grid-row: 1 / 2;
+  position: sticky;
+  top: 0;
+  z-index: 20;
 }
 .g-banner {
   grid-row: 2 / 3;
