@@ -1,18 +1,22 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAccount, useSendTransaction, useWaitForTransactionReceipt } from "wagmi";
 import { encodeFunctionData, formatUnits, parseUnits } from "viem";
 import { erc20Abi } from "../lib/erc20Abi";
 import { poolAbi, POOL_ADDRESS, USDC_ADDRESS } from "../lib/contract";
 import { encodeAggregate3, MULTICALL3_FROM_ADDRESS } from "../lib/multicall3From";
-import { useUserPosition } from "../hooks/usePoolData";
+import { useReferrer, useUserPosition } from "../hooks/usePoolData";
 import { useAmount } from "../config/tokenUnit";
 import { useCloseOnSuccess } from "../hooks/useCloseOnSuccess";
+import { clearPendingReferrer, getPendingReferrer } from "../lib/referralState";
 import { Modal } from "../components/Modal";
+
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 export function DepositModal({ onClose }: { onClose: () => void }) {
   const { address } = useAccount();
   const { data: position } = useUserPosition(address);
   const walletBalance = (position?.[3]?.result as bigint | undefined) ?? 0n;
+  const { data: existingReferrer } = useReferrer(address);
   const fmt = useAmount();
 
   const [amount, setAmount] = useState("");
@@ -20,6 +24,12 @@ export function DepositModal({ onClose }: { onClose: () => void }) {
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   useCloseOnSuccess(isSuccess, onClose);
+
+  // Only ever needs to fire once — refBy is set-once-permanent on the contract,
+  // so once this deposit lands there's nothing left for the stored link to do.
+  useEffect(() => {
+    if (isSuccess) clearPendingReferrer();
+  }, [isSuccess]);
 
   const amountBase = amount ? parseUnits(amount, 6) : 0n;
 
@@ -37,10 +47,29 @@ export function DepositModal({ onClose }: { onClose: () => void }) {
     });
     const depositData = encodeFunctionData({ abi: poolAbi, functionName: "deposit", args: [amountBase] });
 
-    const batchData = encodeAggregate3([
+    const calls = [
       { target: USDC_ADDRESS, allowFailure: false, callData: approveData },
       { target: POOL_ADDRESS, allowFailure: false, callData: depositData },
-    ]);
+    ];
+
+    // Bundles the referral link into the same signature — no extra tx, no extra
+    // gas prompt. allowFailure: true because refBy is set-once: if it's already
+    // set (returning depositor, or the pending link is stale), the call just
+    // no-ops instead of reverting the whole deposit.
+    const pendingReferrer = getPendingReferrer();
+    if (
+      pendingReferrer &&
+      existingReferrer === ZERO_ADDRESS &&
+      pendingReferrer.toLowerCase() !== address.toLowerCase()
+    ) {
+      calls.push({
+        target: POOL_ADDRESS,
+        allowFailure: true,
+        callData: encodeFunctionData({ abi: poolAbi, functionName: "setReferrer", args: [pendingReferrer] }),
+      });
+    }
+
+    const batchData = encodeAggregate3(calls);
 
     sendTransaction({ to: MULTICALL3_FROM_ADDRESS, data: batchData });
   }

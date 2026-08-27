@@ -8,6 +8,8 @@ import { DrawHistoryCard, DrawHistoryList } from "../components/DrawHistoryCard"
 import { MyHistoryCard, MyHistoryList } from "../components/MyHistoryCard";
 import { EpochDetailModal } from "../components/EpochDetailModal";
 import { ResultModal } from "../components/ResultModal";
+import { ReferralInfoModal } from "../components/ReferralInfoModal";
+import { SwapBoostButton } from "../components/SwapBoostButton";
 import { Modal } from "../components/Modal";
 import { DepositModal } from "./Deposit";
 import { WithdrawModal } from "./Withdraw";
@@ -26,7 +28,7 @@ import { useTokenUnit } from "../config/tokenUnit";
 import { wasScratched } from "../lib/scratchState";
 import type { EpochData } from "../hooks/usePoolData";
 
-type Popup = "draw-history" | "my-history" | "deposit" | "withdraw" | null;
+type Popup = "draw-history" | "my-history" | "deposit" | "withdraw" | "referral" | null;
 
 export function Dashboard() {
   const { address } = useAccount();
@@ -84,7 +86,7 @@ export function Dashboard() {
           />
         </div>
 
-        <div className="g-banner">
+        <div className="g-banner" style={{ display: "flex", gap: 10 }}>
           {unit === "$ARC" ? (
             <AnnouncementBanner text="$ARC isn't live yet – figures are the USDC pool." />
           ) : unscratchedResult ? (
@@ -93,13 +95,18 @@ export function Dashboard() {
               onClick={() => setResultEpochId(unscratchedResult.id)}
             />
           ) : (
-            <AnnouncementBanner
-              text="Tap here if you want to faucet"
-              href="https://faucet.circle.com"
-              onClick={() => {
-                if (address) navigator.clipboard.writeText(address);
-              }}
-            />
+            <>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <AnnouncementBanner
+                  text="Tap here if you want to faucet"
+                  href="https://faucet.circle.com"
+                  onClick={() => {
+                    if (address) navigator.clipboard.writeText(address);
+                  }}
+                />
+              </div>
+              <SwapBoostButton />
+            </>
           )}
         </div>
 
@@ -123,6 +130,13 @@ export function Dashboard() {
             onWithdraw={() => setPopup("withdraw")}
             onLatestResult={() => latestDrawnEpoch && openEpoch(latestDrawnEpoch.id, latestDrawnEpoch.epoch)}
             latestResultAvailable={Boolean(latestDrawnEpoch)}
+          />
+        </div>
+
+        <div className="g-referral">
+          <AnnouncementBanner
+            text="Invite a friend, earn 2.5% every time they win — tap here"
+            onClick={() => setPopup("referral")}
           />
         </div>
 
@@ -158,6 +172,8 @@ export function Dashboard() {
           <MyHistoryList entries={historyEntries} connected={Boolean(address)} />
         </Modal>
       )}
+
+      {popup === "referral" && <ReferralInfoModal onClose={() => setPopup(null)} />}
 
       {selectedEpoch && (
         <EpochDetailModal

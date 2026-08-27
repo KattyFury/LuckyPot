@@ -111,6 +111,7 @@ contract LuckyStakerPool is
     event Swept(uint256 indexed epochId, address indexed winner, uint256 amount);
     event AprUpdated(bool indexed isUsdc, uint256 newBps);
     event ReferrerSet(address indexed user, address indexed referrer);
+    event ReferralPaid(address indexed referrer, uint256 amount);
     event ReferralAccrued(address indexed referrer, uint256 amount);
     event ReferralClaimed(address indexed referrer, uint256 amount);
     event VaultAccrued(uint256 reserveAmount, uint256 devAmount);
@@ -415,26 +416,43 @@ contract LuckyStakerPool is
         }
     }
 
-    /// @dev Takes the 5% referral cut out of a gross prize, routes it to the referrer's
-    /// pending balance (or split 50/50 into the two vault counters if unreferred), and
-    /// transfers the remainder to the winner. Returns the net amount paid to the winner.
+    /// @dev Takes the 5% cut out of a gross prize and splits it in half: 2.5% always
+    /// tops up vaultReserve, regardless of referral status. The other 2.5% is pushed
+    /// straight to the winner's referrer wallet if they have one — falling back to
+    /// pendingRef (claimReferral()) only if that transfer fails, so a broken/reverting
+    /// referrer address can never block the winner's own payout — or to vaultDev if
+    /// the winner was unreferred. Returns the net amount paid to the winner.
     function _settle(address winner, uint256 gross) private returns (uint256) {
         uint256 cut = (gross * REFERRAL_BPS) / 10000;
         uint256 net = gross - cut;
 
+        uint256 reserveShare = cut / 2;
+        uint256 otherShare = cut - reserveShare;
+        vaultReserve += reserveShare;
+
         address ref = refBy[winner];
         if (ref != address(0)) {
-            pendingRef[ref] += cut;
-            emit ReferralAccrued(ref, cut);
+            if (!_tryPayReferral(ref, otherShare)) {
+                pendingRef[ref] += otherShare;
+                emit ReferralAccrued(ref, otherShare);
+            }
         } else {
-            uint256 half = cut / 2;
-            vaultReserve += half;
-            vaultDev += cut - half;
-            emit VaultAccrued(half, cut - half);
+            vaultDev += otherShare;
         }
+        emit VaultAccrued(reserveShare, ref == address(0) ? otherShare : 0);
 
         poolToken.safeTransfer(winner, net);
         return net;
+    }
+
+    /// @dev Plain low-level transfer (not SafeERC20) so a reverting/blacklisting
+    /// referrer address fails softly instead of reverting the caller's whole claim/sweep.
+    function _tryPayReferral(address ref, uint256 amount) private returns (bool) {
+        (bool success, bytes memory data) =
+            address(poolToken).call(abi.encodeWithSelector(IERC20.transfer.selector, ref, amount));
+        bool ok = success && (data.length == 0 || abi.decode(data, (bool)));
+        if (ok) emit ReferralPaid(ref, amount);
+        return ok;
     }
 
     function _payoutOwed(Epoch storage e, address user) private view returns (uint256) {

@@ -175,16 +175,17 @@ button {
    for that: the desktop needs 15 rows + 14 gaps, so a shorter window
    scrolls rather than compressing the rows.
 
-   Desktop: 13 rows – 1 navbar, 2 banner, 3-6 EPOCH | TOTAL POOL,
-   7-12 DRAW HISTORY | MY HISTORY, 13 empty. Columns are thirds: EPOCH
-   takes 1/3 and POOL 2/3; DRAW HISTORY takes 2/3 and MY HISTORY 1/3.
-   The history row is 6 rows to the cards' 4, i.e. 1.5x their height
-   (350px vs 230px), which keeps the whole page inside one laptop frame
-   at 13*50 + 12*10 = 770px instead of needing a scroll.
+   Desktop: 13 rows – 1 navbar, 2 banner, 3-6 EPOCH | TOTAL POOL, 7 REFERRAL
+   (full-width, was the spare empty row — moved up here instead of sitting
+   unused at the bottom), 8-13 DRAW HISTORY | MY HISTORY. Columns are
+   thirds: EPOCH takes 1/3 and POOL 2/3; DRAW HISTORY takes 2/3 and MY
+   HISTORY 1/3. The history box is still 6 rows tall, just shifted down by
+   the referral row — the page no longer has a spare row at the bottom, so
+   it now runs 13*50 + 12*10 = 770px exactly instead of 720px + margin.
 
    Mobile: the two history boxes would make the page endless, so each
    collapses to a one-row button that opens the same content as a popup.
-   So: 1 + 1 + 4 + 4 + 1 + 1 + 1 empty = 13 rows, same --row-h.
+   So: 1 + 1 + 4 + 4 + 1 referral + 1 + 1 = 13 rows, same --row-h.
    ------------------------------------------------------------------- */
 .dashboard-grid {
   display: grid;
@@ -209,11 +210,14 @@ button {
 .g-pool {
   grid-row: 7 / 11;
 }
-.g-draw-history-btn {
+.g-referral {
   grid-row: 11 / 12;
 }
-.g-my-history-btn {
+.g-draw-history-btn {
   grid-row: 12 / 13;
+}
+.g-my-history-btn {
+  grid-row: 13 / 14;
 }
 
 /* Mobile shows the two buttons; desktop shows the full boxes instead. */
@@ -258,13 +262,17 @@ button {
     grid-column: 2 / 4;
     grid-row: 3 / 7;
   }
+  .g-referral {
+    grid-column: 1 / 4;
+    grid-row: 7 / 8;
+  }
   .g-draw-history {
     grid-column: 1 / 3;
-    grid-row: 7 / 13;
+    grid-row: 8 / 14;
   }
   .g-my-history {
     grid-column: 3 / 4;
-    grid-row: 7 / 13;
+    grid-row: 8 / 14;
   }
 }
 

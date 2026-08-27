@@ -166,10 +166,9 @@ describe("LuckyStakerPool", () => {
     await expect(keeperPool.write.revealAndDraw([secret])).to.be.rejectedWith("yield not funded");
   });
 
-  it("pays a referrer's 5% cut on claim, once per prize, and lets them withdraw it", async () => {
+  it("pushes a referrer's 2.5% cut straight to their wallet on claim, with the other 2.5% always going to vaultReserve", async () => {
     const { pool, usdc, alice, bob, keeper } = await deployFixture();
     const alicePool = await poolAs(pool, alice);
-    const bobPool = await poolAs(pool, bob);
 
     await alicePool.write.setReferrer([bob.account.address]);
     await expect(alicePool.write.setReferrer([bob.account.address])).to.be.rejectedWith("referrer already set");
@@ -182,15 +181,20 @@ describe("LuckyStakerPool", () => {
     await keeperPool.write.fundYield([expectedPrize]);
     await drawEpoch(pool, keeper);
 
-    await alicePool.write.claim([2n]);
     const cut = (expectedPrize * 500n) / 10000n;
-    expect(await pool.read.pendingRef([bob.account.address])).to.equal(cut);
+    const reserveShare = cut / 2n;
+    const otherShare = cut - reserveShare;
 
     const before = await usdc.read.balanceOf([bob.account.address]);
-    await bobPool.write.claimReferral();
+    await alicePool.write.claim([2n]);
     const after = await usdc.read.balanceOf([bob.account.address]);
-    expect(after - before).to.equal(cut);
+
+    // Pushed straight to bob's wallet in the same tx — no pendingRef accrual, no
+    // separate claimReferral() needed, since a plain EOA accepts the transfer fine.
+    expect(after - before).to.equal(otherShare);
     expect(await pool.read.pendingRef([bob.account.address])).to.equal(0n);
+    expect(await pool.read.vaultReserve()).to.equal(reserveShare);
+    expect(await pool.read.vaultDev()).to.equal(0n);
   });
 
   it("rejects self-referral", async () => {
