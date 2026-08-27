@@ -2,14 +2,16 @@ import type { CSSProperties } from "react";
 
 export function AnnouncementBanner({
   text,
-  note,
+  lead,
   href,
   onClick,
 }: {
+  /** The call-to-action phrase — the only part that's underlined. */
   text: string;
-  /** Extra text appended after `text`, NOT underlined — for a parenthetical
-   *  aside that shouldn't read as part of the clickable prompt itself. */
-  note?: string;
+  /** Plain context that comes before `text`, read as one flowing sentence
+   *  with it — not underlined, since the whole banner is one clickable
+   *  region regardless and underlining all of it just reads as noisy. */
+  lead?: string;
   href?: string;
   /** With `href`, runs before the link opens (used to copy the wallet
    *  address). On its own, makes the whole banner a button. */
@@ -33,12 +35,12 @@ export function AnnouncementBanner({
 
   // The browser's default <a> underline draws across the whole element
   // regardless of what a descendant span sets - has to be cancelled here,
-  // on the element actually drawing it, not just on the "note" span.
+  // on the element actually drawing it, not just on the "text" span.
   const actionable: CSSProperties = { ...style, textDecoration: "none", cursor: "pointer" };
   const content = (
     <>
+      {lead && `${lead} `}
       <span style={{ textDecoration: "underline" }}>{text}</span>
-      {note && <span style={{ textDecoration: "none" }}> {note}</span>}
     </>
   );
 
@@ -60,5 +62,10 @@ export function AnnouncementBanner({
     );
   }
 
-  return <div style={style}>{text}</div>;
+  return (
+    <div style={style}>
+      {lead && `${lead} `}
+      {text}
+    </div>
+  );
 }

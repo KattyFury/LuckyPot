@@ -117,8 +117,8 @@ export function FaucetOrSellBanner() {
 
   return (
     <AnnouncementBanner
-      text="Tap here to faucet"
-      note="(if you faucet EURC & cirBTC, I can help you turn them to USDC)"
+      lead="If you faucet EURC & cirBTC too, I can help turn them into USDC."
+      text="Tap here to faucet."
       href="https://faucet.circle.com"
       onClick={() => {
         if (address) navigator.clipboard.writeText(address);
