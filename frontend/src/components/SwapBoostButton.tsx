@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useAccount, useReadContracts, useSendTransaction, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useConfig, useReadContracts } from "wagmi";
+import { sendTransaction, waitForTransactionReceipt } from "wagmi/actions";
 import { erc20Abi } from "../lib/erc20Abi";
 import { encodeAggregate3, MULTICALL3_FROM_ADDRESS } from "../lib/multicall3From";
 import { buildSwapCalls, type SwapIntent } from "../lib/swapAdapter";
@@ -22,12 +23,14 @@ async function fetchIntent(
   return data as SwapIntent;
 }
 
-/** "x3" — one click swaps every EURC + cirBTC the wallet holds into USDC, batched into
- *  the same 1-signature Multicall3From pattern deposit/withdraw already use. Lets
- *  testers stack up more USDC than Circle's 20 USDC/faucet-request cap by also
- *  faucet-ing EURC and cirBTC and converting them here. */
+/** "x3" — one leg per token: fetches that leg's swap intent, sends its own
+ *  approve+execute Multicall3From transaction, and waits for it to actually land
+ *  on-chain before moving to the next leg or reporting success. Two separate
+ *  signatures (one per token held), not one combined batch - simpler to reason
+ *  about, and a revert on one leg doesn't silently swallow the other. */
 export function SwapBoostButton() {
   const { address } = useAccount();
+  const config = useConfig();
   const { data: balances } = useReadContracts({
     contracts: address
       ? [
@@ -41,29 +44,44 @@ export function SwapBoostButton() {
   const cirbtcBal = (balances?.[1]?.result as bigint | undefined) ?? 0n;
   const hasSomethingToSwap = eurcBal > 0n || cirbtcBal > 0n;
 
-  const [preparing, setPreparing] = useState(false);
+  const [status, setStatus] = useState<"idle" | "eurc" | "cirbtc">("idle");
   const [error, setError] = useState<string | null>(null);
-  const { sendTransaction, isPending } = useSendTransaction();
+  const busy = status !== "idle";
 
-  async function handleClick() {
-    if (!address || !hasSomethingToSwap || preparing || isPending) return;
-    setError(null);
-    setPreparing(true);
-    try {
-      const calls = [];
-      if (eurcBal > 0n) calls.push(...buildSwapCalls(await fetchIntent("EURC", address, eurcBal), EURC_ADDRESS, eurcBal));
-      if (cirbtcBal > 0n)
-        calls.push(...buildSwapCalls(await fetchIntent("cirBTC", address, cirbtcBal), CIRBTC_ADDRESS, cirbtcBal));
-
-      sendTransaction({ to: MULTICALL3_FROM_ADDRESS, data: encodeAggregate3(calls) });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "swap failed");
-    } finally {
-      setPreparing(false);
+  async function swapLeg(tokenSymbol: "EURC" | "cirBTC", tokenAddress: `0x${string}`, amountBase: bigint) {
+    if (!address) return;
+    const intent = await fetchIntent(tokenSymbol, address, amountBase);
+    const calls = buildSwapCalls(intent, tokenAddress, amountBase);
+    const hash = await sendTransaction(config, {
+      to: MULTICALL3_FROM_ADDRESS,
+      data: encodeAggregate3(calls),
+    });
+    const receipt = await waitForTransactionReceipt(config, { hash });
+    if (receipt.status !== "success") {
+      throw new Error(`${tokenSymbol} -> USDC swap reverted on-chain`);
     }
   }
 
-  const busy = preparing || isPending;
+  async function handleClick() {
+    if (!address || !hasSomethingToSwap || busy) return;
+    setError(null);
+    try {
+      if (eurcBal > 0n) {
+        setStatus("eurc");
+        await swapLeg("EURC", EURC_ADDRESS, eurcBal);
+      }
+      if (cirbtcBal > 0n) {
+        setStatus("cirbtc");
+        await swapLeg("cirBTC", CIRBTC_ADDRESS, cirbtcBal);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "swap failed");
+    } finally {
+      setStatus("idle");
+    }
+  }
+
+  const label = status === "eurc" ? "EURC..." : status === "cirbtc" ? "cirBTC..." : "x3";
 
   return (
     <div style={{ position: "relative", height: "100%" }}>
@@ -71,7 +89,7 @@ export function SwapBoostButton() {
         type="button"
         onClick={handleClick}
         disabled={!address || !hasSomethingToSwap || busy}
-        title="Swap all your EURC + cirBTC into USDC"
+        title="Swap your EURC and cirBTC into USDC, one transaction per token"
         style={{
           background: "var(--color-banner-bg)",
           color: "#000000",
@@ -84,7 +102,7 @@ export function SwapBoostButton() {
           cursor: !address || !hasSomethingToSwap || busy ? "not-allowed" : "pointer",
         }}
       >
-        {busy ? "..." : "x3"}
+        {label}
       </button>
       {error && (
         <div
