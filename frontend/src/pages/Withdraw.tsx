@@ -50,7 +50,7 @@ export function WithdrawModal({ onClose }: { onClose: () => void }) {
               placeholder="0.00"
               style={{
                 flex: 1,
-                fontSize: "var(--fs-2)",
+                fontSize: "var(--fs-3)",
                 fontWeight: 700,
                 padding: "12px 0",
                 border: "none",

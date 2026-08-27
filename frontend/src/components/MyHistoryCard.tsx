@@ -29,7 +29,7 @@ export function MyHistoryList({ entries, connected }: { entries: HistoryEntry[];
           </span>
           <span
             style={{
-              fontSize: "var(--fs-4)",
+              fontSize: "var(--fs-5)",
               fontWeight: 700,
               color: entry.type === "Won" ? "var(--color-primary)" : undefined,
             }}

@@ -353,7 +353,7 @@ button {
   display: flex;
   align-items: center;
   flex: none;
-  font-size: var(--fs-4);
+  font-size: var(--fs-5);
   font-weight: 700;
   color: var(--color-primary);
   font-family: var(--font-condensed);
@@ -439,7 +439,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: var(--gap);
-  font-size: var(--fs-3);
+  font-size: var(--fs-4);
   font-weight: 700;
   color: var(--color-primary);
   font-family: var(--font-condensed);
@@ -456,7 +456,7 @@ button {
   padding: 0 20px;
   border-radius: var(--radius);
   background: var(--color-card-bg);
-  font-size: var(--fs-4);
+  font-size: var(--fs-5);
   font-weight: 700;
   color: var(--color-primary);
   font-family: var(--font-condensed);

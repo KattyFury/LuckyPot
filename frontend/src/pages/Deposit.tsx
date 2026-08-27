@@ -92,7 +92,7 @@ export function DepositModal({ onClose }: { onClose: () => void }) {
               placeholder="0.00"
               style={{
                 flex: 1,
-                fontSize: "var(--fs-2)",
+                fontSize: "var(--fs-3)",
                 fontWeight: 700,
                 padding: "12px 0",
                 border: "none",
@@ -105,7 +105,7 @@ export function DepositModal({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        <div style={{ fontSize: "var(--fs-4)" }}>
+        <div style={{ fontSize: "var(--fs-5)" }}>
           Tickets you'll receive once this sits in the pool from this epoch's start to its
           end: <strong>{amount || "0"}</strong>
         </div>

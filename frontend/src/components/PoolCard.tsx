@@ -32,16 +32,16 @@ export function PoolCard({
   return (
     <div className="card card-rows">
       <div className="two-col box-header">
-        <span style={{ fontSize: "var(--fs-4)", fontWeight: 700, color: "var(--color-primary)" }}>
+        <span style={{ fontSize: "var(--fs-5)", fontWeight: 700, color: "var(--color-primary)" }}>
           TOTAL TICKET/POOL
         </span>
-        <span style={{ fontSize: "var(--fs-4)", fontWeight: 700, color: "var(--color-primary)", textAlign: "left" }}>
+        <span style={{ fontSize: "var(--fs-5)", fontWeight: 700, color: "var(--color-primary)", textAlign: "left" }}>
           MY TICKETS/MY DEPOSIT
         </span>
       </div>
 
       <div className="two-col" style={{ alignItems: "baseline", fontFamily: "var(--font-condensed)" }}>
-        <div style={{ fontSize: "var(--fs-3)", fontWeight: 700, display: "flex", alignItems: "baseline", gap: 6 }}>
+        <div style={{ fontSize: "var(--fs-4)", fontWeight: 700, display: "flex", alignItems: "baseline", gap: 6 }}>
           {formatUSDC(eligiblePoolTotal)}/{formatUSDC(totalPool)}{" "}
           <span style={{ fontSize: "var(--fs-5)" }}>{unit}</span>
           <button
@@ -53,7 +53,7 @@ export function PoolCard({
             <span className="icon icon-info" style={{ fontSize: "var(--fs-caption)", color: "var(--color-text-secondary)" }} />
           </button>
         </div>
-        <div style={{ fontSize: "var(--fs-3)", fontWeight: 700, display: "flex", alignItems: "baseline", gap: 6 }}>
+        <div style={{ fontSize: "var(--fs-4)", fontWeight: 700, display: "flex", alignItems: "baseline", gap: 6 }}>
           {formatUSDC(myEligible)}/{formatUSDC(myDeposited)}{" "}
           <span style={{ fontSize: "var(--fs-5)" }}>{unit}</span>
           <button

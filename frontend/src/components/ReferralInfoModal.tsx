@@ -55,7 +55,7 @@ export function ReferralInfoModal({ onClose }: { onClose: () => void }) {
           >
             <span
               className={copied ? "icon icon-check" : "icon icon-copy"}
-              style={{ fontSize: "var(--fs-4)", color: copied ? "var(--color-primary)" : "var(--color-text)" }}
+              style={{ fontSize: "var(--fs-5)", color: copied ? "var(--color-primary)" : "var(--color-text)" }}
             />
           </button>
         </div>
