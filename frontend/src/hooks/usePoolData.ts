@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { keepPreviousData } from "@tanstack/react-query";
 import { useAccount, useReadContract, useReadContracts } from "wagmi";
 import { poolAbi, POOL_ADDRESS, USDC_ADDRESS } from "../lib/contract";
 import { erc20Abi } from "../lib/erc20Abi";
@@ -45,11 +47,11 @@ function toEpoch(raw: readonly unknown[]): EpochData {
 }
 
 export function useCurrentEpochId() {
-  return useReadContract({ ...poolContract, functionName: "currentEpochId" });
+  return useReadContract({ ...poolContract, functionName: "currentEpochId", query: { placeholderData: keepPreviousData } });
 }
 
 export function useCurrentAprBps() {
-  return useReadContract({ ...poolContract, functionName: "currentAprBps" });
+  return useReadContract({ ...poolContract, functionName: "currentAprBps", query: { placeholderData: keepPreviousData } });
 }
 
 export function useEpoch(epochId: bigint | undefined) {
@@ -57,7 +59,7 @@ export function useEpoch(epochId: bigint | undefined) {
     ...poolContract,
     functionName: "getEpoch",
     args: epochId !== undefined ? [epochId] : undefined,
-    query: { enabled: epochId !== undefined },
+    query: { enabled: epochId !== undefined, placeholderData: keepPreviousData },
   });
   return { data: data ? toEpoch(data as readonly unknown[]) : undefined, ...rest };
 }
@@ -73,7 +75,7 @@ export function useEpochHistory(currentEpochId: bigint | undefined, count = 10) 
 
   const { data, ...rest } = useReadContracts({
     contracts: ids.map((id) => ({ ...poolContract, functionName: "getEpoch", args: [id] as const })),
-    query: { enabled: ids.length > 0 },
+    query: { enabled: ids.length > 0, placeholderData: keepPreviousData },
   });
 
   const epochs = (data ?? [])
@@ -89,6 +91,7 @@ export function usePoolTotals() {
       { ...poolContract, functionName: "balancesTotal" },
       { ...poolContract, functionName: "participantCount" },
     ],
+    query: { placeholderData: keepPreviousData },
   });
 }
 
@@ -104,29 +107,39 @@ export function useEligiblePoolTotal(participantCount: number | undefined) {
 
   const { data: addressData } = useReadContracts({
     contracts: indices.map((i) => ({ ...poolContract, functionName: "participants", args: [BigInt(i)] as const })),
-    query: { enabled: indices.length > 0 },
+    query: { enabled: indices.length > 0, placeholderData: keepPreviousData },
   });
 
-  const addresses = (addressData ?? [])
-    .map((r) => (r.status === "success" ? (r.result as `0x${string}`) : null))
-    .filter((a): a is `0x${string}` => a !== null);
+  // The public Arc Testnet RPC 429s under load, and a rate-limited read comes back as
+  // one failed entry, not a thrown error — only trust the address list once every
+  // participants(i) call succeeded, or a rate-limit blip reads as "fewer participants
+  // than there really are" instead of "still loading".
+  const addressesComplete =
+    indices.length === 0 || (addressData?.length === indices.length && addressData.every((r) => r.status === "success"));
+  const addresses = addressesComplete ? (addressData ?? []).map((r) => r.result as `0x${string}`) : [];
 
   const { data: eligibleData, ...rest } = useReadContracts({
     contracts: addresses.map((a) => ({ ...poolContract, functionName: "eligibleBalance", args: [a] as const })),
-    query: { enabled: addresses.length > 0 },
+    query: { enabled: addresses.length > 0, placeholderData: keepPreviousData },
   });
 
-  const total = (eligibleData ?? []).reduce(
-    (sum, r) => (r.status === "success" ? sum + (r.result as bigint) : sum),
-    0n,
-  );
-  // Only counts people who actually hold an eligible (full-epoch) balance right now —
-  // not everyone who has ever deposited, which is what participantCount() returns.
-  const eligibleCount = (eligibleData ?? []).filter(
-    (r) => r.status === "success" && (r.result as bigint) > 0n,
-  ).length;
+  const eligibleComplete =
+    addressesComplete &&
+    (addresses.length === 0 || (eligibleData?.length === addresses.length && eligibleData.every((r) => r.status === "success")));
 
-  return { total, eligibleCount, ...rest };
+  // Same rate-limit hazard here: summing only the reads that happened to succeed would
+  // silently undercount to "whichever participants' calls didn't get 429'd this time",
+  // which changes on every reload. Only report a total once the whole set resolved —
+  // otherwise keep showing the last complete total instead of a confidently wrong one.
+  const [lastGood, setLastGood] = useState({ total: 0n, eligibleCount: 0 });
+  useEffect(() => {
+    if (!eligibleComplete) return;
+    const total = (eligibleData ?? []).reduce((sum, r) => sum + (r.result as bigint), 0n);
+    const eligibleCount = (eligibleData ?? []).filter((r) => (r.result as bigint) > 0n).length;
+    setLastGood({ total, eligibleCount });
+  }, [eligibleComplete, eligibleData]);
+
+  return { ...lastGood, ...rest };
 }
 
 export function useUserPosition(address: `0x${string}` | undefined) {
@@ -143,11 +156,29 @@ export function useUserPosition(address: `0x${string}` | undefined) {
         args: address ? [address, POOL_ADDRESS] : undefined,
       },
     ],
-    query: { enabled: Boolean(address) },
+    query: { enabled: Boolean(address), placeholderData: keepPreviousData },
   });
 }
 
 export function useConnectedAddress() {
   const { address } = useAccount();
   return address;
+}
+
+export function useReferrer(address: `0x${string}` | undefined) {
+  return useReadContract({
+    ...poolContract,
+    functionName: "refBy",
+    args: address ? [address] : undefined,
+    query: { enabled: Boolean(address), placeholderData: keepPreviousData },
+  });
+}
+
+export function usePendingReferral(address: `0x${string}` | undefined) {
+  return useReadContract({
+    ...poolContract,
+    functionName: "pendingRef",
+    args: address ? [address] : undefined,
+    query: { enabled: Boolean(address), placeholderData: keepPreviousData },
+  });
 }
