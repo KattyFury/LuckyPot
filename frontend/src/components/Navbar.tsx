@@ -1,7 +1,7 @@
 import { USE_PRIVY } from "../config/authMode";
 import { NavbarInjected } from "./NavbarInjected";
 import { NavbarPrivy } from "./NavbarPrivy";
-import logoUrl from "../assets/logo.svg";
+import logoFullUrl from "../assets/logo-full.svg";
 
 export type WalletMenuActions = {
   onDeposit: () => void;
@@ -31,12 +31,8 @@ export function Navbar(actions: WalletMenuActions) {
         boxShadow: "0 1px 0 #000000",
       }}
     >
-      <a
-        href="https://luckypot.cc/"
-        style={{ display: "flex", alignItems: "center", gap: 6, textDecoration: "none" }}
-      >
-        <img src={logoUrl} alt="" style={{ height: 24, width: 24 }} />
-        <span style={{ fontSize: "var(--fs-4)", fontWeight: 700, color: "var(--color-primary)" }}>LuckyPot</span>
+      <a href="https://luckypot.cc/" style={{ display: "flex", alignItems: "center" }}>
+        <img src={logoFullUrl} alt="LuckyPot" style={{ height: 28, width: "auto" }} />
       </a>
       {USE_PRIVY ? <NavbarPrivy {...actions} /> : <NavbarInjected {...actions} />}
     </nav>

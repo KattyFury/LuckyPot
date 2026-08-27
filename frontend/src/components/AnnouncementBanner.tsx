@@ -4,23 +4,28 @@ export function AnnouncementBanner({
   text,
   href,
   onClick,
+  flushRight,
 }: {
   text: string;
   href?: string;
   /** With `href`, runs before the link opens (used to copy the wallet
    *  address). On its own, makes the whole banner a button. */
   onClick?: () => void;
+  /** Squares off the right corners so a sibling (the x3 swap button) can sit
+   *  flush against this banner with no visible seam, instead of looking like
+   *  two separate pills with a gap. */
+  flushRight?: boolean;
 }) {
   const style: CSSProperties = {
     background: "var(--color-banner-bg)",
     color: "#000000",
-    borderRadius: "var(--radius)",
+    borderRadius: flushRight ? "var(--radius) 0 0 var(--radius)" : "var(--radius)",
     height: "100%",
     width: "100%",
     display: "flex",
     alignItems: "center",
     padding: "0 20px",
-    fontSize: "var(--fs-4)",
+    fontSize: "var(--fs-caption)",
     fontWeight: 700,
     whiteSpace: "nowrap",
     overflow: "hidden",

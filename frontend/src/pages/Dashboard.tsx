@@ -86,7 +86,7 @@ export function Dashboard() {
           />
         </div>
 
-        <div className="g-banner" style={{ display: "flex", gap: 10 }}>
+        <div className="g-banner" style={{ display: "flex", minWidth: 0 }}>
           {unit === "$ARC" ? (
             <AnnouncementBanner text="$ARC isn't live yet – figures are the USDC pool." />
           ) : unscratchedResult ? (
@@ -100,6 +100,7 @@ export function Dashboard() {
                 <AnnouncementBanner
                   text="Tap here if you want to faucet"
                   href="https://faucet.circle.com"
+                  flushRight
                   onClick={() => {
                     if (address) navigator.clipboard.writeText(address);
                   }}

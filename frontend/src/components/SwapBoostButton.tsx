@@ -93,11 +93,13 @@ export function SwapBoostButton() {
         style={{
           background: "var(--color-banner-bg)",
           color: "#000000",
-          borderRadius: "var(--radius)",
+          // Squares off the left corners so this sits flush against the
+          // faucet banner to its left - one continuous bar, not two pills.
+          borderRadius: "0 var(--radius) var(--radius) 0",
           height: "100%",
           minWidth: 60,
           fontWeight: 700,
-          fontSize: "var(--fs-4)",
+          fontSize: "var(--fs-caption)",
           opacity: !address || !hasSomethingToSwap ? 0.5 : 1,
           cursor: !address || !hasSomethingToSwap || busy ? "not-allowed" : "pointer",
         }}
