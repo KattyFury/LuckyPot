@@ -32,15 +32,18 @@ export function PoolCard({
   return (
     <div className="card card-rows">
       <div className="two-col box-header">
-        <span style={{ fontSize: "var(--fs-4)", fontWeight: 700, color: "var(--color-primary)" }}>TOTAL POOL</span>
+        <span style={{ fontSize: "var(--fs-4)", fontWeight: 700, color: "var(--color-primary)" }}>
+          TOTAL TICKET/POOL
+        </span>
         <span style={{ fontSize: "var(--fs-4)", fontWeight: 700, color: "var(--color-primary)", textAlign: "left" }}>
-          MY TICKETS
+          MY TICKETS/MY DEPOSIT
         </span>
       </div>
 
       <div className="two-col" style={{ alignItems: "baseline", fontFamily: "var(--font-condensed)" }}>
         <div style={{ fontSize: "var(--fs-3)", fontWeight: 700, display: "flex", alignItems: "baseline", gap: 6 }}>
-          {formatUSDC(eligiblePoolTotal)} tickets
+          {formatUSDC(eligiblePoolTotal)}/{formatUSDC(totalPool)}{" "}
+          <span style={{ fontSize: "var(--fs-5)" }}>{unit}</span>
           <button
             type="button"
             aria-label="How much money does the pool actually hold?"
@@ -51,10 +54,8 @@ export function PoolCard({
           </button>
         </div>
         <div style={{ fontSize: "var(--fs-3)", fontWeight: 700, display: "flex", alignItems: "baseline", gap: 6 }}>
-          {formatUSDC(myEligible)}
-          <span style={{ fontSize: "var(--fs-5)", fontWeight: 700 }}>
-            ticket/{formatUSDC(myDeposited)} {unit}
-          </span>
+          {formatUSDC(myEligible)}/{formatUSDC(myDeposited)}{" "}
+          <span style={{ fontSize: "var(--fs-5)" }}>{unit}</span>
           <button
             type="button"
             aria-label="Why is my ticket count different from what I deposited?"

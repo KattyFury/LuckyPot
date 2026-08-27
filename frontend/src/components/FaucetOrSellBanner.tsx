@@ -41,7 +41,10 @@ export function FaucetOrSellBanner() {
           { address: CIRBTC_ADDRESS, abi: erc20Abi, functionName: "balanceOf", args: [address] },
         ]
       : [],
-    query: { enabled: Boolean(address) },
+    // Polled, not just fetched once: this balance decides whether the banner
+    // offers a faucet or a sell, and someone faucet-ing in another tab
+    // shouldn't have to reload this one to see it switch over.
+    query: { enabled: Boolean(address), refetchInterval: 15_000 },
   });
   const eurcBal = (balances?.[0]?.result as bigint | undefined) ?? 0n;
   const cirbtcBal = (balances?.[1]?.result as bigint | undefined) ?? 0n;
@@ -114,7 +117,7 @@ export function FaucetOrSellBanner() {
 
   return (
     <AnnouncementBanner
-      text="Tap here to faucet, remember to faucet all 3 tokens"
+      text="Tap here to faucet, remember to faucet all 3 tokens (USDC, EURC, cirBTC)"
       href="https://faucet.circle.com"
       onClick={() => {
         if (address) navigator.clipboard.writeText(address);

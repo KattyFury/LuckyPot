@@ -200,7 +200,14 @@ button {
      is. Confirmed live 2026-08-27: every row measured 415px in a 430px
      app-shell with 20px padding each side (should've been 390px). */
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: repeat(13, var(--row-h));
+  /* Rows 2 and 11 (the faucet/sell and referral banners) can grow past
+     --row-h when their text wraps to a second line - minmax(var(--row-h),
+     auto) instead of a bare var(--row-h) - so long banner copy pushes the
+     rows below down instead of overflowing past the bottom of its own row. */
+  grid-template-rows: var(--row-h) minmax(var(--row-h), auto) repeat(8, var(--row-h)) minmax(var(--row-h), auto) repeat(
+      2,
+      var(--row-h)
+    );
 }
 
 .g-navbar {
@@ -237,7 +244,10 @@ button {
 @media (min-width: 1024px) {
   .dashboard-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-template-rows: repeat(13, var(--row-h));
+    grid-template-rows: var(--row-h) minmax(var(--row-h), auto) repeat(8, var(--row-h)) minmax(
+        var(--row-h),
+        auto
+      ) repeat(2, var(--row-h));
   }
 
   .g-draw-history,

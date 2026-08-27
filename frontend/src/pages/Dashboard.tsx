@@ -124,7 +124,7 @@ export function Dashboard() {
 
         <div className="g-referral">
           <AnnouncementBanner
-            text="Invite a friend, earn 2.5% every time they win — tap here"
+            text="Invite a friend, earn 2.5% every time they win. Click here to get your referral link."
             onClick={() => setPopup("referral")}
           />
         </div>

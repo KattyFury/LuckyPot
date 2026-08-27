@@ -85,13 +85,19 @@ export function useEpochHistory(currentEpochId: bigint | undefined, count = 10) 
   return { epochs, ...rest };
 }
 
+// Wagmi/tanstack-query only refetch on mount, window refocus, or an explicit
+// invalidate by default - nothing re-polls a balance just because time passed.
+// 15s keeps the numbers on screen close to live without piling more load on
+// the public RPC (everything's already batched into one multicall per hook).
+const BALANCE_POLL_MS = 15_000;
+
 export function usePoolTotals() {
   return useReadContracts({
     contracts: [
       { ...poolContract, functionName: "balancesTotal" },
       { ...poolContract, functionName: "participantCount" },
     ],
-    query: { placeholderData: keepPreviousData },
+    query: { placeholderData: keepPreviousData, refetchInterval: BALANCE_POLL_MS },
   });
 }
 
@@ -107,7 +113,7 @@ export function useEligiblePoolTotal(participantCount: number | undefined) {
 
   const { data: addressData } = useReadContracts({
     contracts: indices.map((i) => ({ ...poolContract, functionName: "participants", args: [BigInt(i)] as const })),
-    query: { enabled: indices.length > 0, placeholderData: keepPreviousData },
+    query: { enabled: indices.length > 0, placeholderData: keepPreviousData, refetchInterval: BALANCE_POLL_MS },
   });
 
   // The public Arc Testnet RPC 429s under load, and a rate-limited read comes back as
@@ -120,7 +126,7 @@ export function useEligiblePoolTotal(participantCount: number | undefined) {
 
   const { data: eligibleData, ...rest } = useReadContracts({
     contracts: addresses.map((a) => ({ ...poolContract, functionName: "eligibleBalance", args: [a] as const })),
-    query: { enabled: addresses.length > 0, placeholderData: keepPreviousData },
+    query: { enabled: addresses.length > 0, placeholderData: keepPreviousData, refetchInterval: BALANCE_POLL_MS },
   });
 
   const eligibleComplete =
@@ -156,7 +162,7 @@ export function useUserPosition(address: `0x${string}` | undefined) {
         args: address ? [address, POOL_ADDRESS] : undefined,
       },
     ],
-    query: { enabled: Boolean(address), placeholderData: keepPreviousData },
+    query: { enabled: Boolean(address), placeholderData: keepPreviousData, refetchInterval: BALANCE_POLL_MS },
   });
 }
 

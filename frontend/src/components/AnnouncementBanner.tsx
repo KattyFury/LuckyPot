@@ -15,17 +15,16 @@ export function AnnouncementBanner({
     background: "var(--color-banner-bg)",
     color: "#000000",
     borderRadius: "var(--radius)",
-    height: "100%",
+    minHeight: "100%",
     width: "100%",
     display: "flex",
     alignItems: "center",
-    padding: "0 20px",
+    padding: "12px 20px",
     fontSize: "var(--fs-caption)",
     fontWeight: 700,
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
+    whiteSpace: "normal",
     textAlign: "left",
+    lineHeight: 1.3,
   };
 
   const actionable: CSSProperties = { ...style, textDecoration: "underline", cursor: "pointer" };
