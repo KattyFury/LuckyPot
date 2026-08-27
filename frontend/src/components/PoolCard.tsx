@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { formatUSDC } from "../lib/format";
-import { useAmount } from "../config/tokenUnit";
+import { useAmount, useTokenUnit } from "../config/tokenUnit";
 import { Modal } from "./Modal";
 
 export function PoolCard({
@@ -25,6 +25,7 @@ export function PoolCard({
   latestResultAvailable: boolean;
 }) {
   const amount = useAmount();
+  const { unit } = useTokenUnit();
   const [showEligibleInfo, setShowEligibleInfo] = useState(false);
   const [showMyEligibleInfo, setShowMyEligibleInfo] = useState(false);
 
@@ -38,22 +39,25 @@ export function PoolCard({
       </div>
 
       <div className="two-col" style={{ alignItems: "baseline", fontFamily: "var(--font-condensed)" }}>
-        <div style={{ fontSize: "var(--fs-3)", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
-          {formatUSDC(eligiblePoolTotal)}/{amount(totalPool)}
+        <div style={{ fontSize: "var(--fs-3)", fontWeight: 700, display: "flex", alignItems: "baseline", gap: 6 }}>
+          {formatUSDC(eligiblePoolTotal)} tickets
           <button
             type="button"
-            aria-label="Why is the eligible pool different from the total pool?"
+            aria-label="How much money does the pool actually hold?"
             onClick={() => setShowEligibleInfo(true)}
             style={{ background: "none", padding: 0, lineHeight: 0, display: "inline-flex", alignItems: "center" }}
           >
             <span className="icon icon-info" style={{ fontSize: "var(--fs-caption)", color: "var(--color-text-secondary)" }} />
           </button>
         </div>
-        <div style={{ fontSize: "var(--fs-3)", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
-          {formatUSDC(myEligible)}/{amount(myDeposited)}
+        <div style={{ fontSize: "var(--fs-3)", fontWeight: 700, display: "flex", alignItems: "baseline", gap: 6 }}>
+          {formatUSDC(myEligible)}
+          <span style={{ fontSize: "var(--fs-5)", fontWeight: 700 }}>
+            ticket/{formatUSDC(myDeposited)} {unit}
+          </span>
           <button
             type="button"
-            aria-label="Why is my eligible amount different from what I deposited?"
+            aria-label="Why is my ticket count different from what I deposited?"
             onClick={() => setShowMyEligibleInfo(true)}
             style={{ background: "none", padding: 0, lineHeight: 0, display: "inline-flex", alignItems: "center" }}
           >
@@ -63,12 +67,14 @@ export function PoolCard({
       </div>
 
       {showEligibleInfo && (
-        <Modal title="Eligible pool vs. total pool" onClose={() => setShowEligibleInfo(false)}>
+        <Modal title="What's a ticket?" onClose={() => setShowEligibleInfo(false)}>
           <div style={{ fontSize: "var(--fs-caption)", color: "var(--color-text-secondary)", lineHeight: 1.5 }}>
             <p>
-              <strong style={{ color: "var(--color-text)" }}>{amount(totalPool)}</strong> deposited, always
-              withdrawable. Only <strong style={{ color: "var(--color-text)" }}>{formatUSDC(eligiblePoolTotal)}</strong> has
-              sat a full week and counts toward this draw – fresh deposits roll in next epoch.
+              "Tickets" is every $1 that's sat in the pool a full week and counts toward this draw. The pool
+              actually holds <strong style={{ color: "var(--color-text)" }}>{amount(totalPool)}</strong> in
+              total, always withdrawable — but only{" "}
+              <strong style={{ color: "var(--color-text)" }}>{formatUSDC(eligiblePoolTotal)}</strong> of that has
+              been in long enough to count; fresh deposits roll into tickets next epoch.
             </p>
             <p>Tip: deposit right after a draw so your week starts immediately.</p>
           </div>
@@ -76,12 +82,13 @@ export function PoolCard({
       )}
 
       {showMyEligibleInfo && (
-        <Modal title="Your eligible balance vs. your deposit" onClose={() => setShowMyEligibleInfo(false)}>
+        <Modal title="Why don't my tickets match my deposit?" onClose={() => setShowMyEligibleInfo(false)}>
           <div style={{ fontSize: "var(--fs-caption)", color: "var(--color-text-secondary)", lineHeight: 1.5 }}>
             <p>
-              <strong style={{ color: "var(--color-text)" }}>{amount(myDeposited)}</strong> deposited, always
-              withdrawable. Only <strong style={{ color: "var(--color-text)" }}>{formatUSDC(myEligible)}</strong> has
-              sat a full week and counts toward this draw – fresh deposits roll in next epoch.
+              You've deposited <strong style={{ color: "var(--color-text)" }}>{amount(myDeposited)}</strong>,
+              always withdrawable. Only{" "}
+              <strong style={{ color: "var(--color-text)" }}>{formatUSDC(myEligible)}</strong> of that has sat a
+              full week, so that's the only part counted as tickets for this draw — the rest rolls in next epoch.
             </p>
             <p>Tip: deposit right after a draw so your week starts immediately.</p>
           </div>
