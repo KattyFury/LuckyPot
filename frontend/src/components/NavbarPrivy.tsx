@@ -20,7 +20,7 @@ export function NavbarPrivy(actions: WalletMenuActions) {
         color: "#ffffff",
         borderRadius: 999,
         padding: "8px 20px",
-        fontSize: "var(--fs-5)",
+        fontSize: "var(--fs-caption)",
         fontWeight: 700,
       }}
     >

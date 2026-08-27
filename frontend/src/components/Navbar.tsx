@@ -32,7 +32,7 @@ export function Navbar(actions: WalletMenuActions) {
       }}
     >
       <a href="https://luckypot.cc/" style={{ display: "flex", alignItems: "center" }}>
-        <img src={logoFullUrl} alt="LuckyPot" style={{ height: 28, width: "auto" }} />
+        <img src={logoFullUrl} alt="LuckyPot" style={{ height: 34, width: "auto" }} />
       </a>
       {USE_PRIVY ? <NavbarPrivy {...actions} /> : <NavbarInjected {...actions} />}
     </nav>
