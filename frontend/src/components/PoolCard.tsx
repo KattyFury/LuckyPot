@@ -76,7 +76,7 @@ export function PoolCard({
               <strong style={{ color: "var(--color-text)" }}>{formatUSDC(eligiblePoolTotal)}</strong> of that has
               been in long enough to count; fresh deposits roll into tickets next epoch.
             </p>
-            <p>Tip: deposit right after a draw so your week starts immediately.</p>
+            <p>Tip: deposit right before a draw so your week starts immediately.</p>
           </div>
         </Modal>
       )}
@@ -90,7 +90,7 @@ export function PoolCard({
               <strong style={{ color: "var(--color-text)" }}>{formatUSDC(myEligible)}</strong> of that has sat a
               full week, so that's the only part counted as tickets for this draw — the rest rolls in next epoch.
             </p>
-            <p>Tip: deposit right after a draw so your week starts immediately.</p>
+            <p>Tip: deposit right before a draw so your week starts immediately.</p>
           </div>
         </Modal>
       )}
