@@ -4,6 +4,7 @@ import { sendTransaction, waitForTransactionReceipt } from "wagmi/actions";
 import { erc20Abi } from "../lib/erc20Abi";
 import { encodeAggregate3, MULTICALL3_FROM_ADDRESS } from "../lib/multicall3From";
 import { buildSwapCalls, type SwapIntent } from "../lib/swapAdapter";
+import { AnnouncementBanner } from "./AnnouncementBanner";
 
 const EURC_ADDRESS = "0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a" as const;
 const CIRBTC_ADDRESS = "0xf0c4a4ce82a5746abaad9425360ab04fbba432bf" as const;
@@ -23,12 +24,14 @@ async function fetchIntent(
   return data as SwapIntent;
 }
 
-/** "x3" — one leg per token: fetches that leg's swap intent, sends its own
- *  approve+execute Multicall3From transaction, and waits for it to actually land
- *  on-chain before moving to the next leg or reporting success. Two separate
- *  signatures (one per token held), not one combined batch - simpler to reason
- *  about, and a revert on one leg doesn't silently swallow the other. */
-export function SwapBoostButton() {
+/** One banner, two jobs. Before the wallet holds any EURC/cirBTC: the usual
+ *  faucet link (also copies the address, same as before). Once it holds some:
+ *  the same banner switches to selling all of it to USDC, one transaction per
+ *  token - Circle's testnet faucet caps each request at 20 USDC, so faucet-ing
+ *  EURC and cirBTC too and selling them here stacks up more than one faucet
+ *  request alone would. No separate button - it was fighting the grid on
+ *  narrow screens, and one banner that explains itself is simpler anyway. */
+export function FaucetOrSellBanner() {
   const { address } = useAccount();
   const config = useConfig();
   const { data: balances } = useReadContracts({
@@ -42,7 +45,7 @@ export function SwapBoostButton() {
   });
   const eurcBal = (balances?.[0]?.result as bigint | undefined) ?? 0n;
   const cirbtcBal = (balances?.[1]?.result as bigint | undefined) ?? 0n;
-  const hasSomethingToSwap = eurcBal > 0n || cirbtcBal > 0n;
+  const hasSomethingToSell = eurcBal > 0n || cirbtcBal > 0n;
 
   const [status, setStatus] = useState<"idle" | "eurc" | "cirbtc">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -52,18 +55,13 @@ export function SwapBoostButton() {
     if (!address) return;
     const intent = await fetchIntent(tokenSymbol, address, amountBase);
     const calls = buildSwapCalls(intent, tokenAddress, amountBase);
-    const hash = await sendTransaction(config, {
-      to: MULTICALL3_FROM_ADDRESS,
-      data: encodeAggregate3(calls),
-    });
+    const hash = await sendTransaction(config, { to: MULTICALL3_FROM_ADDRESS, data: encodeAggregate3(calls) });
     const receipt = await waitForTransactionReceipt(config, { hash });
-    if (receipt.status !== "success") {
-      throw new Error(`${tokenSymbol} -> USDC swap reverted on-chain`);
-    }
+    if (receipt.status !== "success") throw new Error(`${tokenSymbol} -> USDC swap reverted on-chain`);
   }
 
-  async function handleClick() {
-    if (!address || !hasSomethingToSwap || busy) return;
+  async function handleSell() {
+    if (!address || !hasSomethingToSell || busy) return;
     setError(null);
     try {
       if (eurcBal > 0n) {
@@ -75,56 +73,52 @@ export function SwapBoostButton() {
         await swapLeg("cirBTC", CIRBTC_ADDRESS, cirbtcBal);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "swap failed");
+      setError(e instanceof Error ? e.message : "sell failed");
     } finally {
       setStatus("idle");
     }
   }
 
-  const label = status === "eurc" ? "EURC..." : status === "cirbtc" ? "cirBTC..." : "x3";
+  if (hasSomethingToSell) {
+    const text =
+      status === "eurc"
+        ? "Selling EURC..."
+        : status === "cirbtc"
+          ? "Selling cirBTC..."
+          : "Click here to sell EURC and cirBTC to USDC";
+    return (
+      <div style={{ position: "relative", height: "100%" }}>
+        <AnnouncementBanner text={text} onClick={handleSell} />
+        {error && (
+          <div
+            style={{
+              position: "absolute",
+              top: "100%",
+              left: 0,
+              right: 0,
+              marginTop: 6,
+              background: "#c0392b",
+              color: "#fff",
+              fontSize: "var(--fs-5)",
+              padding: "6px 10px",
+              borderRadius: "var(--radius)",
+              zIndex: 10,
+            }}
+          >
+            {error}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
-    <div style={{ position: "relative", height: "100%" }}>
-      <button
-        type="button"
-        onClick={handleClick}
-        disabled={!address || !hasSomethingToSwap || busy}
-        title="Swap your EURC and cirBTC into USDC, one transaction per token"
-        style={{
-          background: "var(--color-banner-bg)",
-          color: "#000000",
-          // Squares off the left corners so this sits flush against the
-          // faucet banner to its left - one continuous bar, not two pills.
-          borderRadius: "0 var(--radius) var(--radius) 0",
-          height: "100%",
-          minWidth: 60,
-          fontWeight: 700,
-          fontSize: "var(--fs-caption)",
-          opacity: !address || !hasSomethingToSwap ? 0.5 : 1,
-          cursor: !address || !hasSomethingToSwap || busy ? "not-allowed" : "pointer",
-        }}
-      >
-        {label}
-      </button>
-      {error && (
-        <div
-          style={{
-            position: "absolute",
-            top: "100%",
-            right: 0,
-            marginTop: 6,
-            background: "#c0392b",
-            color: "#fff",
-            fontSize: "var(--fs-5)",
-            padding: "6px 10px",
-            borderRadius: "var(--radius)",
-            whiteSpace: "nowrap",
-            zIndex: 10,
-          }}
-        >
-          {error}
-        </div>
-      )}
-    </div>
+    <AnnouncementBanner
+      text="Tap here to faucet, remember to faucet all 3 tokens"
+      href="https://faucet.circle.com"
+      onClick={() => {
+        if (address) navigator.clipboard.writeText(address);
+      }}
+    />
   );
 }

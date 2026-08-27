@@ -9,7 +9,7 @@ import { MyHistoryCard, MyHistoryList } from "../components/MyHistoryCard";
 import { EpochDetailModal } from "../components/EpochDetailModal";
 import { ResultModal } from "../components/ResultModal";
 import { ReferralInfoModal } from "../components/ReferralInfoModal";
-import { SwapBoostButton } from "../components/SwapBoostButton";
+import { FaucetOrSellBanner } from "../components/FaucetOrSellBanner";
 import { Modal } from "../components/Modal";
 import { DepositModal } from "./Deposit";
 import { WithdrawModal } from "./Withdraw";
@@ -86,7 +86,7 @@ export function Dashboard() {
           />
         </div>
 
-        <div className="g-banner" style={{ display: "flex", minWidth: 0 }}>
+        <div className="g-banner">
           {unit === "$ARC" ? (
             <AnnouncementBanner text="$ARC isn't live yet – figures are the USDC pool." />
           ) : unscratchedResult ? (
@@ -95,19 +95,7 @@ export function Dashboard() {
               onClick={() => setResultEpochId(unscratchedResult.id)}
             />
           ) : (
-            <>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <AnnouncementBanner
-                  text="Tap here if you want to faucet"
-                  href="https://faucet.circle.com"
-                  flushRight
-                  onClick={() => {
-                    if (address) navigator.clipboard.writeText(address);
-                  }}
-                />
-              </div>
-              <SwapBoostButton />
-            </>
+            <FaucetOrSellBanner />
           )}
         </div>
 
