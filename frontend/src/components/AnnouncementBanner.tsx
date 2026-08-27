@@ -24,7 +24,7 @@ export function AnnouncementBanner({
     display: "flex",
     alignItems: "center",
     padding: "12px 20px",
-    fontSize: "var(--fs-caption)",
+    fontSize: "var(--fs-md)",
     fontWeight: 700,
     whiteSpace: "normal",
     textAlign: "left",

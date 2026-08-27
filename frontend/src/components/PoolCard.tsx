@@ -33,18 +33,18 @@ export function PoolCard({
     <div className="card card-rows">
       <div className="two-col box-header">
         <span style={{ fontWeight: 700, color: "var(--color-primary)" }}>
-          <span style={{ fontSize: "var(--fs-4)" }}>TOTAL TICKET</span>
-          <span style={{ fontSize: "var(--fs-5)" }}>/POOL</span>
+          <span style={{ fontSize: "var(--fs-lg)" }}>TOTAL TICKET</span>
+          <span style={{ fontSize: "var(--fs-sm)" }}>/POOL</span>
         </span>
         <span style={{ fontWeight: 700, color: "var(--color-primary)", textAlign: "left" }}>
-          <span style={{ fontSize: "var(--fs-4)" }}>MY TICKETS</span>
-          <span style={{ fontSize: "var(--fs-5)" }}>/MY DEPOSIT</span>
+          <span style={{ fontSize: "var(--fs-lg)" }}>MY TICKETS</span>
+          <span style={{ fontSize: "var(--fs-sm)" }}>/MY DEPOSIT</span>
         </span>
       </div>
 
       <div className="two-col" style={{ fontFamily: "var(--font-condensed)" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <div style={{ fontSize: "var(--fs-3)", fontWeight: 700, display: "flex", alignItems: "baseline", gap: 6 }}>
+          <div style={{ fontSize: "var(--fs-xl)", fontWeight: 700, display: "flex", alignItems: "baseline", gap: 6 }}>
             {formatUSDC(eligiblePoolTotal)}/{formatUSDC(totalPool)}
             <button
               type="button"
@@ -52,13 +52,13 @@ export function PoolCard({
               onClick={() => setShowEligibleInfo(true)}
               style={{ background: "none", padding: 0, lineHeight: 0, display: "inline-flex", alignItems: "center" }}
             >
-              <span className="icon icon-info" style={{ fontSize: "var(--fs-caption)", color: "var(--color-text-secondary)" }} />
+              <span className="icon icon-info" style={{ fontSize: "var(--fs-md)", color: "var(--color-text-secondary)" }} />
             </button>
           </div>
-          <span style={{ fontSize: "var(--fs-5)", fontWeight: 700 }}>{unit}</span>
+          <span style={{ fontSize: "var(--fs-sm)", fontWeight: 700 }}>{unit}</span>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <div style={{ fontSize: "var(--fs-3)", fontWeight: 700, display: "flex", alignItems: "baseline", gap: 6 }}>
+          <div style={{ fontSize: "var(--fs-xl)", fontWeight: 700, display: "flex", alignItems: "baseline", gap: 6 }}>
             {formatUSDC(myEligible)}/{formatUSDC(myDeposited)}
             <button
               type="button"
@@ -66,16 +66,16 @@ export function PoolCard({
               onClick={() => setShowMyEligibleInfo(true)}
               style={{ background: "none", padding: 0, lineHeight: 0, display: "inline-flex", alignItems: "center" }}
             >
-              <span className="icon icon-info" style={{ fontSize: "var(--fs-caption)", color: "var(--color-text-secondary)" }} />
+              <span className="icon icon-info" style={{ fontSize: "var(--fs-md)", color: "var(--color-text-secondary)" }} />
             </button>
           </div>
-          <span style={{ fontSize: "var(--fs-5)", fontWeight: 700 }}>{unit}</span>
+          <span style={{ fontSize: "var(--fs-sm)", fontWeight: 700 }}>{unit}</span>
         </div>
       </div>
 
       {showEligibleInfo && (
         <Modal title="What's a ticket?" onClose={() => setShowEligibleInfo(false)}>
-          <div style={{ fontSize: "var(--fs-caption)", color: "var(--color-text-secondary)", lineHeight: 1.5 }}>
+          <div style={{ fontSize: "var(--fs-md)", color: "var(--color-text-secondary)", lineHeight: 1.5 }}>
             <p>
               "Tickets" is every $1 that's sat in the pool a full week and counts toward this draw. The pool
               actually holds <strong style={{ color: "var(--color-text)" }}>{amount(totalPool)}</strong> in
@@ -90,7 +90,7 @@ export function PoolCard({
 
       {showMyEligibleInfo && (
         <Modal title="Why don't my tickets match my deposit?" onClose={() => setShowMyEligibleInfo(false)}>
-          <div style={{ fontSize: "var(--fs-caption)", color: "var(--color-text-secondary)", lineHeight: 1.5 }}>
+          <div style={{ fontSize: "var(--fs-md)", color: "var(--color-text-secondary)", lineHeight: 1.5 }}>
             <p>
               You've deposited <strong style={{ color: "var(--color-text)" }}>{amount(myDeposited)}</strong>,
               always withdrawable. Only{" "}
@@ -104,7 +104,7 @@ export function PoolCard({
 
       <div
         style={{
-          fontSize: "var(--fs-caption)",
+          fontSize: "var(--fs-md)",
           color: "var(--color-text-secondary)",
           fontFamily: "var(--font-condensed)",
         }}

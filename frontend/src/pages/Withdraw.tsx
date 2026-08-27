@@ -35,12 +35,12 @@ export function WithdrawModal({ onClose }: { onClose: () => void }) {
   return (
     <Modal title="Withdraw" onClose={onClose}>
 
-        <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
+        <div style={{ fontSize: "var(--fs-sm)", color: "var(--color-text-secondary)" }}>
           Available: <strong style={{ color: "var(--color-text)" }}>{fmt(balance)}</strong>
         </div>
 
         <div>
-          <label style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>Amount (USDC)</label>
+          <label style={{ fontSize: "var(--fs-sm)", color: "var(--color-text-secondary)" }}>Amount (USDC)</label>
           <div style={{ display: "flex", alignItems: "center", gap: 12, borderBottom: "2px solid #000000" }}>
             <input
               type="number"
@@ -50,21 +50,21 @@ export function WithdrawModal({ onClose }: { onClose: () => void }) {
               placeholder="0.00"
               style={{
                 flex: 1,
-                fontSize: "var(--fs-3)",
+                fontSize: "var(--fs-xl)",
                 fontWeight: 700,
                 padding: "12px 0",
                 border: "none",
                 outline: "none",
               }}
             />
-            <button onClick={handleMax} style={{ background: "none", fontSize: "var(--fs-5)", fontWeight: 700 }}>
+            <button onClick={handleMax} style={{ background: "none", fontSize: "var(--fs-sm)", fontWeight: 700 }}>
               MAX
             </button>
           </div>
         </div>
 
         {willForfeit && (
-          <div className="card" style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>
+          <div className="card" style={{ fontSize: "var(--fs-sm)", color: "var(--color-text-secondary)" }}>
             Withdrawing now will remove you from this epoch's ticket draw.
           </div>
         )}
@@ -77,7 +77,7 @@ export function WithdrawModal({ onClose }: { onClose: () => void }) {
           {isPending || isConfirming ? "Confirming..." : "Confirm"}
         </button>
 
-        {error && <div style={{ color: "#c0392b", fontSize: "var(--fs-5)" }}>{error.message.slice(0, 200)}</div>}
+        {error && <div style={{ color: "#c0392b", fontSize: "var(--fs-sm)" }}>{error.message.slice(0, 200)}</div>}
     </Modal>
   );
 }

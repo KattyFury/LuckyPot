@@ -12,15 +12,15 @@ export function DrawHistoryList({
   const amount = useAmount();
 
   if (epochs.length === 0) {
-    return <div style={{ fontSize: "var(--fs-5)", color: "var(--color-text-secondary)" }}>No draws yet.</div>;
+    return <div style={{ fontSize: "var(--fs-md)", color: "var(--color-text-secondary)" }}>No draws yet.</div>;
   }
 
   return (
     <>
       {epochs.map(({ id, epoch }) => (
         <button key={id.toString()} className="card-list__row" onClick={() => onSelect(id, epoch)}>
-          <span style={{ fontSize: "var(--fs-5)", fontWeight: 700 }}>Epoch #{id.toString().padStart(2, "0")}</span>
-          <span style={{ fontSize: "var(--fs-caption)", fontWeight: 700 }}>
+          <span style={{ fontSize: "var(--fs-sm)", fontWeight: 700 }}>Epoch #{id.toString().padStart(2, "0")}</span>
+          <span style={{ fontSize: "var(--fs-md)", fontWeight: 700 }}>
             {amount(epoch.eligiblePoolSnapshot)}
             <span style={{ fontWeight: 400, color: "var(--color-text-secondary)" }}>
               /{epoch.eligibleParticipants.toString()} {plural(epoch.eligibleParticipants, "depositor")}
