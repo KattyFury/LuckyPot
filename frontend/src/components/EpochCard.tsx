@@ -62,7 +62,7 @@ export function EpochCard({
         <strong style={{ color: "var(--color-text)" }}>{numWinnersEstimate.toString()}</strong>{" "}
         {plural(numWinnersEstimate, "lucky winner")} out of{" "}
         <strong style={{ color: "var(--color-text)" }}>{participantCount.toLocaleString("en-US")}</strong>{" "}
-        {plural(participantCount, "participant")}.
+        {plural(participantCount, "participant")}. Winners give 5% back to the protocol.
       </div>
     </div>
   );
