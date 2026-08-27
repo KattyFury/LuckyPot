@@ -76,10 +76,10 @@
   .icon-chevron { -webkit-mask-image: url("icons/down2.svg"); mask-image: url("icons/down2.svg"); }
 
   /* Navbar – same look as the app's (Navbar.tsx / global.css), sticky since
-     this page scrolls. The underline sits inset 20px from each edge, same as
-     the app: a full-bleed line was tried on both and reverted - it needed a
-     negative margin that overflowed the page horizontally (and containing
-     that with overflow-x:hidden would have broken position:sticky). */
+     this page scrolls. nav.top stays full-bleed (background only) so it fully
+     covers scrolling content; .nav-inner uses MARGIN (not padding) for its
+     20px inset, same as the app - padding doesn't shrink the box a box-shadow
+     is drawn around, so the line rendered full-bleed too until this. */
   nav.top {
     position: sticky;
     top: 0;
@@ -92,7 +92,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 20px;
+    margin: 0 20px;
     box-shadow: 0 1px 0 #000000;
   }
   nav.top .brand { display: flex; align-items: center; }
