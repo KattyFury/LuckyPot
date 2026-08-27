@@ -32,38 +32,44 @@ export function PoolCard({
   return (
     <div className="card card-rows">
       <div className="two-col box-header">
-        <span style={{ fontSize: "var(--fs-5)", fontWeight: 700, color: "var(--color-primary)" }}>
-          TOTAL TICKET/POOL
+        <span style={{ fontWeight: 700, color: "var(--color-primary)" }}>
+          <span style={{ fontSize: "var(--fs-4)" }}>TOTAL </span>
+          <span style={{ fontSize: "var(--fs-5)" }}>TICKET/POOL</span>
         </span>
-        <span style={{ fontSize: "var(--fs-5)", fontWeight: 700, color: "var(--color-primary)", textAlign: "left" }}>
-          MY TICKETS/MY DEPOSIT
+        <span style={{ fontWeight: 700, color: "var(--color-primary)", textAlign: "left" }}>
+          <span style={{ fontSize: "var(--fs-4)" }}>MY </span>
+          <span style={{ fontSize: "var(--fs-5)" }}>TICKETS/MY DEPOSIT</span>
         </span>
       </div>
 
-      <div className="two-col" style={{ alignItems: "baseline", fontFamily: "var(--font-condensed)" }}>
-        <div style={{ fontSize: "var(--fs-4)", fontWeight: 700, display: "flex", alignItems: "baseline", gap: 6 }}>
-          {formatUSDC(eligiblePoolTotal)}/{formatUSDC(totalPool)}{" "}
-          <span style={{ fontSize: "var(--fs-5)" }}>{unit}</span>
-          <button
-            type="button"
-            aria-label="How much money does the pool actually hold?"
-            onClick={() => setShowEligibleInfo(true)}
-            style={{ background: "none", padding: 0, lineHeight: 0, display: "inline-flex", alignItems: "center" }}
-          >
-            <span className="icon icon-info" style={{ fontSize: "var(--fs-caption)", color: "var(--color-text-secondary)" }} />
-          </button>
+      <div className="two-col" style={{ fontFamily: "var(--font-condensed)" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <div style={{ fontSize: "var(--fs-3)", fontWeight: 700, display: "flex", alignItems: "baseline", gap: 6 }}>
+            {formatUSDC(eligiblePoolTotal)}/{formatUSDC(totalPool)}
+            <button
+              type="button"
+              aria-label="How much money does the pool actually hold?"
+              onClick={() => setShowEligibleInfo(true)}
+              style={{ background: "none", padding: 0, lineHeight: 0, display: "inline-flex", alignItems: "center" }}
+            >
+              <span className="icon icon-info" style={{ fontSize: "var(--fs-caption)", color: "var(--color-text-secondary)" }} />
+            </button>
+          </div>
+          <span style={{ fontSize: "var(--fs-5)", fontWeight: 700 }}>{unit}</span>
         </div>
-        <div style={{ fontSize: "var(--fs-4)", fontWeight: 700, display: "flex", alignItems: "baseline", gap: 6 }}>
-          {formatUSDC(myEligible)}/{formatUSDC(myDeposited)}{" "}
-          <span style={{ fontSize: "var(--fs-5)" }}>{unit}</span>
-          <button
-            type="button"
-            aria-label="Why is my ticket count different from what I deposited?"
-            onClick={() => setShowMyEligibleInfo(true)}
-            style={{ background: "none", padding: 0, lineHeight: 0, display: "inline-flex", alignItems: "center" }}
-          >
-            <span className="icon icon-info" style={{ fontSize: "var(--fs-caption)", color: "var(--color-text-secondary)" }} />
-          </button>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <div style={{ fontSize: "var(--fs-3)", fontWeight: 700, display: "flex", alignItems: "baseline", gap: 6 }}>
+            {formatUSDC(myEligible)}/{formatUSDC(myDeposited)}
+            <button
+              type="button"
+              aria-label="Why is my ticket count different from what I deposited?"
+              onClick={() => setShowMyEligibleInfo(true)}
+              style={{ background: "none", padding: 0, lineHeight: 0, display: "inline-flex", alignItems: "center" }}
+            >
+              <span className="icon icon-info" style={{ fontSize: "var(--fs-caption)", color: "var(--color-text-secondary)" }} />
+            </button>
+          </div>
+          <span style={{ fontSize: "var(--fs-5)", fontWeight: 700 }}>{unit}</span>
         </div>
       </div>
 
