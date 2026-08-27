@@ -194,7 +194,12 @@ button {
      or the white padding above it reads as part of row 1 and the navbar
      looks pushed below centre. The empty last row is the bottom margin. */
   padding: 0 20px;
-  grid-template-columns: 1fr;
+  /* minmax(0, 1fr), not bare 1fr: a bare 1fr track's implicit minimum is
+     auto (its content's min-content size), which can render the track -
+     and therefore every row sharing it - wider than the container actually
+     is. Confirmed live 2026-08-27: every row measured 415px in a 430px
+     app-shell with 20px padding each side (should've been 390px). */
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: repeat(13, var(--row-h));
 }
 
@@ -231,7 +236,7 @@ button {
 
 @media (min-width: 1024px) {
   .dashboard-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     grid-template-rows: repeat(13, var(--row-h));
   }
 
@@ -374,7 +379,7 @@ button {
 
 .two-col {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--gap);
   min-width: 0;
 }
