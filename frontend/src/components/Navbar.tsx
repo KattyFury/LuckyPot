@@ -18,12 +18,13 @@ export function Navbar(actions: WalletMenuActions) {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        // Breaks out of the grid's 20px side padding so the separator line and
-        // background reach the app-shell's true edges while sticky; the padding
-        // here (20px + the original 4px) puts the logo/wallet button back where
-        // they'd sit without the negative margin.
-        margin: "0 -20px",
-        padding: "0 24px",
+        padding: "0 4px",
+        // Needed now that .g-navbar is sticky: without it, cards scrolling up
+        // underneath would show through the nav's own row instead of being
+        // covered by it. (A negative margin to make the line/background reach
+        // .app-shell's true edges was tried and reverted - it overflowed the
+        // grid horizontally, since overflow-x:hidden to contain it would have
+        // broken position:sticky on an ancestor.)
         background: "#ffffff",
         /* Drawn as a shadow, not a border: a border would sit inside the
            box and shift the vertically centred content up by half a pixel. */

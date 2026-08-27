@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>LuckyPot – no-loss weekly USDC prize pool</title>
-<meta name="description" content="Deposit USDC, hold it for one week, and you're in the draw. The winners take the week's yield – everyone else loses nothing; their full principal remains intact." />
+<meta name="description" content="Deposit USDC, hold it for full week, and you're in the draw. The winners take the week's yield – everyone else loses nothing; their full principal remains intact." />
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -75,18 +75,17 @@
   .icon-down { -webkit-mask-image: url("icons/down.svg"); mask-image: url("icons/down.svg"); }
   .icon-chevron { -webkit-mask-image: url("icons/down2.svg"); mask-image: url("icons/down2.svg"); }
 
-  /* Navbar – same look as the app's (Navbar.tsx / global.css): sticky, full-bleed
-     background AND separator line (the app reaches full-bleed via a negative
-     margin on the nav that cancels .dashboard-grid's 20px padding; here it's
-     native since this bar was never inside a padded grid to begin with). Only
-     .nav-inner's own content gets the 20px inset, via padding, not the bar. */
+  /* Navbar – same look as the app's (Navbar.tsx / global.css), sticky since
+     this page scrolls. The underline sits inset 20px from each edge, same as
+     the app: a full-bleed line was tried on both and reverted - it needed a
+     negative margin that overflowed the page horizontally (and containing
+     that with overflow-x:hidden would have broken position:sticky). */
   nav.top {
     position: sticky;
     top: 0;
     z-index: 20;
     height: var(--row-h);
     background: #ffffff;
-    box-shadow: 0 1px 0 #000000;
   }
   nav.top .nav-inner {
     height: 100%;
@@ -94,9 +93,10 @@
     align-items: center;
     justify-content: space-between;
     padding: 0 20px;
+    box-shadow: 0 1px 0 #000000;
   }
-  nav.top .brand { display: flex; align-items: center; gap: 6px; font-size: var(--fs-4); font-weight: 700; color: var(--color-primary); }
-  nav.top .brand img { height: 24px; width: 24px; }
+  nav.top .brand { display: flex; align-items: center; }
+  nav.top .brand img { height: 28px; width: auto; }
   nav.top a.enter-app {
     background: #000000; color: #ffffff; text-decoration: none; font-weight: 700;
     padding: 8px 20px; border-radius: 999px; font-size: var(--fs-5);
@@ -206,7 +206,7 @@
 <div class="site">
   <nav class="top">
     <div class="nav-inner">
-      <span class="brand"><img src="favicon.svg" alt="" />LuckyPot</span>
+      <span class="brand"><img src="logo-full.svg" alt="LuckyPot" /></span>
       <a class="enter-app" href="/app/">Enter App</a>
     </div>
   </nav>
@@ -214,7 +214,7 @@
   <main>
     <section class="hero" style="border-top: none;">
       <h1 class="condensed">
-        Deposit USDC, hold it for <strong>one week</strong>, and you're in the draw.
+        Deposit USDC, hold it for <strong>full week</strong>, and you're in the draw.
         The winners take the week's yield – everyone else loses nothing; <strong>their full principal remains intact</strong>.
       </h1>
       <div class="cta-row">
