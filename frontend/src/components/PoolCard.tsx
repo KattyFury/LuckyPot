@@ -33,12 +33,12 @@ export function PoolCard({
     <div className="card card-rows">
       <div className="two-col box-header">
         <span style={{ fontWeight: 700, color: "var(--color-primary)" }}>
-          <span style={{ fontSize: "var(--fs-4)" }}>TOTAL </span>
-          <span style={{ fontSize: "var(--fs-5)" }}>TICKET/POOL</span>
+          <span style={{ fontSize: "var(--fs-4)" }}>TOTAL TICKET</span>
+          <span style={{ fontSize: "var(--fs-5)" }}>/POOL</span>
         </span>
         <span style={{ fontWeight: 700, color: "var(--color-primary)", textAlign: "left" }}>
-          <span style={{ fontSize: "var(--fs-4)" }}>MY </span>
-          <span style={{ fontSize: "var(--fs-5)" }}>TICKETS/MY DEPOSIT</span>
+          <span style={{ fontSize: "var(--fs-4)" }}>MY TICKETS</span>
+          <span style={{ fontSize: "var(--fs-5)" }}>/MY DEPOSIT</span>
         </span>
       </div>
 
