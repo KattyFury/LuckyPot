@@ -140,7 +140,7 @@
     border: 2px solid #000;
     display: inline-flex; align-items: center; gap: 6px;
   }
-  .btn-secondary .icon { font-size: 12px; }
+  .btn-secondary .icon { font-size: var(--fs-1); }
 
   section { padding: 30px 0; border-top: 1px solid #e2e2e5; }
   section h2 {
@@ -152,7 +152,7 @@
   .steps li { display: flex; gap: 12px; align-items: flex-start; font-size: var(--fs-1); line-height: 1.5; }
   .steps .num {
     flex: 0 0 auto; width: 24px; height: 24px; border-radius: 50%; background: var(--color-primary);
-    color: #fff; font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: var(--fs-1); display: flex; align-items: center; justify-content: center;
   }
 
   .live-card {
@@ -182,11 +182,11 @@
   details.deep[open] summary .icon-chevron { transform: rotate(180deg); }
   details.deep .body { padding-top: 12px; font-size: var(--fs-1); line-height: 1.6; color: var(--color-text-secondary); }
   details.deep .body code {
-    background: #ffffff; padding: 1px 5px; border-radius: 4px; font-size: 12px; color: var(--color-text);
+    background: #ffffff; padding: 1px 5px; border-radius: 4px; font-size: var(--fs-1); color: var(--color-text);
   }
   details.deep .body pre {
     background: #000000; color: #d9f7e3; padding: 12px 14px; border-radius: 8px; overflow-x: auto;
-    font-size: 12px; line-height: 1.5; font-family: var(--font-condensed);
+    font-size: var(--fs-1); line-height: 1.5; font-family: var(--font-condensed);
   }
   .invariant-list { margin: 0; padding-left: 18px; }
   .invariant-list li { margin-bottom: 8px; }
