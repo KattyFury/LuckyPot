@@ -37,11 +37,17 @@ export function AnnouncementBanner({
   // regardless of what a descendant span sets - has to be cancelled here,
   // on the element actually drawing it, not just on the "text" span.
   const actionable: CSSProperties = { ...style, textDecoration: "none", cursor: "pointer" };
+  // One wrapping span, not two siblings: the outer element is display:flex
+  // for vertical centering, and flex treats each direct child (including a
+  // bare text node) as its own item that wraps independently - lead and
+  // text would end up as two separate columns instead of one flowing
+  // sentence. Wrapping them in a single span makes them one flex item, so
+  // the text inside reflows normally.
   const content = (
-    <>
+    <span>
       {lead && `${lead} `}
       <span style={{ textDecoration: "underline" }}>{text}</span>
-    </>
+    </span>
   );
 
   if (href) {
