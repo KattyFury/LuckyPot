@@ -409,7 +409,6 @@ no referrer    → cut splits evenly into vaultReserve / vaultDev</pre>
           <ul class="invariant-list">
             <li>Principal is never at risk and withdrawable any time – no lockups.</li>
             <li>No hidden fees – every cut is shown publicly.</li>
-            <li>Admin is a 2-of-2 Safe multisig, not a single wallet.</li>
             <li><strong>Scratching the card is just for fun – it's never a condition for getting paid.</strong> Winnings always land in the winner's wallet: scratch immediately for the suspense, or don't bother – after 3 days, anyone (not just the admin) can call <code>sweep()</code> to push the prize to the winner automatically. No deadline ever costs you a prize.</li>
             <li>Pausing only blocks new deposits and new draws – it never locks withdrawals.</li>
           </ul>
@@ -420,8 +419,10 @@ no referrer    → cut splits evenly into vaultReserve / vaultDev</pre>
     <section id="honesty">
       <h2>Honest boundaries</h2>
       <div class="honesty">
-        Running on Arc Testnet. Current yield follows a fixed formula – it's not real DeFi yield yet. Not audited.
-        See the exact formulas and contract source on GitHub.
+        Running on Arc Testnet. Current yield follows a fixed formula – it's not real DeFi yield yet, and nothing is
+        deposited into a lending market. Not audited. A 2-of-2 Safe holds admin, but a single developer wallet still
+        holds the same rights beside it – with no real money in the contract that hasn't been tightened yet, and it
+        will be before any of this touches real funds. See the exact formulas and contract source on GitHub.
       </div>
     </section>
   </main>
