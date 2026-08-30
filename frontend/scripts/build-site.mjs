@@ -30,6 +30,8 @@ cpSync(join(landingDir, "apple-touch-icon.png"), join(siteDir, "apple-touch-icon
 cpSync(join(landingDir, "logo.svg"), join(siteDir, "logo.svg"));
 // The full lockup (mark + wordmark) plus the /logo short URL that points at it.
 cpSync(join(landingDir, "logo-full.svg"), join(siteDir, "logo-full.svg"));
+// Same lockup with a white wordmark, for dark grounds - including this site.
+cpSync(join(landingDir, "logo-full-dark.svg"), join(siteDir, "logo-full-dark.svg"));
 cpSync(join(landingDir, "_redirects"), join(siteDir, "_redirects"));
 
 console.log("Copied landing page into dist-site/");

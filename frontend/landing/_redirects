@@ -3,3 +3,4 @@
 # _redirects only fires for paths that match no Function and no static asset -
 # so /api/* and /app/* are untouched.
 /logo   /logo-full.svg   302
+/logo-dark   /logo-full-dark.svg   302
