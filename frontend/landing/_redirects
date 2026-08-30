@@ -4,3 +4,12 @@
 # so /api/* and /app/* are untouched.
 /logo   /logo-full.svg   302
 /logo-dark   /logo-full-dark.svg   302
+
+# /app/admin is NOT handled here. A rewrite rule (both exact-path and /app/*
+# splat forms) consistently lost to Pages' own unmatched-path fallback, which
+# serves the ROOT index.html (this landing page) instead of /app/index.html -
+# reproduced even on the raw *.pages.dev domain, so it's a Pages platform
+# behavior, not a zone-level rule. Fixed instead by giving build-site.mjs a
+# literal dist-site/app/admin/index.html (a copy of the app shell) so Pages
+# serves it as an ordinary static file, the same way it already serves
+# /app/index.html - no redirect/rewrite involved at all.

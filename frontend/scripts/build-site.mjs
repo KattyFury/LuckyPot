@@ -41,4 +41,15 @@ cpSync(join(landingDir, "privy-logo-dark.png"), join(siteDir, "privy-logo-dark.p
 cpSync(join(landingDir, "_redirects"), join(siteDir, "_redirects"));
 cpSync(join(landingDir, "_headers"), join(siteDir, "_headers"));
 
+// /app/admin (App.tsx's own window.location.pathname check picks AdminPage
+// over Dashboard) needs a literal file here for a direct visit/refresh to
+// resolve - a _redirects rewrite to /app/index.html consistently lost to
+// Pages' own unmatched-path fallback (serves the landing page instead),
+// reproduced even on the raw *.pages.dev domain. The script/asset tags in
+// app/index.html are absolute (vite's base is "/app/"), so this copy loads
+// the same bundle correctly one directory deeper.
+const appDir = join(siteDir, "app");
+mkdirSync(join(appDir, "admin"), { recursive: true });
+cpSync(join(appDir, "index.html"), join(appDir, "admin", "index.html"));
+
 console.log("Copied landing page into dist-site/");
