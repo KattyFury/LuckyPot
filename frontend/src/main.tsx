@@ -11,7 +11,18 @@ import { arcTestnet } from "./chains/arcTestnet";
 import App from "./App";
 import "./styles/global.css";
 
-const queryClient = new QueryClient();
+// Defaults tuned for one shared public RPC. Left alone, a single 429 became a
+// burst of its own: every query retried three times with backoff, and each
+// window refocus refired the lot.
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 10_000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function Providers({ children }: { children: React.ReactNode }) {
   if (USE_PRIVY) {

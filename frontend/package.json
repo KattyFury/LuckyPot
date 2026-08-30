@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "build:site": "npm run build && node scripts/build-site.mjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "npm run build:site && cd .. && npx wrangler pages deploy frontend/dist-site --project-name=luckypot --branch=main --commit-dirty=true"
   },
   "dependencies": {
     "@fontsource/inter": "^5.3.0",

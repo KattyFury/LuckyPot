@@ -233,7 +233,11 @@ biến mới nên không cần `initializeV2`/reinitializer, upgrade bằng
 npx vite --port 5183 --host        # dev server (chỉ phục vụ app, KHÔNG có landing page)
 ./node_modules/.bin/tsc -b --noEmit  # typecheck (đừng dùng `npx tsc`, npx kéo nhầm gói tsc rác)
 npm run build:site                 # build app + copy landing vào dist-site/ — dùng lệnh này, KHÔNG dùng `npm run build` suông
-npx wrangler pages deploy dist-site --project-name=luckypot --branch=main --commit-dirty=true
+# DEPLOY: chay tu GOC REPO, khong phai tu frontend/ — wrangler compile thu muc
+# functions/ tim thay trong CWD cua no, ma functions/ nam o goc. Chay tu frontend/
+# thi Functions KHONG duoc upload, /api/swap tra 405 (static handler tu choi POST).
+# Dung script cho chac: (tu frontend/) npm run deploy
+cd .. && npx wrangler pages deploy frontend/dist-site --project-name=luckypot --branch=main --commit-dirty=true
 
 # gắn/kiểm tra domain luckypot.cc (không có lệnh wrangler cho việc này, phải gọi API)
 # xem CF_API_TOKEN/CF_ACCOUNT_ID trong D:\Files\Claude\Build on Arc\EZwallet\.env.txt
