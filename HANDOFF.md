@@ -76,6 +76,32 @@ nằm gọn trong navbar. Sửa 2 chỗ đồng bộ:
 Verify bằng screenshot Chrome headless zoom cận cảnh cả 2 navbar sau deploy — logo to rõ
 rệt, không tràn, không đè lên đường kẻ dưới navbar.
 
+⚠️ **Follow-up cùng ngày: 38px vẫn "nhỏ" — vì viewBox có khoảng trống ẩn, không phải vì
+38px chưa đủ to.** User báo lại: "logo hiện tại vẫn nhỏ, chẳng qua mình chừa khoảng trống
+nhiều". Đo bằng Chrome headless render + `PIL.Image.getbbox()` (tìm bounding box pixel
+không-trong-suốt) xác nhận đúng: `logo-full.svg`/`logo-full-dark.svg` có `viewBox="0 0 1024
+512"` nhưng artwork thật (hũ + chữ "LuckyPot") chỉ chiếm **44% chiều cao đó** (226/512px,
+bbox đo được `33 143 991 369`). Đặt `height: 38px` lên `<img>` là scale CẢ khoảng trống vô
+hình đó xuống 38px → logo thật hiển thị chỉ ~17px, còn nhỏ hơn cả bản 26px cũ. Y hệt lỗi đã
+từng gặp và fix ở bộ logo TRƯỚC (hũ vàng+cỏ xanh, xem "VIỆC CÒN DANG DỞ" phía dưới, mục
+`viewBox đã bị crop`) — bộ logo MỚI (hũ+$) này bị lại chính lỗi đó vì là file gốc mới từ
+Desktop, chưa qua bước crop.
+
+**Đã sửa: crop `viewBox` từ `"0 0 1024 512"` sang `"33 143 958 226"`** (đúng bbox đo được,
+không thêm lề) ở cả 3 file — `landing/logo-full.svg`, `landing/logo-full-dark.svg`,
+`src/assets/logo-full-dark.svg`. Không đổi CSS `height: 38px`, chỉ đổi viewBox — giờ 38px
+là chiều cao logo THẬT, không còn khoảng trống ẩn.
+
+**Privy PNG (`privy-logo.png`/`privy-logo-dark.png`) dính lỗi tương tự nhưng KHÔNG sửa được
+hết** — đo `Desktop/privy.svg` gốc (`viewBox="0 0 200 100"`) thấy content thật cũng chỉ
+chiếm 43% chiều cao (bbox `9.6 28.6 190.4 71.4` theo đơn vị viewBox, tỉ lệ ngang/dọc content
+~4,22:1). Đã crop viewBox y hệt cách trên rồi render lại, dàn full chiều rộng khung
+(388/400px) — nhưng khung Privy **BẮT BUỘC tỉ lệ 2:1** (yêu cầu cứng của Privy Dashboard,
+không phải mình tự chừa), mà content lockup lại ngang ~4,2:1, nên nhét vào khung 2:1 thì
+theo đúng hình học content chỉ có thể cao tối đa ~47% khung (dù full chiều rộng) — **đây
+KHÔNG phải bug, là giới hạn hình học không tránh được của tỉ lệ khung Privy**. Đã đẩy hết
+cỡ có thể (full chiều rộng, không chừa lề thừa), không thể to hơn nữa nếu còn giữ đúng 2:1.
+
 ---
 
 ## Trạng thái nghỉ 2026-08-30 (khuya) — sửa lỗi "Claim now" trên phần thưởng quá 3 ngày
