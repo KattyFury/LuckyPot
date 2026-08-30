@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useAccount, useConfig, useReadContracts } from "wagmi";
 import { sendTransaction, waitForTransactionReceipt } from "wagmi/actions";
 import { erc20Abi } from "../lib/erc20Abi";
+import { USDC_ADDRESS } from "../lib/contract";
+import { arcTestnet } from "../chains/arcTestnet";
 import { encodeAggregate3, MULTICALL3_FROM_ADDRESS } from "../lib/multicall3From";
 import { buildSwapCalls, type SwapIntent } from "../lib/swapAdapter";
 import { AnnouncementBanner } from "./AnnouncementBanner";
@@ -39,6 +41,9 @@ export function FaucetOrSellBanner() {
       ? [
           { address: EURC_ADDRESS, abi: erc20Abi, functionName: "balanceOf", args: [address] },
           { address: CIRBTC_ADDRESS, abi: erc20Abi, functionName: "balanceOf", args: [address] },
+          // USDC is the gas token on Arc, so this is what pays for the swap
+          // itself - see the guard in handleSell.
+          { address: USDC_ADDRESS, abi: erc20Abi, functionName: "balanceOf", args: [address] },
         ]
       : [],
     // Polled, not just fetched once: this balance decides whether the banner
@@ -48,6 +53,7 @@ export function FaucetOrSellBanner() {
   });
   const eurcBal = (balances?.[0]?.result as bigint | undefined) ?? 0n;
   const cirbtcBal = (balances?.[1]?.result as bigint | undefined) ?? 0n;
+  const usdcBal = (balances?.[2]?.result as bigint | undefined) ?? 0n;
   const hasSomethingToSell = eurcBal > 0n || cirbtcBal > 0n;
 
   const [status, setStatus] = useState<"idle" | "eurc" | "cirbtc">("idle");
@@ -58,7 +64,19 @@ export function FaucetOrSellBanner() {
     if (!address) return;
     const intent = await fetchIntent(tokenSymbol, address, amountBase);
     const calls = buildSwapCalls(intent, tokenAddress, amountBase);
-    const hash = await sendTransaction(config, { to: MULTICALL3_FROM_ADDRESS, data: encodeAggregate3(calls) });
+    // account and chainId are passed explicitly rather than left to whatever
+    // connection happens to be current. Privy registers ONE wagmi connector per
+    // wallet it knows about - the embedded one plus every external wallet the
+    // user has linked - so "the current connection" is not necessarily the
+    // address this swap intent was built for. Circle binds the intent to
+    // fromAddress, so a mismatch reverts inside the adapter with nothing useful
+    // to show the user; naming the account makes wagmi refuse up front instead.
+    const hash = await sendTransaction(config, {
+      account: address,
+      chainId: arcTestnet.id,
+      to: MULTICALL3_FROM_ADDRESS,
+      data: encodeAggregate3(calls),
+    });
     const receipt = await waitForTransactionReceipt(config, { hash });
     if (receipt.status !== "success") throw new Error(`${tokenSymbol} -> USDC swap reverted on-chain`);
   }
@@ -66,6 +84,13 @@ export function FaucetOrSellBanner() {
   async function handleSell() {
     if (!address || !hasSomethingToSell || busy) return;
     setError(null);
+    // Worth saying plainly rather than letting the wallet throw: on Arc the gas
+    // token IS USDC, so a wallet holding EURC/cirBTC but no USDC can't pay for
+    // the swap that would get it any. A fresh Privy embedded wallet lands here.
+    if (usdcBal === 0n) {
+      setError("This wallet has no USDC, and USDC is the gas token on Arc — faucet some first, then sell.");
+      return;
+    }
     try {
       if (eurcBal > 0n) {
         setStatus("eurc");
@@ -94,6 +119,7 @@ export function FaucetOrSellBanner() {
         <AnnouncementBanner text={text} onClick={handleSell} />
         {error && (
           <div
+            className="prose"
             style={{
               position: "absolute",
               top: "100%",
@@ -104,7 +130,8 @@ export function FaucetOrSellBanner() {
               color: "#fecaca",
               border: "1px solid #b91c1c",
               fontSize: "var(--fs-1)",
-              padding: "6px 10px",
+              lineHeight: 1.45,
+              padding: "8px 12px",
               borderRadius: "var(--radius)",
               zIndex: 10,
             }}
