@@ -41,8 +41,16 @@ export function WithdrawModal({ onClose }: { onClose: () => void }) {
 
         <div>
           <label style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>Amount (USDC)</label>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, borderBottom: "2px solid #000000" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              borderBottom: "1px solid var(--color-line)",
+            }}
+          >
             <input
+              className="num"
               type="number"
               min="0"
               value={amount}
@@ -50,14 +58,28 @@ export function WithdrawModal({ onClose }: { onClose: () => void }) {
               placeholder="0.00"
               style={{
                 flex: 1,
+                minWidth: 0,
                 fontSize: "var(--fs-4)",
                 fontWeight: 700,
                 padding: "12px 0",
                 border: "none",
                 outline: "none",
+                // The input has no chrome of its own on the dark panel: without
+                // these it renders as the browser's white field.
+                background: "transparent",
+                color: "var(--color-text)",
               }}
             />
-            <button onClick={handleMax} style={{ background: "none", fontSize: "var(--fs-1)", fontWeight: 700 }}>
+            <button
+              onClick={handleMax}
+              style={{
+                background: "none",
+                fontSize: "var(--fs-0)",
+                fontWeight: 700,
+                letterSpacing: "0.06em",
+                color: "var(--color-primary)",
+              }}
+            >
               MAX
             </button>
           </div>
@@ -70,7 +92,7 @@ export function WithdrawModal({ onClose }: { onClose: () => void }) {
         )}
 
         <button
-          className="pill-button pill-button--primary"
+          className="pill-button pill-button--accent"
           disabled={amountBase <= 0n || amountBase > balance || isPending || isConfirming}
           onClick={handleConfirm}
         >

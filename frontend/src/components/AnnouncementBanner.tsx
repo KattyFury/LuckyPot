@@ -1,10 +1,71 @@
-import type { CSSProperties } from "react";
+/** Leading icon. Drawn inline rather than pulled from the mask-image icon
+ *  set, because these two need to sit at the banner's own colour and never
+ *  as a full-height square. */
+function StarIcon() {
+  return (
+    <svg
+      className="banner__icon"
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 2 15.09 8.26 22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2Z" />
+    </svg>
+  );
+}
+
+function InviteIcon() {
+  return (
+    <svg
+      className="banner__icon"
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M19 8v6M22 11h-6" />
+    </svg>
+  );
+}
+
+function Chevron() {
+  return (
+    <svg
+      className="banner__chevron"
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="m9 18 6-6-6-6" />
+    </svg>
+  );
+}
 
 export function AnnouncementBanner({
   text,
   lead,
   href,
   onClick,
+  variant = "notice",
 }: {
   /** The call-to-action phrase — the only part that's underlined. */
   text: string;
@@ -16,62 +77,63 @@ export function AnnouncementBanner({
   /** With `href`, runs before the link opens (used to copy the wallet
    *  address). On its own, makes the whole banner a button. */
   onClick?: () => void;
+  /** "referral" swaps the amber tint for green and the star for the invite
+   *  icon; everything else about the anatomy is identical. */
+  variant?: "notice" | "referral";
 }) {
-  const style: CSSProperties = {
-    background: "var(--color-banner-bg)",
-    color: "#000000",
-    borderRadius: "var(--radius)",
-    minHeight: "100%",
-    width: "100%",
-    display: "flex",
-    alignItems: "center",
-    padding: "12px 20px",
-    fontSize: "var(--fs-2)",
-    fontWeight: 700,
-    whiteSpace: "normal",
-    textAlign: "left",
-    lineHeight: 1.3,
-  };
+  const className = variant === "referral" ? "banner banner--referral" : "banner";
+  const actionable = Boolean(href || onClick);
 
-  // The browser's default <a> underline draws across the whole element
-  // regardless of what a descendant span sets - has to be cancelled here,
-  // on the element actually drawing it, not just on the "text" span.
-  const actionable: CSSProperties = { ...style, textDecoration: "none", cursor: "pointer" };
-  // One wrapping span, not two siblings: the outer element is display:flex
-  // for vertical centering, and flex treats each direct child (including a
-  // bare text node) as its own item that wraps independently - lead and
-  // text would end up as two separate columns instead of one flowing
-  // sentence. Wrapping them in a single span makes them one flex item, so
-  // the text inside reflows normally.
+  /* Three flex children, and only three: icon, text, chevron.
+     The text used to live inside a wrapper span carrying `min-width: 0`,
+     which let flex squeeze it below its natural width — so the line broke in
+     two on a full-width desktop row with hundreds of pixels to spare. The
+     wrapper is gone, the icon and chevron are `flex: none`, and the text
+     takes the slack. `lead` and `text` stay in ONE span so they reflow as a
+     single sentence: as separate flex items they'd wrap independently and
+     land in two columns. */
   const content = (
-    <span>
+    <span className="banner__text prose">
       {lead && `${lead} `}
-      <span style={{ textDecoration: "underline" }}>{text}</span>
+      <span className="banner__cta">{text}</span>
     </span>
   );
+
+  const icon = variant === "referral" ? <InviteIcon /> : <StarIcon />;
 
   if (href) {
     // A real anchor so the whole box behaves like a link (middle-click, open
     // in a new tab); onClick only does the copy on its way out.
     return (
-      <a href={href} target="_blank" rel="noreferrer" onClick={onClick} style={actionable}>
+      <a href={href} target="_blank" rel="noreferrer" onClick={onClick} className={className}>
+        {icon}
         {content}
+        <Chevron />
       </a>
     );
   }
 
   if (onClick) {
     return (
-      <button type="button" onClick={onClick} style={actionable}>
+      <button type="button" onClick={onClick} className={className}>
+        {icon}
         {content}
+        <Chevron />
       </button>
     );
   }
 
+  // Not clickable: no chevron, and nothing underlined — there's no action to
+  // point at.
   return (
-    <div style={style}>
-      {lead && `${lead} `}
-      {text}
+    <div className={className}>
+      {icon}
+      <span className="banner__text prose">
+        {lead && `${lead} `}
+        {text}
+      </span>
     </div>
   );
 }
+
+export { Chevron };

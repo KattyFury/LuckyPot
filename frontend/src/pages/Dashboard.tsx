@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAccount } from "wagmi";
 import { Navbar } from "../components/Navbar";
-import { AnnouncementBanner } from "../components/AnnouncementBanner";
+import { AnnouncementBanner, Chevron } from "../components/AnnouncementBanner";
 import { EpochCard } from "../components/EpochCard";
 import { PoolCard } from "../components/PoolCard";
 import { DrawHistoryCard, DrawHistoryList } from "../components/DrawHistoryCard";
@@ -24,6 +24,7 @@ import {
 } from "../hooks/usePoolData";
 import { useMyHistory } from "../hooks/useMyHistory";
 import { estimateNumWinners, projectedWeeklyYield } from "../lib/prize";
+import { plural } from "../lib/format";
 import { useTokenUnit } from "../config/tokenUnit";
 import { wasScratched } from "../lib/scratchState";
 import type { EpochData } from "../hooks/usePoolData";
@@ -60,6 +61,7 @@ export function Dashboard() {
   const myPoolBalance = (position?.[0]?.result as bigint | undefined) ?? 0n;
 
   const latestDrawnEpoch = epochs.find((e) => e.epoch.drawn) ?? null;
+  const myWins = historyEntries.filter((e) => e.type === "Won").length;
 
   // Announce a fresh draw to EVERY depositor, not just the winners — saying
   // who won here would give away the scratch card before it's scratched.
@@ -91,7 +93,8 @@ export function Dashboard() {
             <AnnouncementBanner text="$ARC isn't live yet – figures are the USDC pool." />
           ) : unscratchedResult ? (
             <AnnouncementBanner
-              text={`Epoch #${unscratchedResult.id.toString().padStart(2, "0")} result is in – tap to scratch`}
+              lead={`Epoch #${unscratchedResult.id.toString().padStart(2, "0")} has been drawn —`}
+              text="scratch your card"
               onClick={() => setResultEpochId(unscratchedResult.id)}
             />
           ) : (
@@ -124,8 +127,9 @@ export function Dashboard() {
 
         <div className="g-referral">
           <AnnouncementBanner
-            lead="Invite a friend, earn 2.5% every time they win."
-            text="Click here to get your referral link."
+            variant="referral"
+            lead="Invite a friend and earn 2.5% each time they win."
+            text="Get your link"
             onClick={() => setPopup("referral")}
           />
         </div>
@@ -138,12 +142,31 @@ export function Dashboard() {
           <MyHistoryCard entries={historyEntries} connected={Boolean(address)} />
         </div>
 
+        {/* Mobile stand-ins for the two boxes. Each carries the same count
+            the desktop box shows in its header, so collapsing the box doesn't
+            cost the reader the one fact visible at a glance. */}
         <button className="history-button g-draw-history-btn" onClick={() => setPopup("draw-history")}>
-          DRAW HISTORY
+          <span>Draw history</span>
+          <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {epochs.length > 0 && (
+              <span className="eyebrow">
+                {epochs.length} {plural(epochs.length, "draw")}
+              </span>
+            )}
+            <Chevron />
+          </span>
         </button>
 
         <button className="history-button g-my-history-btn" onClick={() => setPopup("my-history")}>
-          MY HISTORY
+          <span>My history</span>
+          <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {myWins > 0 && (
+              <span className="tag">
+                {myWins} {plural(myWins, "win")}
+              </span>
+            )}
+            <Chevron />
+          </span>
         </button>
       </div>
 
@@ -152,13 +175,13 @@ export function Dashboard() {
       {popup === "withdraw" && <WithdrawModal onClose={() => setPopup(null)} />}
 
       {popup === "draw-history" && (
-        <Modal title="DRAW HISTORY" onClose={() => setPopup(null)}>
+        <Modal title="Draw history" onClose={() => setPopup(null)}>
           <DrawHistoryList epochs={epochs} onSelect={openEpoch} />
         </Modal>
       )}
 
       {popup === "my-history" && (
-        <Modal title="MY HISTORY" onClose={() => setPopup(null)}>
+        <Modal title="My history" onClose={() => setPopup(null)}>
           <MyHistoryList entries={historyEntries} connected={Boolean(address)} />
         </Modal>
       )}

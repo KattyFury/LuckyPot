@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>LuckyPot – no-loss weekly USDC prize pool</title>
 <meta name="description" content="Deposit USDC, hold it for full week, and you're in the draw. The winners take the week's yield – everyone else loses nothing; their full principal remains intact." />
-<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="icon" type="image/png" href="favicon.png" />
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     /* Same tokens as the app (frontend/src/styles/global.css) – kept in sync by hand
@@ -37,13 +37,18 @@
     --desktop-width: 860px;
     --row-h: 50px;
 
-    --font-condensed: "Roboto Condensed", sans-serif;
+    /* Same pairing as the app: Inter for UI text (the face docs.privy.io
+       actually uses), Space Grotesk for headings, the wordmark and numbers,
+       standing in for Privy's licensed FFF Acid Grotesk. */
+    --font-ui: "Inter", -apple-system, "Segoe UI", sans-serif;
+    --font-display: "Space Grotesk", "Roboto Condensed", sans-serif;
+    --font-condensed: var(--font-display);
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; }
   body {
     margin: 0;
-    font-family: "Roboto", sans-serif;
+    font-family: var(--font-ui);
     color: var(--color-text);
     background: var(--color-page-bg);
     -webkit-font-smoothing: antialiased;
@@ -97,8 +102,14 @@
     margin: 0 20px;
     box-shadow: 0 1px 0 #000000;
   }
-  nav.top .brand { display: flex; align-items: center; }
-  nav.top .brand img { height: 28px; width: auto; }
+  /* Mark + live type, same lockup as the app - there is no wordmark
+     artwork any more, so the word picks up the page's own font. */
+  nav.top .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: inherit; }
+  nav.top .brand img { height: 26px; width: auto; display: block; }
+  nav.top .brand span {
+    font-family: var(--font-display); font-size: 17px; font-weight: 600;
+    letter-spacing: -0.025em; color: var(--color-text);
+  }
   nav.top a.enter-app {
     background: #000000; color: #ffffff; text-decoration: none; font-weight: 700;
     padding: 8px 20px; border-radius: 999px; font-size: var(--fs-1);
@@ -211,7 +222,7 @@
 <div class="site">
   <nav class="top">
     <div class="nav-inner">
-      <span class="brand"><img src="logo-full.svg" alt="LuckyPot" /></span>
+      <span class="brand"><img src="logo.png" alt="" /><span>LuckyPot</span></span>
       <a class="enter-app" href="/app/">Enter App</a>
     </div>
   </nav>

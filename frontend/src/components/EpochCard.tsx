@@ -28,41 +28,43 @@ export function EpochCard({
     <div className="card card-rows card-rows--epoch">
       <div
         className="box-header box-header--inline"
-        style={{ fontSize: "var(--fs-2)", fontWeight: 700, justifyContent: "space-between" }}
+        style={{
+          fontFamily: "var(--font-display)",
+          fontSize: "var(--fs-2)",
+          fontWeight: 700,
+          letterSpacing: "-0.01em",
+          justifyContent: "space-between",
+        }}
       >
-        <span style={{ color: "var(--color-primary)" }}>EPOCH {idLabel}</span>
+        <span className="pair">
+          Epoch <span style={{ color: "var(--color-primary)" }}>{idLabel}</span>
+        </span>
         <TokenToggle />
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          alignItems: "baseline",
-          gap: 8,
-          fontFamily: "var(--font-condensed)",
-          whiteSpace: "nowrap",
-        }}
-      >
-        <span style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>end in</span>
-        {/* Tightened word spacing so the d/h/m/s groups sit closer together. */}
-        <span style={{ fontSize: "var(--fs-4)", fontWeight: 700, wordSpacing: "-3px" }}>
+      {/* "Draw in" sits above the clock rather than beside it: at 430px the
+          inline pair was the widest thing in the column. */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+        <span className="eyebrow">Draw in</span>
+        <span
+          className="num pair"
+          style={{ fontSize: "var(--fs-3)", fontWeight: 700, color: "var(--color-primary)" }}
+        >
           {formatCountdown(secondsRemaining)}
         </span>
       </div>
 
       <div
-        style={{
-          fontSize: "var(--fs-1)",
-          color: "var(--color-text-secondary)",
-          lineHeight: 1.4,
-          fontFamily: "var(--font-condensed)",
-        }}
+        className="prose"
+        style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)", lineHeight: 1.55 }}
       >
-        Weekly yield goes to{" "}
-        <strong style={{ color: "var(--color-text)" }}>{numWinnersEstimate.toString()}</strong>{" "}
-        {plural(numWinnersEstimate, "lucky winner")} out of{" "}
-        <strong style={{ color: "var(--color-text)" }}>{participantCount.toLocaleString("en-US")}</strong>{" "}
-        {plural(participantCount, "participant")}. Winners give 5% back to the protocol.
+        This week&rsquo;s yield goes to{" "}
+        <strong style={{ color: "var(--color-text)", fontWeight: 600 }}>{numWinnersEstimate.toString()}</strong>{" "}
+        {plural(numWinnersEstimate, "winner")} out of{" "}
+        <strong style={{ color: "var(--color-text)", fontWeight: 600 }}>
+          {participantCount.toLocaleString("en-US")}
+        </strong>{" "}
+        {plural(participantCount, "player")}. Winners return 5% to the protocol.
       </div>
     </div>
   );

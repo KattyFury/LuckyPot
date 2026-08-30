@@ -36,11 +36,22 @@ export function WalletAddressDisplay({
 
   return (
     <div ref={rootRef} style={{ position: "relative" }}>
-      <button
-        onClick={() => setOpen((v) => !v)}
-        style={{ background: "none", display: "flex", alignItems: "center", gap: 8, fontSize: "var(--fs-2)" }}
-      >
-        <span style={{ fontWeight: 700, color: "var(--color-text)" }}>{shortAddress(address)}</span>
+      {/* An outlined pill rather than bare text: on the dark surface a plain
+          run of text in the nav had nothing holding it, and the pill also
+          gives the connected-dot somewhere to live. */}
+      <button className="wallet-pill" onClick={() => setOpen((v) => !v)}>
+        <span
+          aria-hidden="true"
+          style={{
+            width: 5,
+            height: 5,
+            borderRadius: "50%",
+            background: "var(--color-primary)",
+            display: "block",
+            flex: "none",
+          }}
+        />
+        <span className="num">{shortAddress(address)}</span>
         <span
           className={copied ? "icon icon-check" : "icon icon-copy"}
           title="Copy address"
@@ -50,7 +61,7 @@ export function WalletAddressDisplay({
             setCopied(true);
             setTimeout(() => setCopied(false), 1500);
           }}
-          style={{ color: copied ? "var(--color-primary)" : "var(--color-text-secondary)" }}
+          style={{ color: copied ? "var(--color-primary)" : "var(--color-text-faint)" }}
         />
       </button>
 
@@ -58,8 +69,8 @@ export function WalletAddressDisplay({
         <div className="wallet-menu">
           <button onClick={() => pick(onDeposit)}>Deposit</button>
           <button onClick={() => pick(onWithdraw)}>Withdraw</button>
-          <button onClick={() => pick(onDrawHistory)}>Draw History</button>
-          <button onClick={() => pick(onMyHistory)}>My History</button>
+          <button onClick={() => pick(onDrawHistory)}>Draw history</button>
+          <button onClick={() => pick(onMyHistory)}>My history</button>
           <button className="is-danger" onClick={() => pick(onDisconnect)}>
             Disconnect
           </button>
