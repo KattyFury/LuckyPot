@@ -185,6 +185,33 @@ contract LuckyStakerPool is
         emit Withdrawn(msg.sender, amount, balances[msg.sender], forfeited);
     }
 
+    /// @notice Testnet convenience: returns every depositor's full principal to their
+    /// own wallet in one call, so clearing the pool for a migration/test doesn't mean
+    /// asking each test wallet to withdraw by hand. Same money movement as withdraw()
+    /// - each address only ever receives its own balance, never anyone else's or the
+    /// admin's - so this can't be used to redirect funds, only to force self-serve
+    /// withdrawals to happen early. Requires pausing first, same as withdrawReserve,
+    /// so it can't run silently while the pool looks normal. MUST be locked out (see
+    /// revokeRole) before this pool holds real depositor funds without their consent
+    /// to move on this schedule.
+    function forceWithdrawAll() external onlyRole(DEFAULT_ADMIN_ROLE) whenPaused nonReentrant {
+        uint256 n = participants.length;
+        for (uint256 i = 0; i < n; i++) {
+            address p = participants[i];
+            uint256 amount = balances[p];
+            if (amount == 0) continue;
+
+            bool forfeited = eligibleBalance[p] > 0;
+            eligibleBalance[p] = 0;
+            balances[p] = 0;
+            pendingBalance[p] = 0;
+            balancesTotal -= amount;
+
+            poolToken.safeTransfer(p, amount);
+            emit Withdrawn(p, amount, 0, forfeited);
+        }
+    }
+
     // ---------------------------------------------------------------------
     // Referral — set once, permanent. Payout happens as a cut at claim time.
     // ---------------------------------------------------------------------

@@ -16,6 +16,83 @@ sẵn của `keeper.yml`) — lưu lịch sử Deposited/Withdrawn/Claimed cho "
 
 ---
 
+## Trạng thái nghỉ 2026-08-30 (khuya, phiên mới) — contract V5 (`forceWithdrawAll`), kế hoạch Vitael
+
+### 1. Cào cào to gấp đôi (đã xong, đã deploy)
+
+`ScratchCanvas.tsx` — bán kính cọ cào từ 28px lên **56px** (x2), user kêu cào mỏi tay. Đổi 1
+dòng, không đụng ngưỡng `0.45` (45% diện tích lộ ra mới coi là "revealed").
+
+### 2. Kế hoạch dùng lending thật của Vitael (đang bàn, CHƯA code)
+
+User muốn thay yield giả lập (keeper tự bỏ tiền bù `fundYield()` theo `aprBpsUSDC` admin-set,
+hiện = 600bps = 6%, band cho phép 400-800) bằng yield thật từ **Vitael** (`vitael.xyz`) — lending
+protocol thật của **em trai user**, cũng chạy trên **Arc Testnet, cùng chain 5042002**, hỗ trợ
+USDC/EURC/cirBTC, oracle Stork. Đã đọc docs Vitael (site dạng Next.js, các mục con như
+"Interest Rates" là `<button>` đổi state JS chứ KHÔNG có URL riêng — muốn đọc phải click thật,
+không dump-dom được).
+
+User báo APY thật của Vitael chỉ **1,88%** (thấp vì testnet gần như không ai vay, mà lãi gửi
+kiểu Aave luôn tỉ lệ theo utilization), muốn kéo lên **~5%**. Đã thống nhất **2 hướng làm song
+song**:
+1. **Kỹ thuật:** giữ nguyên cơ chế admin-set APR của LuckyPot (5% vẫn nằm gọn trong band
+   400-800bps, không cần sửa contract phần đó) nhưng cho **keeper thật sự gửi USDC nhàn rỗi
+   của pool vào Vitael** để có real yield cộng thêm, thay vì 100% là keeper tự bỏ tiền túi bù.
+2. **Kinh doanh (với em user):** Vitael thêm 1 chương trình thưởng/liquidity-mining riêng cho
+   pool USDC để kéo APY hiệu dụng lên ~5% — không phải sửa lãi suất thị trường, mà cộng thưởng
+   lên trên, đồng thời kéo người dùng thật vào test Vitael.
+
+⚠️ **CHƯA tìm được địa chỉ contract lending thật của Vitael** (docs không lộ ra ngoài HTML,
+đang định lục JS bundle của `vitael.xyz/lend` thì bị chuyển hướng sang việc rút tiền — xem mục
+3 dưới). Việc còn dở: tìm contract/ABI Vitael, rồi thiết kế hàm `depositToVitael`/
+`withdrawFromVitael` trên `LuckyStakerPool` (hoặc để keeper tự giữ 1 phần riêng gửi Vitael,
+tách khỏi core contract — chưa chốt cách nào).
+
+### 3. Contract upgrade V5 — thêm `forceWithdrawAll()` (ĐÃ LÊN CHAIN THẬT)
+
+Trước khi đụng vào tiền thật của pool để tích hợp Vitael, cần rút sạch pool ra để test an toàn
+trên pool trống. User hỏi "có hàm nào đẩy hết tiền user về ví họ không" — chưa có, chỉ có
+`withdraw()` tự rút. Đã thêm:
+
+```solidity
+function forceWithdrawAll() external onlyRole(DEFAULT_ADMIN_ROLE) whenPaused nonReentrant
+```
+
+— loop `participants`, trả **đúng số dư của từng người về đúng ví người đó** (không thể chuyển
+đi đâu khác, không có tham số địa chỉ đích), bắt buộc `whenPaused` trước (như `withdrawReserve`)
+để không chạy âm thầm. Test mới: "lets the admin force-withdraw everyone's principal to their
+own wallet while paused" — 17/17 test pass.
+
+**Quy trình upgrade (giống hệt V2/V3/V4trước giờ):**
+1. Deploy implementation MỚI, không đụng proxy (an toàn, ký bằng `DEPLOYER_PRIVATE_KEY`):
+   ```bash
+   cd contracts && npx hardhat ignition deploy ignition/modules/LuckyStakerPoolV5Implementation.ts --network arcTestnet --deployment-id luckypot-v5-impl
+   ```
+   → deployed tại `0x39bDCbB8228440D529Df6a7aADa86A60ddF8Dc6a`.
+2. Admin (`0xb0ea48A1979326BA9e0b5027D105C8DF9CCAA12E`) tự ký `upgradeToAndCall(0x39bD...,
+   0x)` — Claude không giữ private key admin, không tự ký được. Làm 1 trang HTML nhỏ
+   (`~/Desktop/upgrade-v5.html`, serve qua `python -m http.server` ở `127.0.0.1:8532` vì
+   MetaMask không tự inject vào trang mở kiểu `file://`) cho user tự Connect Wallet + bấm gửi.
+3. **User đã ký xong — verify bằng `eth_getStorageAt` slot EIP-1967
+   (`0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bb`) trên proxy, ra đúng
+   `0x39bdcbb8228440d529df6a7aada86a60ddf8dc6a`.** Upgrade thành công thật, không phải suy đoán.
+
+⚠️ **Gotcha lúc ký: ví báo sai mạng dù user nói "đang trỏ Arc Testnet".** `eth_chainId` trả về
+thật là `0x2105` = **8453 = Base mainnet**, không phải Arc Testnet (`5042002` = `0x4cef52`).
+Khả năng máy cài nhiều ví (VD MetaMask + Coinbase Wallet) và `window.ethereum` bị ví khác
+(Coinbase Wallet mặc định Base) giành quyền inject thay vì ví user tưởng đang active. Đã sửa
+trang tự gọi `wallet_switchEthereumChain` (fallback `wallet_addEthereumChain` nếu ví chưa có
+sẵn Arc Testnet) thay vì chỉ báo lỗi suông.
+
+**VIỆC CÒN DỞ (đã thêm nút 3-4 vào cùng trang, CHƯA xác nhận user đã bấm):** pool lúc upgrade
+xong còn **1.761 USDC** của người khác (không phải ví admin) chưa rút. Trang
+`~/Desktop/upgrade-v5.html` đã có thêm 2 nút "3. Pause pool" / "4. Force withdraw all" (calldata
+tính sẵn: `0x8456cb59` / `0xe12b30d4`, không cần build lại) — chờ user bấm. Sau khi user xác
+nhận đã bấm, nhớ verify lại `balancesTotal() == 0` trước khi coi như xong, và cân nhắc
+`unpause()` lại nếu muốn pool nhận deposit tiếp trong lúc build tích hợp Vitael.
+
+---
+
 ## Trạng thái nghỉ 2026-08-30 (gần sáng) — My history chuyển sang D1, không quét RPC nữa
 
 Sau khi ship xong bản quét-RPC-trực-tiếp (mục ngay bên dưới), user hỏi thẳng: "có cần

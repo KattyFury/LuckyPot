@@ -26,7 +26,9 @@ export function ScratchCanvas({ onRevealed, children }: { onRevealed: () => void
     function scratchAt(x: number, y: number) {
       ctx.globalCompositeOperation = "destination-out";
       ctx.beginPath();
-      ctx.arc(x, y, 28, 0, Math.PI * 2);
+      // 2x the original 28px radius - scratching a whole card at 28px took too
+      // many strokes to clear the 45% reveal threshold below.
+      ctx.arc(x, y, 56, 0, Math.PI * 2);
       ctx.fill();
     }
 

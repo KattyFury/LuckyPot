@@ -258,6 +258,28 @@ describe("LuckyStakerPool", () => {
     expect((await pool.read.getEpoch([1n]))[8]).to.equal(true); // drawn
   });
 
+  it("lets the admin force-withdraw everyone's principal to their own wallet while paused", async () => {
+    const { pool, usdc, admin, alice, bob, keeper } = await deployFixture();
+    const alicePool = await poolAs(pool, alice);
+    const bobPool = await poolAs(pool, bob);
+    await alicePool.write.deposit([USDC(1000)]);
+    await bobPool.write.deposit([USDC(500)]);
+    await advanceEpochWithDraw(pool, keeper, 0n); // gives alice/bob an eligible ticket to forfeit
+    await alicePool.write.withdraw([USDC(1000)]); // alice is now a 0-balance participant
+
+    const adminPool = await poolAs(pool, admin);
+    await expect(adminPool.write.forceWithdrawAll()).to.be.rejected; // must pause first
+
+    await adminPool.write.pause();
+    const bobBefore = await usdc.read.balanceOf([bob.account.address]);
+    await adminPool.write.forceWithdrawAll(); // no-ops on alice's zero balance, pays bob
+
+    expect(await pool.read.balances([bob.account.address])).to.equal(0n);
+    expect(await pool.read.eligibleBalance([bob.account.address])).to.equal(0n);
+    expect(await usdc.read.balanceOf([bob.account.address])).to.equal(bobBefore + USDC(500));
+    expect(await pool.read.balancesTotal()).to.equal(0n);
+  });
+
   it("lets anyone sweep unclaimed prizes after the 3-day window", async () => {
     const { pool, usdc, alice, keeper, bob } = await deployFixture();
     const alicePool = await poolAs(pool, alice);
