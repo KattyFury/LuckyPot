@@ -12,6 +12,189 @@
 
 ---
 
+## Trạng thái nghỉ 2026-08-30 — redesign dark theo Privy, logo mới, và MỘT BUG DEPLOY LỚN
+
+`main` = `84dd8ec`, đã push, đã deploy lên luckypot.cc.
+
+### ⚠️ ĐỌC TRƯỚC: lệnh deploy CŨ trong HANDOFF là SAI, và đã sai từ đầu dự án
+
+`wrangler` compile thư mục `functions/` mà nó tìm thấy trong **CWD của chính nó**.
+`functions/` nằm ở **gốc repo**, còn lệnh cũ chạy từ `frontend/` → wrangler đi tìm
+`frontend/functions/`, không thấy, và upload một site **thuần tĩnh không có API**.
+
+Hệ quả: `POST /api/swap` trả **405 với body rỗng** (đó là static asset handler của
+Pages từ chối POST, không phải lỗi code). **Mọi lần deploy của dự án này đều ship
+thiếu API** → nút "sell EURC/cirBTC" chưa bao giờ chạy trên production, với ví nào
+cũng vậy. MetaMask "chạy được" là do test qua `wrangler pages dev` — lệnh đó *có*
+compile functions.
+
+**Deploy đúng: `cd frontend && npm run deploy`** (script mới, tự `cd ..` rồi mới gọi
+wrangler). Deploy thành công phải in ra 2 dòng `Compiled Worker successfully` và
+`Uploading Functions bundle`. Không thấy 2 dòng đó = Functions lại rớt.
+
+Verify nhanh sau mỗi lần deploy:
+
+```bash
+curl -X POST https://luckypot.cc/api/swap -H "Content-Type: application/json" \
+  -d '{"tokenIn":"EURC","tokenOut":"USDC","walletAddress":"0x4672A3B3C14727629107711D9853B52e8E1E26B1","amountBase":"1000000"}'
+```
+
+→ phải trả JSON intent có `executionParams` + `signature`, KHÔNG phải 405.
+`KIT_KEY` đã cấu hình sẵn trên Pages project, không cần set lại.
+
+`build-site.mjs` cũng đã sửa: trước đây nó KHÔNG dọn thư mục gốc `dist-site/`, nên
+file landing bị đổi tên/xoá vẫn nằm lại từ build cũ và ship lên production (chính vì
+vậy `favicon.svg` và `logo-full.svg` cũ vẫn còn sau khi đã xoá khỏi repo). Giờ xoá
+sạch mọi thứ trừ `app/` (vite tự quản thư mục đó).
+
+### VIỆC CÒN DANG DỞ — user nói navbar vẫn ra LOGO CŨ
+
+Chưa giải quyết xong. Trạng thái đúng như đang có:
+
+- Nguồn logo là **2 file trên Desktop**: `luckpot-SVG.svg` (chỉ mark, 1.558 bytes) và
+  `luckpot-full.svg` (lockup mark + chữ, 6.323 bytes, mtime 2026-08-30 16:06,
+  md5 `5b012c5dedb1f0464339c2d851b79c65`). Đã quét toàn bộ `C:\Users\Dell` —
+  **chỉ có ĐÚNG 1 bản** `luckpot-full.svg`, không có bản OneDrive nào khác.
+- Repo đang có: `landing/logo.svg` (mark), `landing/logo-full.svg` (chữ đen),
+  `landing/logo-full-dark.svg` + `src/assets/logo-full-dark.svg` (chữ trắng).
+  Bản dark = bản light replace đúng 8 path `fill="black"` sang `#FFFFFF` (bình `#FCD34D`
+  và cỏ `#3DCF88` giữ nguyên; cái `rect fill="white"` trong `clipPath` dùng chuỗi khác
+  nên không bị chạm).
+- **viewBox đã bị crop** từ `0 0 200 100` sang `10 22.2 180.1 50.1`. Lý do: file gốc đặt
+  hình giữa canvas cao gấp đôi, để nguyên thì `height: 26px` render ra hình chỉ ~13px.
+  Bounding box đo bằng sharp trim. **Nếu user muốn giữ nguyên 100% file gốc thì hoàn
+  nguyên chỗ này và bù bằng CSS.**
+- Navbar app (`Navbar.tsx`) + landing đều đã đổi sang `<img src=logo-full-dark.svg>`;
+  cách ghép cũ (mark riêng + chữ "LuckyPot" đánh bằng Space Grotesk) đã xoá, kèm 2 class
+  `.brand__word` / `.brand__mark`.
+- **Verify được từ server**: HTML landing live đúng là
+  `<img src="logo-full-dark.svg" alt="LuckyPot" />`, file trả về có
+  `viewBox="10 22.2 180.1 50.1"` và 8 path `#FFFFFF`; bundle app tham chiếu
+  `assets/logo-full-dark-CAnD0q43.svg`. Render ra đúng lockup bình + chữ trắng.
+- **Nhưng user vẫn báo thấy logo cũ.** Đã hỏi, user chọn "vẫn thấy logo cũ trên site"
+  (không phải phản đối việc crop, không phải chê navbar xấu).
+
+→ **Việc đầu tiên khi quay lại: XIN 1 ẢNH CHỤP MÀN HÌNH.** Đừng verify bằng curl nữa,
+curl đã nói ngược lại với mắt user 3 lần rồi. Nghi ngờ: cache trình duyệt, hoặc user và
+tôi đang nhìn 2 chỗ khác nhau (VD user nhìn favicon trên tab, hoặc nhìn bản dev local).
+
+Ngoài ra `/logo` và `/logo-dark` là 2 short URL (302 qua `landing/_redirects`) trỏ tới
+`logo-full.svg` / `logo-full-dark.svg`. Đây là hiểu nhầm ban đầu của tôi khi user nói
+"trỏ nó vào luckypot.cc/logo" — user muốn nói *logo của site*, không phải một URL.
+Giữ lại vì vẫn tiện, nhưng không phải cái user yêu cầu.
+
+### Redesign dark — hệ token và typography (đã xong, đã live)
+
+**Font: Inter (UI/body) + Space Grotesk (heading, wordmark, MỌI con số).** Self-host qua
+`@fontsource/inter` + `@fontsource/space-grotesk`, không gọi Google Fonts lúc runtime.
+Biến: `--font-ui`, `--font-display`. `--font-condensed` (Roboto Condensed) đã BỎ khỏi app;
+landing còn giữ tên đó nhưng chỉ là alias trỏ về `--font-display`.
+
+Lý do chọn: docs.privy.io dùng **FFF Acid Grotesk** cho heading (font thương mại họ tự
+host, repo không ship được) + **Inter** cho body. Inter lấy đúng y hệt; Space Grotesk
+đứng thay Acid Grotesk. Muốn đúng bản gốc = mua licence webfont rồi đổi mỗi `--font-display`.
+
+**Thang chữ hạ từ 15/18/22/27 sang `--fs-0..4` = 10/12/14/19/20** (user kêu chữ to, chèn lấn).
+0 = nhãn micro in hoa (tầng mới), 1 = body/UI/nút/dòng list (sàn), 2 = tiêu đề card,
+3 = countdown, 4 = con số lớn nhất của card.
+
+**Màu: lấy nguyên token dark của Privy** để modal login của họ khớp chrome mình.
+`--color-page-bg #000008` · `--color-surface #010110` · `--color-card-bg #16172a` ·
+`--color-elevated #22222a` · `--color-line #333455` · `--color-hair #24253f` ·
+text `#ffffff` / secondary `#cbcde1` / faint `#8b8dab`.
+
+⚠️ **Xanh đổi `#16a34a` sang `#3dcf88`**: xanh cũ (vừa là primary của mình vừa là success
+của Privy) KHÔNG đủ tương phản trên nền gần đen. `#3dcf88` là sắc Privy dùng cho dark.
+Kéo theo: **mọi nút xanh đặc dùng chữ `#04170e`**, không dùng trắng.
+Slab `#ffcc00` cũ thay bằng card amber `#fcd34d` 12% + viền 35%.
+
+**`pill-button--primary/--secondary` đổi tên thành `--quiet/--accent`** — restyle làm đảo
+cái nào đặc cái nào viền, giữ tên cũ là bẫy cho lần sửa sau. `--accent` = xanh đặc (1 hành
+động chính mỗi màn), `--quiet` = nền elevated + viền.
+
+**LƯỚI KHÔNG ĐỔI**: vẫn 50px/hàng, gap 10, bo 15, shell 860/430, 13 hàng đúng thứ tự cũ.
+
+### 3 luật xuống dòng (đừng phá)
+
+1. **KHÔNG bọc chữ trong span có `min-width: 0`** rồi thả vào flex — flex sẽ bóp chữ xuống
+   dưới bề rộng tự nhiên và ngắt dòng dù còn thừa cả trăm px. Đây chính là bug banner user
+   bắt được.
+2. **`text-wrap: pretty` (class `.prose`), KHÔNG dùng `balance`** — `balance` chủ động chia
+   đôi một dòng đang vừa khít. Đó là nửa còn lại của bug banner.
+3. **`.pair` = `white-space: nowrap`** cho cặp số + đơn vị (`1,300.38 USDC`), địa chỉ rút
+   gọn, countdown, và cụm CTA gạch chân.
+
+Banner giờ đúng 3 flex item: icon (`flex: none`) · chữ (`flex: 1 1 auto`) · chevron
+(`flex: none`). Xem `.banner*` trong global.css và `AnnouncementBanner.tsx`.
+
+**MY HISTORY: hàng 50px** (trước 90/100px) — bằng đúng đơn vị của DRAW HISTORY để 2 box kẻ
+ngang trùng nhau. Ngày dời sang cạnh action thay vì chiếm riêng 1 dòng, vừa 5 dòng thay vì
+3. Class `.card-list__row--stacked` đã xoá.
+
+### Copy: "full epoch" chứ không phải "full week"
+
+`deposit()` cộng vào `pendingBalance`; roll-in sang `eligibleBalance` xảy ra trong
+`revealAndDraw`, tức **tại mốc epoch** — mà mốc đó neo Thứ Hai 00:00 UTC (= 7h sáng T2 giờ
+VN). Nên luật là **mốc-tới-mốc**, không phải đếm đủ 7 ngày. Gửi thứ 4 thì chờ hết epoch đó,
+thành ticket ở mốc T2, rồi chạy cho epoch kế. Ai đọc "a full week" mà gửi thứ 7 sẽ tưởng T7
+tuần sau có vé — chuyện đó không bao giờ xảy ra. Đã sửa ở landing (hero, meta description,
+step 2, mục Tickets, mục Yield) và 2 popup của app (`PoolCard`).
+
+⚠️ **Cảnh báo cũ "đừng dùng chữ Monday" trong HANDOFF ĐÃ HẾT HIỆU LỰC** — nó có từ trước
+bản V3 neo lịch (2026-08-25). Giờ nói "Monday 00:00 UTC" là đúng sự thật.
+
+**Copy multisig đã sửa**: dòng "Admin is a 2-of-2 Safe multisig, not a single wallet" bị bỏ
+khỏi danh sách "What never changes" (nó không phải thứ không đổi) và chuyển xuống mục
+"Honest boundaries", nói thẳng là ví đơn vẫn có quyền ngang Safe, chưa siết vì chưa deposit
+vào DeFi thật, và sẽ siết trước khi có tiền thật. User đã duyệt cách diễn đạt này.
+
+### Privy — 2 bug, mức độ chắc chắn KHÁC NHAU
+
+**`VITE_PRIVY_APP_ID` có trong `frontend/.env` nên `USE_PRIVY = true` và production LUÔN
+build cây Privy.** "Dùng MetaMask" thực chất là nối MetaMask *qua* Privy. Không có chuyện
+2 config wagmi khác nhau ở production.
+
+1. **Login email nhưng vào nhầm MetaMask — tìm ra gốc trong source, CHƯA TEST.**
+   `useSyncPrivyWallets.mjs` đăng ký 1 wagmi connector cho MỖI ví rồi gọi `reconnect()`,
+   mà `reconnect()` khôi phục theo `recentConnectorId` trong localStorage — key này Privy
+   ghi mỗi lần có ví nào connect. Nên một khi MetaMask từng dùng trên trình duyệt đó, mọi
+   lần login email sau đều reconnect thẳng về MetaMask.
+   Fix: truyền `setActiveWalletForWagmi` (prop có sẵn, chưa bao giờ truyền) trong `main.tsx`
+   — `pickActiveWallet` ưu tiên ví `walletClientType === "privy"`. Vì
+   `createOnLogin: "users-without-wallets"`, ví embedded chỉ tồn tại với người đăng ký
+   KHÔNG có ví, nên "ưu tiên embedded" = "dùng đúng ví vừa login". Truyền prop này cũng làm
+   Privy bỏ luôn việc ghi `recentConnectorId` (`a || (...)` trong source), nên đường storage
+   cũ bị gỡ chứ không phải bị lấn át. **KHÔNG cần xoá site data.**
+   Trường hợp chưa cover: tài khoản tạo bằng email VÀ đã link MetaMask sẽ luôn bị ép vào
+   embedded, không có cách đổi trong app. Có thể thêm nút đổi ví trong dropdown navbar
+   (`useWallets` + `useSetActiveWallet`, khoảng 20 dòng) — user chưa duyệt.
+
+2. **Nút sell không chạy — GỐC THẬT chính là bug deploy 405 ở đầu mục này.** Không liên
+   quan Privy chút nào. Hai thứ tôi sửa trước đó (chặn khi ví 0 USDC vì USDC là gas token
+   của Arc; truyền `account` + `chainId` tường minh cho `sendTransaction`) là lỗi thật và
+   nên giữ, **nhưng KHÔNG phải nguyên nhân** — tôi đã nói sai với user chỗ này.
+
+### RPC 429
+
+Console user ngập `429` từ `rpc.testnet.arc.io`. `multicall3` vốn đã cấu hình nên các hook
+nhiều contract chỉ tốn 1 call, nhưng các read đơn lẻ cộng lại vẫn bắn khoảng 8 request cùng
+lúc lúc mount, rồi react-query retry mỗi cái 3 lần. Đã sửa: transport
+`http(undefined, { batch: true })` ở cả 2 config (gộp eth_call cùng tick vào 1 POST), và
+QueryClient hạ `retry: 1`, `staleTime: 10_000`, `refetchOnWindowFocus: false`.
+
+### Chưa verify được (không có trình duyệt)
+
+Repo KHÔNG còn Playwright và tôi không tự cài. Mọi thứ ở trên chỉ verify bằng `curl`, đọc
+source, và `tsc`. **Chưa từng render thật trên trình duyệt.** Cần user (hoặc cài lại
+Playwright) để kiểm: navbar/logo, mobile 430px, banner có còn xuống dòng vô lý không, và
+luồng Privy login-email → faucet → sell.
+
+Có `sharp` cài trong scratchpad để rasterize SVG (máy không có ImageMagick). Scratchpad là
+thư mục tạm theo session, reset máy là mất — cài lại bằng `npm install sharp` ở thư mục
+tạm bất kỳ nếu cần.
+
+---
+
 ## HỆ LƯỚI GIAO DIỆN — đọc trước khi đụng vào bất kỳ layout nào
 
 User rất khắt khe về lưới; đã phải dựng lại 2 lần vì làm sai. **Luật bất di bất dịch:**
