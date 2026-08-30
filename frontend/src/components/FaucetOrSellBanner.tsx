@@ -123,7 +123,7 @@ export function FaucetOrSellBanner() {
           : "Click here to sell EURC and cirBTC to USDC";
     return (
       <div style={{ position: "relative", height: "100%" }}>
-        <AnnouncementBanner text={text} onClick={handleSell} />
+        <AnnouncementBanner text={text} onClick={handleSell} status={status !== "idle"} />
         {error && (
           <div
             className="prose"

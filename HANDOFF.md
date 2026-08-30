@@ -102,6 +102,28 @@ theo đúng hình học content chỉ có thể cao tối đa ~47% khung (dù fu
 KHÔNG phải bug, là giới hạn hình học không tránh được của tỉ lệ khung Privy**. Đã đẩy hết
 cỡ có thể (full chiều rộng, không chừa lề thừa), không thể to hơn nữa nếu còn giữ đúng 2:1.
 
+⚠️ **Follow-up thứ 2 cùng ngày: đợt crop viewBox ở trên vô tình làm dấu $ trên hũ bị trắng
+luôn, chìm mất trên nền vàng.** User báo: "icon USDC trong chiếc hộp nếu màu trắng sẽ bị
+chìm... chỉ có chữ mới trắng". Nguyên nhân: `fulllogo.svg` có đúng **9 path `fill="black"`**
+— 8 path đầu là 8 chữ cái "LuckyPot" (toạ độ x nằm bên phải, ~200-990), path thứ 9 là dấu
+$ vẽ trên hũ (toạ độ x bên trái, ~90-138, cùng vùng với hũ vàng/xanh). Bản dark ban đầu
+(cả 2 đợt trước) đổi *TẤT CẢ* 9 path `black` sang `#FFFFFF` bằng string-replace toàn cục —
+đúng cho 8 chữ cái, sai cho dấu $ (nó cần đứng yên màu đen để còn tương phản với hũ vàng
+`#FCD34D`, không liên quan gì đến nền tối/sáng của trang).
+
+**Đã sửa: chỉ đổi 8 lần đầu sang trắng, giữ lần thứ 9 (dấu $) nguyên màu đen** — dùng
+`str.split('fill="black"')` rồi ráp lại có chọn lọc, verify bằng `assert` đếm đúng 8 và 1
+trước khi ghi file. Áp dụng cho cả 3 chỗ: `landing/logo-full-dark.svg`,
+`src/assets/logo-full-dark.svg`, và 2 PNG Privy (`privy-logo.png`/`privy-logo-dark.png`,
+`privy.svg` gốc cũng đúng pattern 8 chữ + 1 icon y hệt). Verify bằng screenshot zoom navbar
+thật trên production — dấu $ đen rõ trên nền vàng, chữ trắng trên nền tối.
+
+**Bài học:** khi 1 file SVG có nhiều path cùng màu `black` nhưng đóng vai trò khác nhau
+(chữ vs icon/chi tiết trên mark màu), *không bao giờ* string-replace toàn cục theo màu —
+phải soi toạ độ (x range) từng path để biết path nào thuộc nhóm nào trước khi đổi màu chọn
+lọc. Lỗi này lặp lại 2 lần liên tiếp trong cùng buổi vì lần đầu chỉ sửa viewBox mà không
+soi lại từng path.
+
 ---
 
 ## Trạng thái nghỉ 2026-08-30 (khuya) — sửa lỗi "Claim now" trên phần thưởng quá 3 ngày

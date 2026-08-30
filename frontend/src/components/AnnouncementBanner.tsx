@@ -66,8 +66,10 @@ export function AnnouncementBanner({
   href,
   onClick,
   variant = "notice",
+  status = false,
 }: {
-  /** The call-to-action phrase — the only part that's underlined. */
+  /** The call-to-action phrase — underlined, unless `status` says this isn't
+   *  one right now. */
   text: string;
   /** Plain context that comes before `text`, read as one flowing sentence
    *  with it — not underlined, since the whole banner is one clickable
@@ -80,6 +82,11 @@ export function AnnouncementBanner({
   /** "referral" swaps the amber tint for green and the star for the invite
    *  icon; everything else about the anatomy is identical. */
   variant?: "notice" | "referral";
+  /** True while `text` reports what's happening ("Selling EURC...") rather
+   *  than inviting a click ("Click here to sell..."). Same banner, same
+   *  onClick (a click mid-swap still needs to no-op there, not here), just
+   *  without the underline a plain status was never meant to carry. */
+  status?: boolean;
 }) {
   const className = variant === "referral" ? "banner banner--referral" : "banner";
   const actionable = Boolean(href || onClick);
@@ -95,7 +102,7 @@ export function AnnouncementBanner({
   const content = (
     <span className="banner__text prose">
       {lead && `${lead} `}
-      <span className="banner__cta">{text}</span>
+      {status ? text : <span className="banner__cta">{text}</span>}
     </span>
   );
 
