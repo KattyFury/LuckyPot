@@ -18,6 +18,31 @@ sẵn của `keeper.yml`) — lưu lịch sử Deposited/Withdrawn/Claimed cho "
 
 ## Trạng thái nghỉ 2026-08-30 (khuya, phiên mới) — contract V5 (`forceWithdrawAll`), kế hoạch Vitael
 
+### 0. Trang Admin console `/app/admin` (MỚI, đã deploy — thay hẳn cách làm HTML rời rạc)
+
+User chán cảnh mỗi lần cần ký giao dịch admin là Claude phải dựng 1 file HTML rời + local
+server riêng (như `upgrade-v5.html` ở mục dưới) — kêu làm 1 trang điều phối dùng lại được.
+Đã thêm `frontend/src/pages/AdminPage.tsx`, route `/app/admin` (App.tsx tự check
+`window.location.pathname`, KHÔNG cài react-router — app vốn triết lý "no other pages").
+
+Vào trang tự check `hasRole(DEFAULT_ADMIN_ROLE, address)`, nếu đúng ví admin mới hiện các
+nút: **Pause/Unpause, Force withdraw all, Upgrade (dán địa chỉ implementation mới, tự gọi
+`upgradeToAndCall(addr, 0x)`), setAprBpsUSDC/ARC, Approve+Fund yield.** Mỗi nút qua 1
+`TxButton` chung, tự hiện trạng thái pending/confirm/lỗi + link ArcScan. Từ giờ về sau
+KHÔNG cần dựng file HTML riêng cho từng thao tác admin nữa — vào thẳng `luckypot.cc/app/admin`.
+
+⚠️ **Gotcha tốn ~5 lượt deploy mới ra: `_redirects` rewrite (kể cả đúng cú pháp
+`/app/*  /app/index.html  200` theo docs Cloudflare) LUÔN thua fallback riêng của Cloudflare
+Pages cho path chưa khớp** — Pages tự trả về **ROOT `/index.html` (landing page)** cho MỌI
+path lạ, kể cả đường dẫn hoàn toàn ngẫu nhiên (`/foo123`), **kể cả trên domain `*.pages.dev`
+gốc** (không phải do custom domain `luckypot.cc`, không phải do zone-level rule). `_redirects`
+KHÔNG thắng được hành vi này dù đúng cú pháp. **Fix thật: bỏ hẳn `_redirects`, cho
+`build-site.mjs` copy file tĩnh thật** `dist-site/app/admin/index.html` (bản sao
+`app/index.html` sau khi vite build xong) — file tĩnh có thật thì Cloudflare serve bình
+thường, không dính fallback vì không cần rewrite gì cả. Script/asset tag trong
+`app/index.html` là absolute path (`base: "/app/"`) nên copy sâu thêm 1 cấp vẫn load đúng
+bundle. **Nhớ bài học này** nếu sau này cần thêm route tĩnh nào khác trong `/app/*`.
+
 ### 1. Cào cào to gấp đôi (đã xong, đã deploy)
 
 `ScratchCanvas.tsx` — bán kính cọ cào từ 28px lên **56px** (x2), user kêu cào mỏi tay. Đổi 1
@@ -42,11 +67,39 @@ song**:
    pool USDC để kéo APY hiệu dụng lên ~5% — không phải sửa lãi suất thị trường, mà cộng thưởng
    lên trên, đồng thời kéo người dùng thật vào test Vitael.
 
-⚠️ **CHƯA tìm được địa chỉ contract lending thật của Vitael** (docs không lộ ra ngoài HTML,
-đang định lục JS bundle của `vitael.xyz/lend` thì bị chuyển hướng sang việc rút tiền — xem mục
-3 dưới). Việc còn dở: tìm contract/ABI Vitael, rồi thiết kế hàm `depositToVitael`/
-`withdrawFromVitael` trên `LuckyStakerPool` (hoặc để keeper tự giữ 1 phần riêng gửi Vitael,
-tách khỏi core contract — chưa chốt cách nào).
+**Đã đào được kiến trúc Vitael thật (chưa xong, đang dở giữa chừng vì chuyển sang làm
+`/app/admin` — xem mục 0):**
+
+- KHÔNG lấy được địa chỉ từ docs (site Next.js, các mục con là `<button>` đổi state JS, không
+  có URL riêng, không dump-dom được — muốn đọc phải click thật qua Playwright/CDP thật sự).
+- Tải hết ~45 JS chunk của `vitael.xyz/lend` (`grep -ohE "0x[a-fA-F0-9]{40}"`) ra rất nhiều
+  địa chỉ nhưng lẫn lộn (predeploy OP-stack `0x4200...`, Multicall3, placeholder ETH...) —
+  không đáng tin, dừng hướng này.
+- **Cách ăn chắc: search trực tiếp trên `testnet.arcscan.app` API**
+  (`/api/v2/search?q=...`) theo tên — ra kết quả xác đáng:
+  - `Vitael Interest Bearing USDC` (symbol `vUSDC`) tại `0x2950c3209F6329143A9cba1486479628109277a1`
+    — token đại diện phần đã supply, giống aToken của Aave.
+  - Nhiều `Vitael LP` token khác nhau — thuộc tính năng Swap/Liquidity Pool, KHÔNG phải lending.
+  - **Kiến trúc lending KHÔNG phải 1 pool tổng kiểu Aave** — search `"LendingPool"` ra
+    `LendingPoolFactory` (`0x54f6Ff27093FC45c5A39083C3Ef0260D25012Be3`, đã verify ABI) +
+    `LendingPoolAddressesProvider` (`0xC48674acd3CafDd5746A94B5144eA57672592bF3`) +
+    **30+ instance `LendingPool` riêng lẻ**, mỗi cái là **1 CẶP** `(collateralToken,
+    borrowToken)` độc lập với đường cong lãi suất riêng (`ltv`, `baseRate`, `rateAtOptimal`,
+    `optimalUtilization`, `maxUtilization`, `maxRate`, `liquidationThreshold`,
+    `liquidationBonus` — struct `LendingPoolFactoryHook.LendingPoolParams`). Giống mô hình
+    Morpho Blue / Fraxlend (isolated pair pools), KHÔNG giống Aave V3 (1 pool nhiều reserve).
+  - Factory **KHÔNG có hàm `getPool(asset)` để tra cứu trực tiếp** — phải enumerate qua event
+    `LendingPoolCreated(tuple lendingPoolParams, address router, address routerImplementation,
+    address lendingPool, address lendingPoolImplementation, address sharesToken)` bằng
+    `getLogs` trên factory, lọc theo `lendingPoolParams.borrowToken == USDC` (hoặc
+    `collateralToken`) để tìm đúng (các) pool có USDC.
+
+**Việc còn dở, làm tiếp khi quay lại:** `getLogs` factory để liệt kê hết `LendingPoolCreated`,
+tìm đúng pool USDC (borrowToken hoặc collateralToken = `0x3600...0000`), đọc ABI 1
+`LendingPool` instance cụ thể để biết hàm supply/withdraw đặt tên gì (chưa xem — factory chỉ
+cho biết THAM SỐ tạo pool, không cho biết interface của chính pool). Rồi mới thiết kế
+`depositToVitael`/`withdrawFromVitael` trên `LuckyStakerPool` (hoặc tách keeper tự giữ riêng
+— chưa chốt).
 
 ### 3. Contract upgrade V5 — thêm `forceWithdrawAll()` (ĐÃ LÊN CHAIN THẬT)
 
@@ -84,12 +137,14 @@ Khả năng máy cài nhiều ví (VD MetaMask + Coinbase Wallet) và `window.et
 trang tự gọi `wallet_switchEthereumChain` (fallback `wallet_addEthereumChain` nếu ví chưa có
 sẵn Arc Testnet) thay vì chỉ báo lỗi suông.
 
-**VIỆC CÒN DỞ (đã thêm nút 3-4 vào cùng trang, CHƯA xác nhận user đã bấm):** pool lúc upgrade
-xong còn **1.761 USDC** của người khác (không phải ví admin) chưa rút. Trang
-`~/Desktop/upgrade-v5.html` đã có thêm 2 nút "3. Pause pool" / "4. Force withdraw all" (calldata
-tính sẵn: `0x8456cb59` / `0xe12b30d4`, không cần build lại) — chờ user bấm. Sau khi user xác
-nhận đã bấm, nhớ verify lại `balancesTotal() == 0` trước khi coi như xong, và cân nhắc
-`unpause()` lại nếu muốn pool nhận deposit tiếp trong lúc build tích hợp Vitael.
+**✅ ĐÃ XONG (verify on-chain sau khi user bấm 2 nút 3-4 trên `upgrade-v5.html`):**
+`paused() == true`, `balancesTotal() == 0` — pool sạch hoàn toàn, an toàn để build/test tích
+hợp Vitael mà không đụng tiền thật của ai. Đang **paused**, cân nhắc `unpause()` (giờ làm
+qua trang `/app/admin` mới, mục 0) nếu muốn pool nhận deposit tiếp trong lúc build Vitael.
+
+⚠️ `~/Desktop/upgrade-v5.html` + local server `python -m http.server` ở `127.0.0.1:8532` đã
+**dừng, không còn chạy** — mọi thao tác admin sau này (kể cả upgrade contract) làm qua
+`/app/admin` (mục 0 ở trên) thay vì dựng lại file HTML rời.
 
 ---
 
