@@ -118,8 +118,8 @@ export function PoolCard({
             style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)", lineHeight: 1.6 }}
           >
             <p>
-              "Tickets" is every $1 that's sat in the pool a full week and counts toward this draw. The pool
-              actually holds{" "}
+              "Tickets" is every $1 that sat in the pool through a whole epoch &mdash; Monday 00:00 UTC to the
+              next Monday 00:00 UTC &mdash; and so counts toward this draw. The pool actually holds{" "}
               <strong className="pair" style={{ color: "var(--color-text)" }}>
                 {amount(totalPool)}
               </strong>{" "}
@@ -127,9 +127,11 @@ export function PoolCard({
               <strong className="pair" style={{ color: "var(--color-text)" }}>
                 {formatUSDC(eligiblePoolTotal)}
               </strong>{" "}
-              of that has been in long enough to count; fresh deposits roll into tickets next epoch.
+              of that has been in long enough to count; fresh deposits roll into tickets at the next Monday
+              boundary.
             </p>
-            <p>Tip: deposit right before a draw so your week starts immediately.</p>
+            <p>Tip: deposit just before a draw, so your money starts a full epoch immediately instead of
+              waiting out the rest of this one.</p>
           </div>
         </Modal>
       )}
@@ -149,10 +151,11 @@ export function PoolCard({
               <strong className="pair" style={{ color: "var(--color-text)" }}>
                 {formatUSDC(myEligible)}
               </strong>{" "}
-              of that has sat a full week, so that's the only part counted as tickets for this draw — the rest
-              rolls in next epoch.
+              of that sat through a whole epoch, so that's the only part counted as tickets for this draw &mdash;
+              the rest rolls in at the next Monday boundary.
             </p>
-            <p>Tip: deposit right before a draw so your week starts immediately.</p>
+            <p>Tip: deposit just before a draw, so your money starts a full epoch immediately instead of
+              waiting out the rest of this one.</p>
           </div>
         </Modal>
       )}

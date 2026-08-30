@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>LuckyPot – no-loss weekly USDC prize pool</title>
-<meta name="description" content="Deposit USDC, hold it for full week, and you're in the draw. The winners take the week's yield – everyone else loses nothing; their full principal remains intact." />
+<meta name="description" content="Deposit USDC, hold it through a full epoch – Monday to Monday – and you're in the draw. The winners take the week's yield; everyone else loses nothing, their full principal remains intact." />
 <link rel="icon" type="image/png" href="favicon.png" />
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <meta name="theme-color" content="#010110" />
@@ -298,7 +298,7 @@
   <main>
     <section class="hero" style="border-top: none;">
       <h1 class="condensed prose">
-        Deposit USDC, hold it for <strong>full week</strong>, and you're in the draw.
+        Deposit USDC, hold it through a <strong>full epoch</strong>, and you're in the draw.
         The winners take the week's yield – everyone else loses nothing; <strong>their full principal remains intact</strong>.
       </h1>
       <div class="cta-row">
@@ -311,7 +311,7 @@
       <h2>How it works</h2>
       <ol class="steps">
         <li><span class="num">1</span><span>Deposit USDC into the pool.</span></li>
-        <li><span class="num">2</span><span>Hold it for a full week – that's what makes it a ticket.</span></li>
+        <li><span class="num">2</span><span>Hold it through a full epoch – Monday 00:00 UTC to the next Monday 00:00 UTC. That's what turns it into a ticket.</span></li>
         <li><span class="num">3</span><span>At week's end, a winner is drawn – verifiable on-chain, nobody (not even the admin) can pick who wins ahead of time.</span></li>
         <li><span class="num">4</span><span>Won? Scratch the card to claim. Didn't win? Withdraw your principal – any time, no conditions.</span></li>
       </ol>
@@ -349,7 +349,7 @@
         <summary><span class="icon icon-chevron"></span>Tickets &amp; the draw</summary>
         <div class="body">
           <p>Every USDC you deposit becomes ticket weight proportional to your share of the pool.</p>
-          <p>You only have a ticket once your deposit has sat in the pool for a full epoch (7 days). Withdraw mid-week and you forfeit that week's ticket – never your money.</p>
+          <p>You only have a ticket once your deposit has sat in the pool for a full epoch – and an epoch is a fixed calendar week, Monday 00:00 UTC to the next Monday 00:00 UTC, not any rolling seven days. Deposit on a Wednesday and it waits out the rest of that epoch, becomes a ticket at Monday's boundary, and runs for the epoch after. Withdraw mid-epoch and you forfeit that epoch's ticket – never your money.</p>
           <p>Randomness is two-layer commit-reveal: the keeper commits a hashed secret at the start of the week, reveals it at the end, and it's mixed with a future blockhash unknowable at commit time – so nobody, not even the keeper or the admin, can predict or steer the outcome.</p>
         </div>
       </details>
@@ -363,7 +363,7 @@
 realYieldEarned = totalPool × aprBps / 10000 / 52
 weeklyPrizePool = eligibleBalance × aprBps / 10000 / 52
 surplus         = realYieldEarned − weeklyPrizePool → flows to the vault</pre>
-          <p><strong>Why only <code>eligibleBalance</code>, not the whole pool?</strong> The draw runs weekly, and only money that's sat a full week has a ticket that week. The prize has to be computed on that exact same slice – not the whole pool – because counting fresh mid-week deposits would inflate the prize for people who don't yet have a shot at winning it. The yield those fresh deposits still earn is real – it just isn't split with anyone that week, so it flows into the vault instead.</p>
+          <p><strong>Why only <code>eligibleBalance</code>, not the whole pool?</strong> The draw runs once an epoch, and only money that sat through the whole of that epoch has a ticket in it. The prize has to be computed on that exact same slice – not the whole pool – because counting fresh mid-week deposits would inflate the prize for people who don't yet have a shot at winning it. The yield those fresh deposits still earn is real – it just isn't split with anyone that week, so it flows into the vault instead.</p>
         </div>
       </details>
 
