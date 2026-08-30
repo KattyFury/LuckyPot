@@ -9,6 +9,10 @@
 **Web đang chạy:** https://luckypot.cc (custom domain gắn vào Cloudflare Pages project `luckypot`) — landing page ở root, dashboard ở `/app`. Deploy tay bằng `cd frontend && npm run build:site && npx wrangler pages deploy dist-site --project-name=luckypot --branch=main` — **KHÔNG** auto-deploy từ GitHub. Project Cloudflare cũ `luckystaker`/`stableluck` vẫn còn tồn tại nhưng ngừng cập nhật.
 ⚠️ **Contract Solidity CỐ Ý giữ nguyên tên `LuckyStakerPool`, KHÔNG redeploy khi đổi thương hiệu** — spec không yêu cầu tên contract khớp tên sản phẩm, và contract đang giữ dữ liệu thật (685 USDC, lịch sử epoch 3/4 đã quay). Mọi chỗ trong repo nhắc tới `LuckyStakerPool.sol` / `LuckyStakerPool (proxy)` là tên kỹ thuật thật, không phải sai sót quên đổi.
 **Spec gốc:** [`arc-prize-pool-spec.md`](./arc-prize-pool-spec.md) — đã có trong repo, encoding sạch
+**Database:** Cloudflare D1 `luckypot-history` (đọc qua binding `HISTORY_DB` khai báo trong
+`wrangler.toml` ở gốc repo, ghi bởi `automation/src/indexHistory.ts` chạy trên lịch cron có
+sẵn của `keeper.yml`) — lưu lịch sử Deposited/Withdrawn/Claimed cho "My history". Chi tiết
+đầy đủ ở mục "My history chuyển sang D1" bên dưới.
 
 ---
 
