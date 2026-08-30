@@ -1,0 +1,5 @@
+# Short, shareable URL for the brand lockup: luckypot.cc/logo
+# Cloudflare Pages won't map an extensionless path to a .svg on its own, and
+# _redirects only fires for paths that match no Function and no static asset -
+# so /api/* and /app/* are untouched.
+/logo   /logo-full.svg   302

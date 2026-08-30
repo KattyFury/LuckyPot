@@ -28,5 +28,8 @@ cpSync(join(landingDir, "apple-touch-icon.png"), join(siteDir, "apple-touch-icon
 // logo.svg replaced logo-full.svg: the mark ships on its own now and the
 // "LuckyPot" beside it is live type, so there's no wordmark artwork to copy.
 cpSync(join(landingDir, "logo.svg"), join(siteDir, "logo.svg"));
+// The full lockup (mark + wordmark) plus the /logo short URL that points at it.
+cpSync(join(landingDir, "logo-full.svg"), join(siteDir, "logo-full.svg"));
+cpSync(join(landingDir, "_redirects"), join(siteDir, "_redirects"));
 
 console.log("Copied landing page into dist-site/");
