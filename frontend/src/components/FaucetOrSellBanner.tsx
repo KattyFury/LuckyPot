@@ -55,6 +55,13 @@ export function FaucetOrSellBanner() {
   const cirbtcBal = (balances?.[1]?.result as bigint | undefined) ?? 0n;
   const usdcBal = (balances?.[2]?.result as bigint | undefined) ?? 0n;
   const hasSomethingToSell = eurcBal > 0n || cirbtcBal > 0n;
+  // Circle's testnet faucet caps a single request at 20 USDC, so a wallet
+  // sitting above that has already been through the faucet at least once and
+  // is a fair candidate to be offered the sell flow. Below it, offering "sell"
+  // was the wrong message: USDC is Arc's gas token, so a wallet that's never
+  // faucet-ed can't pay for the swap it would be asked to approve.
+  const SELL_PROMPT_THRESHOLD = 20_000_000n; // 20 USDC, 6 decimals
+  const showSellBanner = hasSomethingToSell && usdcBal > SELL_PROMPT_THRESHOLD;
 
   const [status, setStatus] = useState<"idle" | "eurc" | "cirbtc">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -107,7 +114,7 @@ export function FaucetOrSellBanner() {
     }
   }
 
-  if (hasSomethingToSell) {
+  if (showSellBanner) {
     const text =
       status === "eurc"
         ? "Selling EURC..."

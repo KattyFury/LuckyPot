@@ -221,9 +221,11 @@ button {
 }
 
 /* The drawn lockup. Its viewBox is cropped to the artwork, so this height is
-   the pot's height on screen rather than half of it. */
+   the pot's height on screen rather than half of it. 38px is the largest
+   this fits at without outgrowing the navbar's locked 50px row height
+   (--row-h) - do not push this past ~40px without also revisiting that row. */
 .brand__lockup {
-  height: 26px;
+  height: 38px;
   width: auto;
   display: block;
 }

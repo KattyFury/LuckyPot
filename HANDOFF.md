@@ -12,6 +12,72 @@
 
 ---
 
+## Trạng thái nghỉ 2026-08-30 (nửa đêm) — My history quét thật, banner đúng ngưỡng, logo navbar to hơn
+
+3 việc user giao trong 1 lượt, cả 3 đã deploy + verify trong bundle production.
+
+### 1. My history luôn rỗng — do RPC, không do code logic sai
+
+`useMyHistory.ts` cũ gọi `getLogs({ fromBlock: 0n })`. Test thẳng bằng curl vào
+`rpc.testnet.arc.io` phát hiện RPC này **luôn từ chối `fromBlock: 0`** với lỗi
+`"pruned history unavailable"` — không liên quan gì đến hoạt động thật của ví. Vì
+`Dashboard.tsx` destructure `data: historyEntries = []`, lỗi bị nuốt âm thầm → My History
+**luôn hiện "No activity yet." với MỌI ví, bất kể có deposit/withdraw/claim thật hay
+không.** Đây là bug 100% tái hiện, không phải thỉnh thoảng.
+
+Đào sâu thêm phát hiện 2 giới hạn cứng khác của RPC này (xác nhận bằng chính error message
+RPC trả về, không đoán):
+- `eth_getLogs is limited to a 10,000 range` — không thể quét quá 10.000 block/lần gọi.
+- Rate limit khá gắt, dùng chung cho MỌI dApp trên Arc Testnet (đã ghi nhận trước đó ở mục
+  "RPC 429"): ~15 request liên tiếp là bị chặn, phải lùi-chờ.
+
+Pool contract đã sống **~1,18 triệu block** (deploy block `58425277`, tìm bằng cách nhị
+phân `eth_getCode` — xem code có xuất hiện ở block nào, KHÔNG đoán từ ngày tháng) — tức
+cần **~119 lần gọi** để quét hết. User hỏi "có cần database không" → **không cần**, dùng
+`localStorage` (file mới `lib/historyCache.ts`, cùng convention với `scratchState.ts`) lưu
+`{lastBlock, entries[]}` theo từng ví. Test thật (script Node độc lập, xoá sau khi xong)
+xác nhận quét trọn 119 chunk mất **~7 phút** (có lùi-chờ theo cấp số nhân khi bị rate-limit)
+và ra đúng dữ liệu Deposited thật của 2 ví thật trên chain — **đã verify, không phải suy
+đoán**. Nhưng đây CHỈ xảy ra 1 lần duy nhất cho mỗi ví (lần đầu tiên mở app / xoá
+localStorage) — mọi lần sau chỉ quét từ `lastBlock` đã cache tới hiện tại, thường 1 request.
+
+Đã tối ưu thêm: gộp 3 event (Deposited/Withdrawn/Claimed) thành **1 lần gọi `getLogs`/chunk**
+thay vì 3 (dùng `parseEventLogs` của viem lọc theo ABI sau khi có logs thô), và đọc
+`log.blockTimestamp` **thẳng từ response `eth_getLogs`** (Arc RPC trả kèm field này, viem
+tự parse) thay vì gọi `getBlock()` riêng cho mỗi block — bỏ hẳn 1 tầng round-trip so với
+code cũ.
+
+⚠️ **Nếu proxy contract bị deploy lại ở địa chỉ mới, phải cập nhật lại `POOL_DEPLOY_BLOCK`**
+trong `useMyHistory.ts` (hằng số hardcode, không tự tính lại).
+
+### 2. Banner faucet/sell — sai tiêu chí, giờ theo đúng USDC balance
+
+`FaucetOrSellBanner.tsx` cũ chuyển sang "sell" chỉ dựa vào `eurcBal>0 || cirbtcBal>0`,
+**không nhìn USDC balance** — dẫn tới hiện "Click here to sell..." ngay cả khi ví chưa có
+USDC để trả gas (USDC là gas token của Arc), bấm vào là dính lỗi. User chốt luật: **USDC >
+20 mới hiện sell, ≤ 20 thì hiện faucet** (20 khớp đúng comment có sẵn trong code: "Circle's
+testnet faucet caps each request at 20 USDC" — tức ví đã faucet full 1 lần thì mới đủ gas).
+
+Fix: `showSellBanner = hasSomethingToSell && usdcBal > 20_000_000n` — giữ cả 2 điều kiện
+(không chỉ mỗi ngưỡng USDC) để tránh 1 kẽ hở mới: ví có nhiều USDC nhưng KHÔNG còn
+EURC/cirBTC để bán thì vẫn phải hiện faucet, không hiện nút "sell" chết (bấm không làm gì).
+
+### 3. Logo navbar quá nhỏ (26px) — đã hỏi lại trước khi đổi vì đụng luật lưới
+
+User ban đầu xin x4 (→104px). Navbar là **hàng #1 trong hệ lưới 50px/hàng CỐ ĐỊNH** (luật
+đã ghi ở mục "HỆ LƯỚI GIAO DIỆN", dựng lại 2 lần vì làm sai) — 104px cao gấp đôi cả navbar,
+chắc chắn tràn ra đè lên banner bên dưới. Đã hỏi lại, user chọn: **giữ nguyên hàng 50px,
+logo chỉ to vừa đủ trong hàng đó** → chốt **38px** (từ 26px, x1.46), là mức lớn nhất còn
+nằm gọn trong navbar. Sửa 2 chỗ đồng bộ:
+- `global.css` → `.brand__lockup` (app, `Navbar.tsx`)
+- `landing/index.html` → `nav.top .brand img` (landing, vốn đã tự nhận "same look as the
+  app's" và cùng dùng `--row-h`)
+
+Verify bằng screenshot Chrome headless zoom cận cảnh cả 2 navbar sau deploy — logo to rõ
+rệt, không tràn, không đè lên đường kẻ dưới navbar.
+
+---
+
 ## Trạng thái nghỉ 2026-08-30 (khuya) — sửa lỗi "Claim now" trên phần thưởng quá 3 ngày
 
 User gửi ảnh chụp modal Privy báo lỗi khi bấm nhận thưởng:
