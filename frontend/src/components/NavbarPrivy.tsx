@@ -16,11 +16,11 @@ export function NavbarPrivy(actions: WalletMenuActions) {
       onClick={login}
       disabled={!ready}
       style={{
-        background: "#000000",
-        color: "#ffffff",
+        background: "var(--color-primary)",
+        color: "#04170e",
         borderRadius: 999,
-        padding: "8px 20px",
-        fontSize: "var(--fs-2)",
+        padding: "8px 18px",
+        fontSize: "var(--fs-1)",
         fontWeight: 700,
       }}
     >

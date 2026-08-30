@@ -1,29 +1,69 @@
-@import "@fontsource/roboto/400.css";
-@import "@fontsource/roboto/500.css";
-@import "@fontsource/roboto/700.css";
-@import "@fontsource/roboto-condensed/400.css";
-@import "@fontsource/roboto-condensed/700.css";
+/* Inter carries every piece of UI text; Space Grotesk carries headings, the
+   wordmark and every number. Both are the Privy pairing: docs.privy.io sets
+   its body text in Inter and its headings in FFF Acid Grotesk, a licensed
+   face they self-host and we can't ship — Space Grotesk stands in for it.
+   Self-hosted via @fontsource, same as the Roboto pair they replace, so the
+   app still pulls no fonts from a third-party host at runtime. */
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+@import "@fontsource/space-grotesk/500.css";
+@import "@fontsource/space-grotesk/600.css";
+@import "@fontsource/space-grotesk/700.css";
 
 :root {
-  --color-primary: #16a34a;
-  --color-text: #000000;
-  --color-text-secondary: #8e8e93;
-  --color-banner-bg: #ffcc00;
-  --color-card-bg: #d9d9d9;
-  --color-page-bg: #b8b8bd;
-  --color-scrollbar-track: #ffffff;
-  --color-scrollbar-thumb: #8e8e93;
+  /* ------------------------------------------------------------------
+     Surface. Every value below is one of Privy's own dark tokens, so the
+     Privy login modal lands on chrome that matches ours instead of
+     fighting it.
+     ------------------------------------------------------------------ */
+  --color-page-bg: #000008;
+  --color-surface: #010110;
+  --color-card-bg: #16172a;
+  --color-elevated: #22222a;
+  --color-line: #333455;
+  /* A fainter rule for dividers inside a card, where --color-line is loud. */
+  --color-hair: #24253f;
+
+  --color-text: #ffffff;
+  --color-text-secondary: #cbcde1;
+  /* Third tier: metadata that should recede behind secondary text. */
+  --color-text-faint: #8b8dab;
+
+  /* The green moves from #16a34a to #3dcf88. The old green is Privy's
+     success colour AND was our primary, but it fails contrast on a
+     near-black ground; #3dcf88 is the shade Privy itself uses for dark
+     highlights. */
+  --color-primary: #3dcf88;
+  --color-primary-bg: rgba(61, 207, 136, 0.12);
+  --color-primary-line: rgba(61, 207, 136, 0.3);
+
+  /* Replaces the flat #ffcc00 slab: a tinted card, not a flood fill. */
+  --color-banner-bg: rgba(253, 211, 77, 0.12);
+  --color-banner-line: rgba(253, 211, 77, 0.35);
+  --color-banner-text: #fcd34d;
+
+  --color-danger: #ff5a5a;
+
+  --color-scrollbar-track: transparent;
+  --color-scrollbar-thumb: #333455;
 
   --radius: 15px;
   --gap: 10px;
 
-  /* 4-step scale, user-revised 2026-08-27: 15/18/22/27, numbered smallest
-     to largest: 1 = UI/metadata/body text (the floor), 2 = heading/
-     important label, 3 = primary number, 4 = exceptional (jackpot) number. */
-  --fs-1: 15px;
-  --fs-2: 18px;
-  --fs-3: 22px;
-  --fs-4: 27px;
+  /* 5-step scale, stepped down from 15/18/22/27 (2026-08-30) because the old
+     sizes crowded their rows. Numbered smallest to largest:
+     0 = micro label / uppercase eyebrow (new tier)
+     1 = UI, body copy, buttons, list rows — the floor
+     2 = card heading / important label
+     3 = countdown
+     4 = the one big number a card exists to show. */
+  --fs-0: 10px;
+  --fs-1: 12px;
+  --fs-2: 14px;
+  --fs-3: 19px;
+  --fs-4: 20px;
 
   /* Mobile 430px; desktop exactly 2x that (user's call, over the spec's
      1290). Fixed columns, never a fluid stretch — outside is page bg. */
@@ -34,9 +74,10 @@
      measures the same on desktop and mobile side by side. */
   --row-h: 50px;
 
-  --font-condensed: "Roboto Condensed", sans-serif;
+  --font-ui: "Inter", -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Space Grotesk", "Roboto Condensed", sans-serif;
 
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 * {
@@ -51,9 +92,11 @@ body,
 
 body {
   margin: 0;
-  font-family: "Roboto", sans-serif;
+  font-family: var(--font-ui);
+  font-size: var(--fs-1);
   color: var(--color-text);
   background: var(--color-page-bg);
+  -webkit-font-smoothing: antialiased;
 }
 
 .app-shell {
@@ -61,7 +104,7 @@ body {
   max-width: var(--mobile-width);
   margin: 0 auto;
   min-height: 100vh;
-  background: #ffffff;
+  background: var(--color-surface);
 }
 
 @media (min-width: 1024px) {
@@ -74,6 +117,33 @@ button {
   font-family: inherit;
   cursor: pointer;
   border: none;
+  color: inherit;
+}
+
+/* Numbers: display face, tabular figures so columns line up down a list,
+   and the tracking pulled in so a long figure doesn't sprawl. */
+.num {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* ---------------------------------------------------------------------
+   Wrapping. Three rules, and they hold from 430px to 860px.
+   ------------------------------------------------------------------- */
+
+/* On any run of prose: the browser reflows the closing lines so a lone word
+   is never left stranded on its own. Deliberately NOT `balance`, which
+   actively splits a line that already fits — that is what was breaking the
+   banners across two rows on a full-width desktop grid. */
+.prose {
+  text-wrap: pretty;
+}
+
+/* A value and its unit ("1,300.38 USDC"), a truncated address, a countdown:
+   one unbreakable token. */
+.pair {
+  white-space: nowrap;
 }
 
 .icon {
@@ -135,52 +205,139 @@ button {
   border-radius: 8px;
 }
 
+/* ---------------------------------------------------------------------
+   The brand lockup. The mark is the artwork untouched; the word beside it
+   is live type, so the pair rescales cleanly and there's no baked-in
+   wordmark raster to go blurry.
+   ------------------------------------------------------------------- */
+.brand {
+  display: flex;
+  align-items: center;
+  /* 0.4x the mark's height — tuned so the word reads as attached to the pot
+     without touching it. */
+  gap: 9px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.brand__mark {
+  height: 26px;
+  width: auto;
+  display: block;
+}
+
+.brand__word {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--color-text);
+}
+
 .pill-button {
   border-radius: 999px;
-  padding: 14px 0;
+  /* Was 14px 0. The type dropped 3px, so the padding comes down with it and
+     the control keeps the same optical weight in its row. */
+  padding: 11px 0;
   font-size: var(--fs-1);
-  font-weight: 700;
+  font-weight: 600;
   text-align: center;
   width: 100%;
 }
 
-.pill-button--primary {
-  background: #000000;
-  color: #ffffff;
+/* Named for what they look like, not for a rank: the restyle inverted which
+   one is filled, and "primary/secondary" would now point the wrong way. */
+.pill-button--quiet {
+  background: var(--color-elevated);
+  border: 1px solid var(--color-line);
+  color: var(--color-text);
 }
 
-.pill-button--secondary {
+/* The one filled control in any given view - the action that view exists to
+   invite. Dark ink, because #3dcf88 is far too bright to carry white text. */
+.pill-button--accent {
   background: var(--color-primary);
-  color: #ffffff;
+  color: #04170e;
+  font-weight: 700;
 }
 
 .pill-button:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
 .card {
   background: var(--color-card-bg);
+  border: 1px solid var(--color-line);
   border-radius: var(--radius);
   padding: 20px;
   min-width: 0;
 }
 
 /* ---------------------------------------------------------------------
-   Dashboard grid — spec section 5.
+   Announcement / referral banners.
+
+   Anatomy is three flex children — icon, text, chevron — and nothing else.
+   The previous version wrapped the icon and text in a span carrying
+   `min-width: 0`, which let flex squeeze the text below its natural width
+   and wrap a line that fits with room to spare; `text-wrap: balance` on the
+   text then split it deliberately. Both are gone. The icon and chevron
+   never shrink, the text takes the slack, and it wraps only when it must.
+   ------------------------------------------------------------------- */
+.banner {
+  min-height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  border-radius: var(--radius);
+  background: var(--color-banner-bg);
+  border: 1px solid var(--color-banner-line);
+  color: var(--color-banner-text);
+  font-size: var(--fs-1);
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: left;
+  text-decoration: none;
+}
+
+.banner--referral {
+  background: var(--color-primary-bg);
+  border-color: var(--color-primary-line);
+  color: var(--color-primary);
+}
+
+.banner__icon,
+.banner__chevron {
+  flex: none;
+}
+
+.banner__text {
+  flex: 1 1 auto;
+}
+
+/* The call to action never splits across lines, whatever the width. */
+.banner__cta {
+  white-space: nowrap;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------------
+   Dashboard grid — spec section 5. Geometry is unchanged by the 2026-08-30
+   restyle: same 50px row, same 10px gap, same 13 rows in the same order.
 
    The row is a FIXED unit (--row-h), identical at both breakpoints, so a
    row measures the same next to each other on screen. The trade accepted
-   for that: the desktop needs 15 rows + 14 gaps, so a shorter window
+   for that: the desktop needs 13 rows + 12 gaps, so a shorter window
    scrolls rather than compressing the rows.
 
    Desktop: 13 rows – 1 navbar, 2 banner, 3-6 EPOCH | TOTAL POOL, 7 REFERRAL
-   (full-width, was the spare empty row — moved up here instead of sitting
-   unused at the bottom), 8-13 DRAW HISTORY | MY HISTORY. Columns are
-   thirds: EPOCH takes 1/3 and POOL 2/3; DRAW HISTORY takes 2/3 and MY
-   HISTORY 1/3. The history box is still 6 rows tall, just shifted down by
-   the referral row — the page no longer has a spare row at the bottom, so
-   it now runs 13*50 + 12*10 = 770px exactly instead of 720px + margin.
+   (full-width), 8-13 DRAW HISTORY | MY HISTORY. Columns are thirds: EPOCH
+   takes 1/3 and POOL 2/3; DRAW HISTORY takes 2/3 and MY HISTORY 1/3.
+   13*50 + 12*10 = 770px exactly.
 
    Mobile: the two history boxes would make the page endless, so each
    collapses to a one-row button that opens the same content as a popup.
@@ -190,8 +347,8 @@ button {
   display: grid;
   gap: var(--gap);
   /* Horizontal margin only: row 1 must start at the very top of the page,
-     or the white padding above it reads as part of row 1 and the navbar
-     looks pushed below centre. The empty last row is the bottom margin. */
+     or the padding above it reads as part of row 1 and the navbar looks
+     pushed below centre. */
   padding: 0 20px;
   /* minmax(0, 1fr), not bare 1fr: a bare 1fr track's implicit minimum is
      auto (its content's min-content size), which can render the track -
@@ -295,14 +452,14 @@ button {
 
 /* Inside EPOCH / TOTAL POOL: each element owns one of the box's 4 rows
    (spec: "mỗi yếu tố chiếm 1 hàng") — 4 EQUAL rows separated by the same
-   --gap as the page grid, inside the box's 10/20 padding. Equal rows plus
-   one gap unit is what keeps the elements from drifting; the earlier bug
-   was dividing by 4 with no gaps at all. */
+   --gap as the page grid, inside the box's padding. Equal rows plus one gap
+   unit is what keeps the elements from drifting. Horizontal padding came
+   down 20 -> 16 with the type, so the cards keep the same optical inset. */
 .card-rows {
   display: grid;
   grid-template-rows: repeat(4, 1fr);
   gap: var(--gap);
-  padding: 0 20px 20px;
+  padding: 0 16px 16px;
   height: 100%;
   min-height: 0;
 }
@@ -326,8 +483,7 @@ button {
 .box-header {
   align-self: stretch;
   align-items: center;
-  font-family: var(--font-condensed);
-  box-shadow: 0 1px 0 var(--color-text-secondary);
+  box-shadow: 0 1px 0 var(--color-line);
 }
 
 /* Header whose content is a plain inline run. */
@@ -341,7 +497,7 @@ button {
 .card-list {
   display: flex;
   flex-direction: column;
-  padding: 0 20px 20px;
+  padding: 0 16px 16px;
   height: 100%;
   min-height: 0;
   overflow: hidden;
@@ -351,19 +507,21 @@ button {
   height: var(--row-h);
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: var(--gap);
   flex: none;
   font-size: var(--fs-2);
   font-weight: 700;
-  color: var(--color-primary);
-  font-family: var(--font-condensed);
-  box-shadow: 0 1px 0 var(--color-text-secondary);
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+  font-family: var(--font-display);
+  box-shadow: 0 1px 0 var(--color-line);
 }
 
 .card-list__body {
   flex: 1;
   min-height: 0;
   padding-top: var(--gap);
-  font-family: var(--font-condensed);
 }
 
 .card-list__row {
@@ -374,16 +532,36 @@ button {
   gap: var(--gap);
   width: 100%;
   background: none;
+  border-bottom: 1px solid var(--color-hair);
   text-align: left;
+  font-size: var(--fs-1);
+  color: var(--color-text);
 }
 
-/* A two-line entry (date above, action + amount below) takes two rows. */
-.card-list__row--stacked {
-  height: calc(var(--row-h) * 2);
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 2px;
+.card-list__row:last-child {
+  border-bottom: none;
+}
+
+/* A small pill for a status word beside a row's label ("You won", "1 win"). */
+.tag {
+  font-size: var(--fs-0);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  background: var(--color-primary-bg);
+  padding: 2px 6px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* An uppercase micro label — column headers, "draw in", the row counts. */
+.eyebrow {
+  font-size: var(--fs-0);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-faint);
 }
 
 .two-col {
@@ -406,7 +584,7 @@ button {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 8, 0.72);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -418,7 +596,8 @@ button {
   width: 75vw;
   max-height: 80vh;
   overflow-y: auto;
-  background: #ffffff;
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-line);
   border-radius: var(--radius);
   padding: 20px;
   display: flex;
@@ -440,8 +619,9 @@ button {
   gap: var(--gap);
   font-size: var(--fs-2);
   font-weight: 700;
-  color: var(--color-primary);
-  font-family: var(--font-condensed);
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+  font-family: var(--font-display);
 }
 
 /* Mobile stand-ins for the two history boxes: full-width card-looking
@@ -452,13 +632,16 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  gap: var(--gap);
+  padding: 0 16px;
   border-radius: var(--radius);
   background: var(--color-card-bg);
-  font-size: var(--fs-1);
+  border: 1px solid var(--color-line);
+  font-size: var(--fs-2);
   font-weight: 700;
-  color: var(--color-primary);
-  font-family: var(--font-condensed);
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+  font-family: var(--font-display);
   text-align: left;
 }
 
@@ -467,24 +650,25 @@ button {
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.08);
+  background: var(--color-elevated);
+  border: 1px solid var(--color-line);
   padding: 2px;
 }
 
 .token-toggle button {
-  padding: 3px 10px;
+  padding: 3px 8px;
   border-radius: 999px;
   background: none;
-  color: var(--color-text-secondary);
-  font-size: var(--fs-1);
-  font-weight: 700;
+  color: var(--color-text-faint);
+  font-size: var(--fs-0);
+  font-weight: 600;
   line-height: 1.2;
   white-space: nowrap;
 }
 
 .token-toggle button.is-active {
   background: var(--color-text);
-  color: #ffffff;
+  color: var(--color-surface);
 }
 
 .token-toggle button:disabled {
@@ -492,7 +676,21 @@ button {
   opacity: 0.5;
 }
 
-/* Wallet dropdown in the navbar. */
+/* Wallet pill + dropdown in the navbar. */
+.wallet-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--color-line);
+  background: var(--color-elevated);
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
 .wallet-menu {
   position: absolute;
   top: calc(100% + 8px);
@@ -500,8 +698,9 @@ button {
   min-width: 200px;
   padding: 8px;
   border-radius: var(--radius);
-  background: var(--color-text);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  background: var(--color-elevated);
+  border: 1px solid var(--color-line);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
   z-index: 50;
 }
 
@@ -512,15 +711,15 @@ button {
   padding: 10px 12px;
   border-radius: 8px;
   background: none;
-  color: #ffffff;
+  color: var(--color-text);
   font-size: var(--fs-1);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .wallet-menu button:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .wallet-menu button.is-danger {
-  color: #ff5a5a;
+  color: var(--color-danger);
 }

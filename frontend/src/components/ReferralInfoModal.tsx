@@ -34,7 +34,7 @@ export function ReferralInfoModal({ onClose }: { onClose: () => void }) {
       </div>
 
       {link ? (
-        <div style={{ display: "flex", alignItems: "center", gap: 12, borderBottom: "2px solid #000000" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, borderBottom: "1px solid var(--color-line)" }}>
           <span
             style={{
               flex: 1,
@@ -71,7 +71,7 @@ export function ReferralInfoModal({ onClose }: { onClose: () => void }) {
             Unclaimed referral earnings: <strong style={{ color: "var(--color-text)" }}>{fmt(pendingRef as bigint)}</strong>
           </span>
           <button
-            className="pill-button pill-button--primary"
+            className="pill-button pill-button--accent"
             disabled={isPending || isConfirming}
             onClick={() => writeContract({ address: POOL_ADDRESS, abi: poolAbi, functionName: "claimReferral" })}
           >

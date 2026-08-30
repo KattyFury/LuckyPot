@@ -52,13 +52,13 @@ export function ResultModal({
         gap: 8,
         borderRadius: "var(--radius)",
         background: won ? "var(--color-primary)" : "var(--color-card-bg)",
-        color: won ? "#ffffff" : "var(--color-text)",
+        color: won ? "#04170e" : "var(--color-text)",
       }}
     >
       {won ? (
         <>
           <span style={{ fontSize: "var(--fs-1)", fontWeight: 700, textTransform: "uppercase" }}>You won</span>
-          <span style={{ fontSize: "var(--fs-4)", fontWeight: 700, fontFamily: "var(--font-condensed)" }}>
+          <span style={{ fontSize: "var(--fs-4)", fontWeight: 700, fontFamily: "var(--font-display)" }}>
             {amount(owed)}
           </span>
         </>
@@ -79,7 +79,7 @@ export function ResultModal({
 
       {revealed && won && !hasClaimed && (
         <button
-          className="pill-button pill-button--primary"
+          className="pill-button pill-button--accent"
           disabled={isPending || isConfirming}
           onClick={() =>
             writeContract({ address: POOL_ADDRESS, abi: poolAbi, functionName: "claim", args: [epochId] })

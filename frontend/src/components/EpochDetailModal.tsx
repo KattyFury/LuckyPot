@@ -40,14 +40,14 @@ export function EpochDetailModal({
         </div>
       ) : (
         <div
-          style={{ display: "flex", flexDirection: "column", gap: 8, fontFamily: "var(--font-condensed)" }}
+          style={{ display: "flex", flexDirection: "column", gap: 8, fontFamily: "var(--font-display)" }}
         >
           {epoch.winners.map((winner, i) => {
             const isMine = mine !== undefined && winner.toLowerCase() === mine;
             const row = (
               <>
                 <span>
-                  <span style={{ color: isMine ? "#ffffff" : "var(--color-text-secondary)" }}>#{i + 1}</span>{" "}
+                  <span style={{ color: isMine ? "rgba(4, 23, 14, 0.65)" : "var(--color-text-faint)" }}>#{i + 1}</span>{" "}
                   {isMine ? "You" : shortAddress(winner)}
                 </span>
                 <span style={{ fontWeight: 700 }}>
@@ -68,7 +68,7 @@ export function EpochDetailModal({
               <button
                 key={`${winner}-${i}`}
                 onClick={onSelectMine}
-                style={{ ...base, background: "var(--color-primary)", color: "#ffffff", fontWeight: 700 }}
+                style={{ ...base, background: "var(--color-primary)", color: "#04170e", fontWeight: 700 }}
               >
                 {row}
               </button>

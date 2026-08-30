@@ -14,10 +14,10 @@ export function ScratchCanvas({ onRevealed, children }: { onRevealed: () => void
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = "#a0a0a5";
+    ctx.fillStyle = "#2c2d47";
     ctx.fillRect(0, 0, width, height);
-    ctx.font = "700 20px Roboto";
-    ctx.fillStyle = "#ffffff";
+    ctx.font = '600 16px Inter, sans-serif';
+    ctx.fillStyle = "#cbcde1";
     ctx.textAlign = "center";
     ctx.fillText("Scratch to reveal", width / 2, height / 2);
 
