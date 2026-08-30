@@ -7,31 +7,45 @@
 <meta name="description" content="Deposit USDC, hold it for full week, and you're in the draw. The winners take the week's yield – everyone else loses nothing; their full principal remains intact." />
 <link rel="icon" type="image/png" href="favicon.png" />
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<meta name="theme-color" content="#010110" />
+<meta name="color-scheme" content="dark" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    /* Same tokens as the app (frontend/src/styles/global.css) – kept in sync by hand
-       since this page isn't part of the Vite build. */
-    --color-primary: #16a34a;
-    --color-text: #000000;
-    --color-text-secondary: #8e8e93;
-    --color-banner-bg: #ffcc00;
-    --color-card-bg: #d9d9d9;
-    --color-page-bg: #b8b8bd;
+    /* Same tokens as the app (frontend/src/styles/global.css) – kept in sync by
+       hand since this page isn't part of the Vite build. Every surface value is
+       one of Privy's own dark tokens. */
+    --color-page-bg: #000008;
+    --color-surface: #010110;
+    --color-card-bg: #16172a;
+    --color-elevated: #22222a;
+    --color-line: #333455;
+    --color-hair: #24253f;
+
+    --color-text: #ffffff;
+    --color-text-secondary: #cbcde1;
+    --color-text-faint: #8b8dab;
+
+    --color-primary: #3dcf88;
+    --color-primary-bg: rgba(61, 207, 136, 0.12);
+    --color-primary-line: rgba(61, 207, 136, 0.3);
+
+    --color-banner-bg: rgba(253, 211, 77, 0.12);
+    --color-banner-line: rgba(253, 211, 77, 0.35);
+    --color-banner-text: #fcd34d;
 
     --radius: 15px;
     --gap: 10px;
 
-    /* 4-step scale, same as the app: 15/18/22/27, numbered smallest to
-       largest: 1 = UI/metadata/body text, 2 = heading/important label,
-       3 = primary number, 4 = exceptional (jackpot) number. The hero h1
-       below is a deliberate exception, sized outside this scale. */
-    --fs-1: 15px;
-    --fs-2: 18px;
-    --fs-3: 22px;
-    --fs-4: 27px;
+    /* 5-step scale, same as the app: 10/12/14/19/20. The hero h1 below is a
+       deliberate exception, sized outside the scale. */
+    --fs-0: 10px;
+    --fs-1: 12px;
+    --fs-2: 14px;
+    --fs-3: 19px;
+    --fs-4: 20px;
 
     --mobile-width: 430px;
     --desktop-width: 860px;
@@ -49,19 +63,33 @@
   body {
     margin: 0;
     font-family: var(--font-ui);
+    font-size: var(--fs-1);
     color: var(--color-text);
     background: var(--color-page-bg);
     -webkit-font-smoothing: antialiased;
   }
-  .condensed { font-family: var(--font-condensed); }
+  .condensed { font-family: var(--font-display); }
 
-  /* Same shell as .app-shell: white column, fixed width, gray outside. */
+  /* Numbers: display face, tabular so a column of them lines up. */
+  .num {
+    font-family: var(--font-display);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  /* Wrapping, same three rules as the app. `pretty` reflows the closing lines
+     so no lone word is stranded; deliberately NOT `balance`, which splits a
+     line that already fits. A value and its unit are one token. */
+  .prose { text-wrap: pretty; }
+  .pair { white-space: nowrap; }
+
+  /* Same shell as .app-shell: dark column, fixed width, deeper black outside. */
   .site {
     width: 100%;
     max-width: var(--mobile-width);
     margin: 0 auto;
     min-height: 100vh;
-    background: #ffffff;
+    background: var(--color-surface);
   }
   @media (min-width: 1024px) {
     .site { max-width: var(--desktop-width); }
@@ -92,7 +120,7 @@
     top: 0;
     z-index: 20;
     height: var(--row-h);
-    background: #ffffff;
+    background: var(--color-surface);
   }
   nav.top .nav-inner {
     height: 100%;
@@ -100,7 +128,7 @@
     align-items: center;
     justify-content: space-between;
     margin: 0 20px;
-    box-shadow: 0 1px 0 #000000;
+    box-shadow: 0 1px 0 var(--color-line);
   }
   /* Mark + live type, same lockup as the app - there is no wordmark
      artwork any more, so the word picks up the page's own font. */
@@ -111,8 +139,8 @@
     letter-spacing: -0.025em; color: var(--color-text);
   }
   nav.top a.enter-app {
-    background: #000000; color: #ffffff; text-decoration: none; font-weight: 700;
-    padding: 8px 20px; border-radius: 999px; font-size: var(--fs-1);
+    background: var(--color-primary); color: #04170e; text-decoration: none; font-weight: 700;
+    padding: 7px 16px; border-radius: 999px; font-size: var(--fs-1);
   }
 
   main { padding: 0 20px; }
@@ -126,95 +154,135 @@
     justify-content: center;
     padding: 40px 0;
   }
-  /* Deliberate exception to the 4-step scale (max token is --fs-4 at 27px) -
+  /* Deliberate exception to the 5-step scale (max token is --fs-4 at 20px) -
      this is the one line a visitor most needs to read, so it's allowed to run
-     bigger. Still trimmed down a few points from its original 34/44. */
+     bigger. Down another 2pt with the rest of the scale. */
   .hero h1 {
-    font-size: 30px; line-height: 1.35; margin: 0 0 40px; font-weight: 400;
+    font-size: 28px; line-height: 1.35; margin: 0 0 36px; font-weight: 500;
+    letter-spacing: -0.02em;
   }
   @media (min-width: 1024px) {
-    .hero h1 { font-size: 40px; }
+    .hero h1 { font-size: 38px; }
   }
   /* Bold + green is the emphasis pair; the rest of the line stays regular
-     weight and black so the emphasized phrases actually stand out instead
-     of everything reading at the same heavy weight. */
+     weight so the emphasized phrases actually stand out instead of everything
+     reading at the same heavy weight. */
   .hero h1 strong { font-weight: 700; color: var(--color-primary); }
-  .cta-row { display: flex; gap: 14px; flex-wrap: wrap; }
+  .cta-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  /* One primary action on the page, repeated: the filled green pill. */
   .btn-primary {
-    background: var(--color-primary); color: #fff; text-decoration: none; font-weight: 700;
-    padding: 14px 0; width: 100%; max-width: 220px; border-radius: 999px; font-size: var(--fs-1);
+    background: var(--color-primary); color: #04170e; text-decoration: none; font-weight: 700;
+    padding: 13px 0; width: 100%; max-width: 220px; border-radius: 999px; font-size: var(--fs-1);
     text-align: center; display: inline-block;
   }
   .btn-secondary {
-    background: none; color: var(--color-text); text-decoration: none; font-weight: 700;
-    padding: 12px 20px; border-radius: 999px; font-size: var(--fs-1);
-    border: 2px solid #000;
+    background: var(--color-elevated); color: var(--color-text); text-decoration: none; font-weight: 600;
+    padding: 12px 18px; border-radius: 999px; font-size: var(--fs-1);
+    border: 1px solid var(--color-line);
     display: inline-flex; align-items: center; gap: 6px;
   }
-  .btn-secondary .icon { font-size: var(--fs-1); }
+  .btn-secondary .icon { font-size: var(--fs-1); color: var(--color-text-faint); }
 
-  section { padding: 30px 0; border-top: 1px solid #e2e2e5; }
+  section { padding: 30px 0; border-top: 1px solid var(--color-line); }
   section h2 {
-    font-size: var(--fs-1); text-transform: uppercase; letter-spacing: 0.08em;
-    color: var(--color-text-secondary); margin: 0 0 18px; font-weight: 700;
+    font-size: var(--fs-0); text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--color-text-faint); margin: 0 0 18px; font-weight: 700;
   }
 
   .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
-  .steps li { display: flex; gap: 12px; align-items: flex-start; font-size: var(--fs-1); line-height: 1.5; }
+  .steps li {
+    display: flex; gap: 12px; align-items: flex-start;
+    font-size: var(--fs-1); line-height: 1.55; color: var(--color-text-secondary);
+    text-wrap: pretty;
+  }
+  /* Outlined rather than filled: four solid green discs down the left edge
+     shouted louder than the copy beside them. */
   .steps .num {
-    flex: 0 0 auto; width: 24px; height: 24px; border-radius: 50%; background: var(--color-primary);
-    color: #fff; font-weight: 700; font-size: var(--fs-1); display: flex; align-items: center; justify-content: center;
+    flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%;
+    background: var(--color-primary-bg); border: 1px solid var(--color-primary-line);
+    color: var(--color-primary); font-weight: 700; font-size: var(--fs-0);
+    font-family: var(--font-display);
+    display: flex; align-items: center; justify-content: center;
   }
 
   .live-card {
-    background: var(--color-card-bg); border-radius: var(--radius); padding: 20px;
+    background: var(--color-card-bg); border: 1px solid var(--color-line);
+    border-radius: var(--radius); padding: 20px;
   }
-  .live-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap) 20px; }
-  .live-stat .label { font-size: var(--fs-1); color: var(--color-text-secondary); margin-bottom: 4px; }
-  .live-stat .value { font-family: var(--font-condensed); font-size: var(--fs-3); font-weight: 700; }
-  .live-note { font-size: var(--fs-1); color: var(--color-text-secondary); margin-top: 16px; }
+  .live-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 20px; }
+  .live-stat .label {
+    font-size: var(--fs-0); color: var(--color-text-faint); margin-bottom: 5px;
+    text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;
+  }
+  .live-stat .value {
+    font-family: var(--font-display); font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em; font-size: var(--fs-3); font-weight: 700;
+    color: var(--color-primary); white-space: nowrap;
+  }
+  .live-note {
+    font-size: var(--fs-1); color: var(--color-text-faint); margin-top: 18px;
+    padding-top: 14px; border-top: 1px solid var(--color-hair); text-wrap: pretty;
+  }
   .live-dot {
-    display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--color-primary);
+    display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--color-primary);
     margin-right: 6px; animation: pulse 1.6s infinite;
   }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+  @media (prefers-reduced-motion: reduce) {
+    .live-dot { animation: none; }
+  }
 
   details.deep {
-    border-radius: var(--radius); background: var(--color-card-bg); padding: 14px 20px; margin-bottom: var(--gap);
+    border-radius: var(--radius); background: var(--color-card-bg);
+    border: 1px solid var(--color-line); padding: 14px 18px; margin-bottom: var(--gap);
   }
   details.deep summary {
-    font-weight: 700; cursor: pointer; font-size: var(--fs-1); list-style: none;
-    display: flex; align-items: center; gap: 8px;
+    font-weight: 600; cursor: pointer; font-size: var(--fs-1); list-style: none;
+    display: flex; align-items: center; gap: 8px; color: var(--color-text);
   }
   details.deep summary::-webkit-details-marker { display: none; }
   details.deep summary .icon-chevron {
     color: var(--color-primary); flex: 0 0 auto; transition: transform 0.15s ease;
   }
   details.deep[open] summary .icon-chevron { transform: rotate(180deg); }
-  details.deep .body { padding-top: 12px; font-size: var(--fs-1); line-height: 1.6; color: var(--color-text-secondary); }
-  details.deep .body code {
-    background: #ffffff; padding: 1px 5px; border-radius: 4px; font-size: var(--fs-1); color: var(--color-text);
+  details.deep .body {
+    padding-top: 12px; font-size: var(--fs-1); line-height: 1.65;
+    color: var(--color-text-secondary); text-wrap: pretty;
   }
+  details.deep .body code {
+    background: var(--color-elevated); border: 1px solid var(--color-line);
+    padding: 1px 5px; border-radius: 4px; font-size: var(--fs-1);
+    color: var(--color-text); font-family: var(--font-display); white-space: nowrap;
+  }
+  /* The formula blocks are the one place a reader needs alignment to hold, so
+     they scroll sideways rather than reflowing. */
   details.deep .body pre {
-    background: #000000; color: #d9f7e3; padding: 12px 14px; border-radius: 8px; overflow-x: auto;
-    font-size: var(--fs-1); line-height: 1.5; font-family: var(--font-condensed);
+    background: #0a0a18; border: 1px solid var(--color-line);
+    color: #a7f3d0; padding: 12px 14px; border-radius: 8px; overflow-x: auto;
+    font-size: var(--fs-1); line-height: 1.55; font-family: var(--font-display);
+    text-wrap: nowrap;
   }
   .invariant-list { margin: 0; padding-left: 18px; }
   .invariant-list li { margin-bottom: 8px; }
+  .invariant-list li::marker { color: var(--color-primary); }
 
   .honesty {
-    background: var(--color-banner-bg); border-radius: var(--radius); padding: 16px 20px;
-    font-size: var(--fs-1); line-height: 1.6; font-weight: 500;
+    background: var(--color-banner-bg); border: 1px solid var(--color-banner-line);
+    color: var(--color-banner-text);
+    border-radius: var(--radius); padding: 16px 18px;
+    font-size: var(--fs-1); line-height: 1.6; font-weight: 500; text-wrap: pretty;
   }
 
   footer {
     padding: 24px 0 40px;
-    display: flex; justify-content: center; align-items: center; gap: 28px; flex-wrap: wrap;
+    display: flex; justify-content: center; align-items: center; gap: 24px; flex-wrap: wrap;
+    border-top: 1px solid var(--color-line); margin: 0 20px;
   }
   footer a {
-    color: var(--color-text); text-decoration: none; font-size: var(--fs-1); font-weight: 700;
-    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--color-text-secondary); text-decoration: none; font-size: var(--fs-1); font-weight: 600;
+    display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
   }
+  footer a:hover { color: var(--color-primary); }
 </style>
 </head>
 <body>
@@ -229,7 +297,7 @@
 
   <main>
     <section class="hero" style="border-top: none;">
-      <h1 class="condensed">
+      <h1 class="condensed prose">
         Deposit USDC, hold it for <strong>full week</strong>, and you're in the draw.
         The winners take the week's yield – everyone else loses nothing; <strong>their full principal remains intact</strong>.
       </h1>
@@ -255,19 +323,19 @@
         <div class="live-grid">
           <div class="live-stat">
             <div class="label"><span class="live-dot"></span>Total pool</div>
-            <div class="value" id="stat-pool">…</div>
+            <div class="value num" id="stat-pool">…</div>
           </div>
           <div class="live-stat">
             <div class="label">Current epoch</div>
-            <div class="value" id="stat-epoch">…</div>
+            <div class="value num" id="stat-epoch">…</div>
           </div>
           <div class="live-stat">
             <div class="label">Last winner</div>
-            <div class="value" id="stat-winner">…</div>
+            <div class="value num" id="stat-winner">…</div>
           </div>
           <div class="live-stat">
             <div class="label">Last prize</div>
-            <div class="value" id="stat-prize">…</div>
+            <div class="value num" id="stat-prize">…</div>
           </div>
         </div>
         <div class="live-note">Read directly from the contract on Arc Testnet – not a screenshot, not a static number.</div>

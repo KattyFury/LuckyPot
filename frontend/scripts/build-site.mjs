@@ -2,7 +2,7 @@
 // see vite.config.ts base/outDir) plus the static landing page at dist-site/
 // root. Landing isn't part of the Vite build — it's plain HTML/CSS/JS with no
 // bundling needed — so this script just copies it into place afterward.
-import { cpSync, mkdirSync } from "node:fs";
+import { cpSync, mkdirSync, readdirSync, rmSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -11,6 +11,16 @@ const landingDir = join(root, "landing");
 const siteDir = join(root, "dist-site");
 
 mkdirSync(siteDir, { recursive: true });
+
+// Clear everything except app/ (vite owns that, and has already written it by
+// the time this runs). Without this, a landing asset that gets renamed or
+// deleted lingers in dist-site from an earlier build and ships to production -
+// which is exactly how favicon.svg and logo-full.svg survived being deleted
+// from the repo.
+for (const entry of readdirSync(siteDir)) {
+  if (entry !== "app") rmSync(join(siteDir, entry), { recursive: true, force: true });
+}
+
 cpSync(join(landingDir, "index.html"), join(siteDir, "index.html"));
 cpSync(join(landingDir, "icons"), join(siteDir, "icons"), { recursive: true });
 cpSync(join(landingDir, "favicon.png"), join(siteDir, "favicon.png"));
