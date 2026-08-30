@@ -47,9 +47,65 @@ file landing bị đổi tên/xoá vẫn nằm lại từ build cũ và ship lê
 vậy `favicon.svg` và `logo-full.svg` cũ vẫn còn sau khi đã xoá khỏi repo). Giờ xoá
 sạch mọi thứ trừ `app/` (vite tự quản thư mục đó).
 
-### VIỆC CÒN DANG DỞ — user nói navbar vẫn ra LOGO CŨ
+### ✅ ĐÃ GIẢI QUYẾT — "navbar vẫn ra logo cũ" là CACHE TRÌNH DUYỆT, không phải bug
 
-Chưa giải quyết xong. Trạng thái đúng như đang có:
+Kết luận cuối (2026-08-30, sau khi chụp được màn hình thật): **server luôn đúng ngay từ
+đầu.** Cái user nhìn thấy là bản `logo-full.svg` CŨ (cỏ 4 lá xanh gradient, không có hũ
+vàng) nằm trong cache đĩa của trình duyệt họ.
+
+Bằng chứng: `git show b75964a:frontend/landing/logo-full.svg` render ra đúng y hệt ảnh user
+gửi — file đó dùng `fill="url(#paint0_linear_...)"` + 2 `linearGradient`, còn file hiện tại
+dùng `#FCD34D` (hũ) + `#3DCF88` (cỏ), không có gradient nào. File cũ **đã biến mất khỏi
+server**, md5 local ≡ md5 live.
+
+Vì sao kẹt: Cloudflare Pages mặc định cho asset tĩnh `Cache-Control: max-age=14400` (4
+tiếng) mà tên file logo **không có content hash** → đổi logo xong người đã từng vào site
+vẫn thấy bản cũ suốt 4 tiếng, trong khi curl (không cache) báo đúng. Đó là lý do curl và
+mắt user nói ngược nhau 3 lần.
+
+**Đã fix gốc: thêm `frontend/landing/_headers`** đặt `max-age=0, must-revalidate` cho 5 file
+brand không hash tên (favicon, apple-touch-icon, logo, logo-full, logo-full-dark) + 2 PNG
+Privy. `/app/*` KHÔNG đụng tới — vite hash tên nên phải cache dài. `build-site.mjs` copy
+thêm `_headers`. Verify: preview deployment trả `max-age=0` đúng. Domain chính còn dính edge
+cache cũ vài giờ; token Cloudflare trong `EZwallet/.env.txt` **đọc được zone nhưng KHÔNG có
+quyền purge_cache** (trả `Authentication error` code 10000) — muốn purge phải cấp thêm quyền.
+
+### 🖼️ Logo cho Privy dashboard (đã xong)
+
+Privy (Dashboard → login screen → Logo) đòi **URL của một PNG**, khuyến nghị 180x90, tỉ lệ
+**2:1**. Đưa link `.svg` vào nó báo "Logo must be a valid URL". Lockup của mình là 3.6:1
+(180.1/50.1) nên **phải padding vào khung 2:1, tuyệt đối không kéo méo**.
+
+Đã tạo 2 file, nền trong suốt, 360x180 (2:1, 2x cho màn retina), lockup canh giữa:
+
+- `https://luckypot.cc/privy-logo.png` — chữ ĐEN, cho modal Privy theme **light** (mặc định)
+- `https://luckypot.cc/privy-logo-dark.png` — chữ TRẮNG, nếu modal để theme **dark**
+
+⚠️ `main.tsx` KHÔNG set `appearance` trong `PrivyProvider` config → theme modal lấy từ
+Privy Dashboard, đọc source không biết được. Nếu sau này set `appearance.theme` trong code
+thì nhớ đổi luôn logo cho khớp.
+
+Nguồn sinh PNG: `scripts/build-site.mjs` chỉ copy file; PNG được render bằng Chrome headless
+(xem mục công cụ bên dưới) từ chính 2 file SVG trong `landing/`. Muốn tạo lại: dựng 1 trang
+HTML `width:360px;height:180px;display:flex;align-items:center;justify-content:center` bọc
+`<img style="width:340px">`, rồi chụp với `--default-background-color=00000000`.
+
+### 🔧 CHỤP MÀN HÌNH ĐƯỢC RỒI — không cần Playwright
+
+Handoff cũ ghi "không có trình duyệt, chưa verify được". **Sai — máy có sẵn Chrome và dùng
+headless chụp được ngay**, không phải cài gì:
+
+```bash
+"/c/Program Files/Google/Chrome/Application/chrome.exe" --headless=new --disable-gpu   --hide-scrollbars --window-size=1280,900 --virtual-time-budget=15000   --screenshot="C:\duong\dan\out.png" https://luckypot.cc/app
+```
+
+Thêm `--allow-file-access-from-files` nếu trang có `<img src="file:///...">`, và
+`--default-background-color=00000000` để nền trong suốt. Đã dùng để verify cả 2 navbar,
+so file live với file gốc trên Desktop, và render PNG cho Privy. Browser cache của Chrome
+headless là profile tạm nên mỗi lần chạy là một lần load sạch — chính vì vậy nó thấy logo
+mới trong khi trình duyệt user thấy logo cũ.
+
+### Trạng thái các file logo (giữ lại để tham chiếu)
 
 - Nguồn logo là **2 file trên Desktop**: `luckpot-SVG.svg` (chỉ mark, 1.558 bytes) và
   `luckpot-full.svg` (lockup mark + chữ, 6.323 bytes, mtime 2026-08-30 16:06,
@@ -74,9 +130,9 @@ Chưa giải quyết xong. Trạng thái đúng như đang có:
 - **Nhưng user vẫn báo thấy logo cũ.** Đã hỏi, user chọn "vẫn thấy logo cũ trên site"
   (không phải phản đối việc crop, không phải chê navbar xấu).
 
-→ **Việc đầu tiên khi quay lại: XIN 1 ẢNH CHỤP MÀN HÌNH.** Đừng verify bằng curl nữa,
-curl đã nói ngược lại với mắt user 3 lần rồi. Nghi ngờ: cache trình duyệt, hoặc user và
-tôi đang nhìn 2 chỗ khác nhau (VD user nhìn favicon trên tab, hoặc nhìn bản dev local).
+→ Đã xong: nghi ngờ "cache trình duyệt" là đúng, xem mục ✅ ĐÃ GIẢI QUYẾT ở trên.
+**Bài học: khi curl nói ngược với mắt user, đừng curl thêm lần thứ ba — hãy chụp màn hình
+bằng Chrome headless, và nghi cache trước tiên nếu tên file không có content hash.**
 
 Ngoài ra `/logo` và `/logo-dark` là 2 short URL (302 qua `landing/_redirects`) trỏ tới
 `logo-full.svg` / `logo-full-dark.svg`. Đây là hiểu nhầm ban đầu của tôi khi user nói
@@ -182,16 +238,16 @@ lúc lúc mount, rồi react-query retry mỗi cái 3 lần. Đã sửa: transpo
 `http(undefined, { batch: true })` ở cả 2 config (gộp eth_call cùng tick vào 1 POST), và
 QueryClient hạ `retry: 1`, `staleTime: 10_000`, `refetchOnWindowFocus: false`.
 
-### Chưa verify được (không có trình duyệt)
+### Chưa verify được (cập nhật 2026-08-30 chiều)
 
-Repo KHÔNG còn Playwright và tôi không tự cài. Mọi thứ ở trên chỉ verify bằng `curl`, đọc
-source, và `tsc`. **Chưa từng render thật trên trình duyệt.** Cần user (hoặc cài lại
-Playwright) để kiểm: navbar/logo, mobile 430px, banner có còn xuống dòng vô lý không, và
-luồng Privy login-email → faucet → sell.
+**ĐÃ verify bằng Chrome headless** (xem mục 🔧 ở trên): 2 navbar hiện đúng logo mới, landing
++ /app render đúng theme dark, banner không xuống dòng vô lý, `POST /api/swap` trên
+production trả **HTTP 200** kèm intent đầy đủ (bug 405 đã hết thật).
 
-Có `sharp` cài trong scratchpad để rasterize SVG (máy không có ImageMagick). Scratchpad là
-thư mục tạm theo session, reset máy là mất — cài lại bằng `npm install sharp` ở thư mục
-tạm bất kỳ nếu cần.
+Còn lại phải có người thật bấm (headless không login ví được): **luồng Privy
+login-email → faucet → sell**, tức là fix Privy #1 bên dưới vẫn CHƯA test thật.
+
+Rasterize SVG: dùng Chrome headless (mục 🔧) — không cần `sharp`, không cần ImageMagick.
 
 ---
 

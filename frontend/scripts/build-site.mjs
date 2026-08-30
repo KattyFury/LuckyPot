@@ -32,6 +32,13 @@ cpSync(join(landingDir, "logo.svg"), join(siteDir, "logo.svg"));
 cpSync(join(landingDir, "logo-full.svg"), join(siteDir, "logo-full.svg"));
 // Same lockup with a white wordmark, for dark grounds - including this site.
 cpSync(join(landingDir, "logo-full-dark.svg"), join(siteDir, "logo-full-dark.svg"));
+// Privy's dashboard login-screen logo field takes a PNG URL at a 2:1 ratio.
+// The lockup is 3.6:1, so these are the same artwork centred in a 360x180
+// transparent canvas - padded, never stretched. Light = black wordmark for
+// Privy's default light modal, dark = white wordmark if the modal is themed dark.
+cpSync(join(landingDir, "privy-logo.png"), join(siteDir, "privy-logo.png"));
+cpSync(join(landingDir, "privy-logo-dark.png"), join(siteDir, "privy-logo-dark.png"));
 cpSync(join(landingDir, "_redirects"), join(siteDir, "_redirects"));
+cpSync(join(landingDir, "_headers"), join(siteDir, "_headers"));
 
 console.log("Copied landing page into dist-site/");

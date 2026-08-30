@@ -1,0 +1,20 @@
+# Brand artwork keeps a stable filename (no content hash), so Pages' default
+# 4-hour cache means a redrawn logo stays invisible to anyone who loaded the
+# old one - that cost a whole session of "the site still shows the old logo"
+# while the server was already serving the new file. Revalidate every time
+# instead; the ETag turns that into a 304 and the files are ~6 KB anyway.
+# /app/* is untouched: Vite hashes those filenames, so they SHOULD cache long.
+/favicon.svg
+  Cache-Control: public, max-age=0, must-revalidate
+/apple-touch-icon.png
+  Cache-Control: public, max-age=0, must-revalidate
+/logo.svg
+  Cache-Control: public, max-age=0, must-revalidate
+/logo-full.svg
+  Cache-Control: public, max-age=0, must-revalidate
+/logo-full-dark.svg
+  Cache-Control: public, max-age=0, must-revalidate
+/privy-logo.png
+  Cache-Control: public, max-age=0, must-revalidate
+/privy-logo-dark.png
+  Cache-Control: public, max-age=0, must-revalidate
