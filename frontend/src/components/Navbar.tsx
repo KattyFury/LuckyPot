@@ -1,7 +1,7 @@
 import { USE_PRIVY } from "../config/authMode";
 import { NavbarInjected } from "./NavbarInjected";
 import { NavbarPrivy } from "./NavbarPrivy";
-import logoUrl from "../assets/logo.svg";
+import logoUrl from "../assets/logo-full-dark.svg";
 
 export type WalletMenuActions = {
   onDeposit: () => void;
@@ -31,13 +31,12 @@ export function Navbar(actions: WalletMenuActions) {
         boxShadow: "0 1px 0 var(--color-line)",
       }}
     >
-      {/* The mark is the artwork as drawn; "LuckyPot" beside it is live type
-          in the app's display face, which is why there's no logo-full.svg
-          any more — a baked-in wordmark can't pick up the type scale and
-          goes soft the moment it's rescaled. */}
+      {/* One drawn lockup, mark and wordmark together, as supplied. It's
+          vector so it stays sharp at any size; height is set on the pot, and
+          the lettering sits at roughly half that by construction. The white
+          wordmark variant is the one that belongs on this surface. */}
       <a href="https://luckypot.cc/" className="brand">
-        <img src={logoUrl} alt="" className="brand__mark" />
-        <span className="brand__word">LuckyPot</span>
+        <img src={logoUrl} alt="LuckyPot" className="brand__lockup" />
       </a>
       {USE_PRIVY ? <NavbarPrivy {...actions} /> : <NavbarInjected {...actions} />}
     </nav>

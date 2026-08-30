@@ -132,12 +132,10 @@
   }
   /* Mark + live type, same lockup as the app - there is no wordmark
      artwork any more, so the word picks up the page's own font. */
-  nav.top .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: inherit; }
+  /* One drawn lockup, same file the app uses. Its viewBox is cropped to the
+     artwork, so this height is the pot's height rather than half of it. */
+  nav.top .brand { display: flex; align-items: center; }
   nav.top .brand img { height: 26px; width: auto; display: block; }
-  nav.top .brand span {
-    font-family: var(--font-display); font-size: 17px; font-weight: 600;
-    letter-spacing: -0.025em; color: var(--color-text);
-  }
   nav.top a.enter-app {
     background: var(--color-primary); color: #04170e; text-decoration: none; font-weight: 700;
     padding: 7px 16px; border-radius: 999px; font-size: var(--fs-1);
@@ -290,7 +288,7 @@
 <div class="site">
   <nav class="top">
     <div class="nav-inner">
-      <span class="brand"><img src="logo.svg" alt="" /><span>LuckyPot</span></span>
+      <span class="brand"><img src="logo-full-dark.svg" alt="LuckyPot" /></span>
       <a class="enter-app" href="/app/">Enter App</a>
     </div>
   </nav>
