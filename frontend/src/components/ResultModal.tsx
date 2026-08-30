@@ -4,6 +4,7 @@ import { poolAbi, POOL_ADDRESS } from "../lib/contract";
 import { useAmount } from "../config/tokenUnit";
 import { rememberScratched, wasScratched } from "../lib/scratchState";
 import { useCloseOnSuccess } from "../hooks/useCloseOnSuccess";
+import { useEpoch, useSweepDelay } from "../hooks/usePoolData";
 import { Modal } from "./Modal";
 import { ScratchCanvas } from "./ScratchCanvas";
 
@@ -26,6 +27,16 @@ export function ResultModal({
 
   const owed = (data?.[0]?.result as bigint | undefined) ?? 0n;
   const hasClaimed = (data?.[1]?.result as boolean | undefined) ?? false;
+
+  // claim() only works within SWEEP_DELAY of the draw; after that it reverts with
+  // "past claim window, use sweep" and sweep() (permissionless, pays every unclaimed
+  // winner including this one) is the only way left to get the prize out.
+  const { data: epoch } = useEpoch(epochId);
+  const sweepDelay = useSweepDelay().data as bigint | undefined;
+  const pastClaimWindow =
+    epoch !== undefined && sweepDelay !== undefined
+      ? BigInt(Math.floor(Date.now() / 1000)) >= epoch.drawnAt + sweepDelay
+      : false;
 
   const [revealed, setRevealed] = useState(() => wasScratched(epochId, address) || hasClaimed);
 
@@ -78,15 +89,27 @@ export function ResultModal({
       {revealed ? <div style={{ height: 200 }}>{panel}</div> : <ScratchCanvas onRevealed={handleReveal}>{panel}</ScratchCanvas>}
 
       {revealed && won && !hasClaimed && (
-        <button
-          className="pill-button pill-button--accent"
-          disabled={isPending || isConfirming}
-          onClick={() =>
-            writeContract({ address: POOL_ADDRESS, abi: poolAbi, functionName: "claim", args: [epochId] })
-          }
-        >
-          {isPending || isConfirming ? "Confirming..." : "Claim now"}
-        </button>
+        <>
+          <button
+            className="pill-button pill-button--accent"
+            disabled={isPending || isConfirming}
+            onClick={() =>
+              writeContract({
+                address: POOL_ADDRESS,
+                abi: poolAbi,
+                functionName: pastClaimWindow ? "sweep" : "claim",
+                args: [epochId],
+              })
+            }
+          >
+            {isPending || isConfirming ? "Confirming..." : pastClaimWindow ? "Release prize" : "Claim now"}
+          </button>
+          {pastClaimWindow && (
+            <div style={{ fontSize: "var(--fs-0)", color: "var(--color-text-faint)", textAlign: "center" }}>
+              The 3-day self-claim window passed, but your prize is still there — this releases it.
+            </div>
+          )}
+        </>
       )}
       {revealed && won && hasClaimed && (
         <div style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>Already claimed.</div>

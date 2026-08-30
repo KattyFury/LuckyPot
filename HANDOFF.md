@@ -12,6 +12,43 @@
 
 ---
 
+## Trạng thái nghỉ 2026-08-30 (khuya) — sửa lỗi "Claim now" trên phần thưởng quá 3 ngày
+
+User gửi ảnh chụp modal Privy báo lỗi khi bấm nhận thưởng:
+`Execution reverted with reason: past claim window, use sweep.` — không phải bug ngẫu
+nhiên, đây là **contract hoạt động đúng thiết kế nhưng frontend chưa theo kịp**.
+
+Contract (`LuckyStakerPool.sol`) có 2 đường lấy thưởng tách biệt:
+- `claim(epochId)` — tự bấm, **chỉ trong vòng `SWEEP_DELAY` = 3 ngày** kể từ lúc quay số
+  (`e.drawnAt`). Quá hạn thì revert đúng câu trên.
+- `sweep(epochId)` — permissionless, ai gọi cũng được, mở **sau** 3 ngày, tự động trả cho
+  MỌI người thắng chưa nhận (kể cả người đang gọi). Đây là đường thoát duy nhất sau khi hết
+  hạn claim.
+
+`ResultModal.tsx` (nút "Claim now" trong popup xem kết quả epoch) **trước giờ chỉ biết gọi
+`claim`**, không hề đọc `drawnAt`/`SWEEP_DELAY`, nên với bất kỳ epoch nào thắng mà quá 3
+ngày chưa bấm nhận — kể cả epoch cũ từ mấy tuần trước xem lại trong "My history" — nút vẫn
+hiện "Claim now" và luôn revert.
+
+**Đã sửa** (`ResultModal.tsx` + thêm hook `useSweepDelay()` vào `hooks/usePoolData.ts`):
+đọc `useEpoch(epochId).drawnAt` và `SWEEP_DELAY` từ chain, so với `Date.now()`. Quá hạn thì
+nút đổi thành **"Release prize"** và gọi `sweep` thay vì `claim`, kèm 1 dòng giải thích nhỏ
+("The 3-day self-claim window passed, but your prize is still there — this releases it.").
+Chưa quá hạn thì hành vi y hệt cũ, không đổi gì.
+
+Lưu ý kỹ thuật: `poolAbi` cast thẳng sang `Abi` (không `as const`) nên wagmi không suy được
+kiểu trả về chính xác — theo đúng quy ước sẵn có trong file (`aprBps as bigint | undefined`
+ở `Dashboard.tsx`), phải tự cast `useSweepDelay().data as bigint | undefined`. Không dùng
+`epoch as EpochData` kiểu tương tự vì `useEpoch` đã tự parse tuple thành object có kiểu qua
+`toEpoch()` sẵn trong `usePoolData.ts`.
+
+Đã `tsc -b` sạch, build+deploy, và `grep` xác nhận `"Release prize"` / `"SWEEP_DELAY"` có
+mặt trong bundle production (`index-BCm-kdVo.js`). **Chưa test bằng ví thật** — headless
+Chrome không connect được Privy/MetaMask nên không click thật được nút; cần user tự bấm
+thử trên 1 epoch đã thắng và đã quá 3 ngày để xác nhận `sweep` chạy đúng và tiền về ví.
+
+---
+
 ## Trạng thái nghỉ 2026-08-30 (tối) — bộ nhận dạng thương hiệu MỚI thay toàn bộ logo cũ
 
 `main` chưa push lúc viết dòng này, đang chuẩn bị commit ngay sau. Đã deploy live lên

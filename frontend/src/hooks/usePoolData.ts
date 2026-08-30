@@ -54,6 +54,11 @@ export function useCurrentAprBps() {
   return useReadContract({ ...poolContract, functionName: "currentAprBps", query: { placeholderData: keepPreviousData } });
 }
 
+/** Seconds after a draw during which a winner can self-claim; after that only sweep() works. */
+export function useSweepDelay() {
+  return useReadContract({ ...poolContract, functionName: "SWEEP_DELAY", query: { staleTime: Infinity } });
+}
+
 export function useEpoch(epochId: bigint | undefined) {
   const { data, ...rest } = useReadContract({
     ...poolContract,
