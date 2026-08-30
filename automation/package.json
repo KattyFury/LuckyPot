@@ -6,7 +6,8 @@
   "scripts": {
     "fund-yield": "tsx src/fundYield.ts",
     "draw": "tsx src/draw.ts",
-    "draw:now": "tsx src/drawNow.ts"
+    "draw:now": "tsx src/drawNow.ts",
+    "index-history": "tsx src/indexHistory.ts"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

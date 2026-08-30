@@ -1,0 +1,9 @@
+name = "luckypot"
+pages_build_output_dir = "frontend/dist-site"
+compatibility_date = "2026-08-30"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "HISTORY_DB"
+database_name = "luckypot-history"
+database_id = "5d8b9b50-3903-4cc7-9dc4-d5d8374969c0"

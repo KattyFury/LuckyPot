@@ -12,6 +12,71 @@
 
 ---
 
+## Trạng thái nghỉ 2026-08-30 (gần sáng) — My history chuyển sang D1, không quét RPC nữa
+
+Sau khi ship xong bản quét-RPC-trực-tiếp (mục ngay bên dưới), user hỏi thẳng: "có cần
+database không, chẳng lẽ không có cách nào đơn giản hơn?" — hỏi đúng. Đã làm lại đúng
+kiến trúc: **Cloudflare D1** (`luckypot-history`, database_id `5d8b9b50-3903-4cc7-9dc4-
+d5d8374969c0`, tạo bằng `wrangler d1 create`).
+
+**Luồng dữ liệu mới:**
+1. `automation/src/indexHistory.ts` — script mới, chạy trong `keeper.yml` (GitHub Actions,
+   **đã có sẵn lịch 6 tiếng/lần** cho việc quay số, tận dụng luôn, không tạo job riêng).
+   Mỗi lần chạy chỉ cần quét ~6 tiếng block mới (vài chunk) chứ không phải toàn bộ lịch sử
+   — đây chính là lý do dùng cron thay vì client tự quét: **server-side quét ĐỀU ĐẶN từng
+   chút một, không bao giờ phải quét dồn hàng triệu block trong 1 lần.**
+2. Đọc/ghi D1 qua **Cloudflare REST API** (`POST .../d1/database/{id}/query`), KHÔNG dùng
+   binding trực tiếp — vì GitHub Actions chạy ngoài runtime Cloudflare Workers, không có
+   binding. Cần `CF_ACCOUNT_ID` + `CF_API_TOKEN` (đã test token sẵn có trong
+   `EZwallet/.env.txt` CÓ quyền đọc/ghi D1 — không cần tạo token mới).
+3. `functions/api/history.js` — Function mới, đọc D1 qua **binding** `HISTORY_DB` (khai báo
+   trong `wrangler.toml` ở gốc repo), trả JSON cho frontend theo `?wallet=0x...`.
+4. `useMyHistory.ts` viết lại gọn hẳn — chỉ còn `fetch('/api/history?wallet=...')`, xoá hẳn
+   toàn bộ logic quét/chunk/retry/backoff và `lib/historyCache.ts` (không cần cache
+   localStorage nữa vì D1 đã là nguồn lưu trữ bền, đọc lúc nào cũng nhanh).
+
+⚠️ **`wrangler.toml` ở gốc repo là file MỚI, lần đầu dự án này có config này** — trước giờ
+deploy hoàn toàn zero-config (`wrangler pages deploy frontend/dist-site --project-name=
+luckypot`). File này **BẮT BUỘC phải có đủ 3 field**: `name`, `pages_build_output_dir`,
+và **`compatibility_flags = ["nodejs_compat"]`** — thiếu `nodejs_compat` thì deploy die
+với lỗi khó hiểu `Uncaught Error: No such module "node:stream"` (tốn khá nhiều lượt thử để
+tìm ra, xem "Bài học" bên dưới). Thiếu `name` hoặc `pages_build_output_dir` thì wrangler
+**âm thầm bỏ qua cả file**, không báo lỗi rõ ràng — dễ tưởng binding có tác dụng mà thực
+ra không.
+
+**Backfill lần đầu đã chạy xong** (local, `npm run index-history`, ~1,19 triệu block, dùng
+đúng logic quét 10.000 block/chunk + retry-backoff đã viết cho bản client-side trước đó) —
+37 bản ghi, verify khớp 100% với dữ liệu đã kiểm chứng qua RPC trực tiếp trước đó (ví
+`0xe7d7...93c1`: 119 + 318 + 89 USDC).
+
+⚠️ **VIỆC CHƯA XONG — cần user tự làm:** set 2 GitHub Actions secret mới cho repo
+(`CF_ACCOUNT_ID`, `CF_API_TOKEN`) — bị chính Claude Code's auto-mode classifier chặn khi
+tôi thử `gh secret set` (hành động ghi credential vào CI của repo chung, cần xác nhận rõ
+ràng, không tự ý làm). Không set 2 secret này thì bước "Index deposit/withdraw/claim
+history" trong `keeper.yml` sẽ fail ở lần chạy tự động kế tiếp (6 tiếng/lần) — nhưng KHÔNG
+làm hỏng 2 bước quay số/fund-yield phía trước nó trong cùng job. Lệnh cần chạy (giá trị lấy
+từ `EZwallet/.env.txt`):
+```bash
+gh secret set CF_ACCOUNT_ID --repo KattyFury/LuckyPot --body "<CF_ACCOUNT_ID>"
+gh secret set CF_API_TOKEN --repo KattyFury/LuckyPot --body "<CF_API_TOKEN>"
+```
+
+### Bài học/gotcha lần này
+
+- **`wrangler.toml` cho Pages thiếu field bắt buộc → bị ÂM THẦM bỏ qua, không lỗi.** Chỉ in
+  1 dòng warning dễ lướt qua ("missing pages_build_output_dir... Ignoring configuration
+  file"). Nếu thấy binding "không có tác dụng gì" mà không có lỗi rõ ràng → nghi ngay chỗ
+  này trước, đừng nghi code Function.
+- **Thiếu `nodejs_compat` → lỗi hoàn toàn không liên quan tới nguyên nhân thật**
+  (`No such module "node:stream"`, không nhắc gì tới D1 hay compatibility flag). Tốn 4-5
+  lượt deploy thử-sai mới ra. Nhớ luôn: **hễ thêm `[[d1_databases]]` (hay binding nào cần
+  Node API) vào `wrangler.toml` cho Pages thì thêm `compatibility_flags = ["nodejs_compat"]`
+  ngay từ đầu**, đừng đợi lỗi.
+- REST API của D1 nhận multi-row `INSERT ... VALUES (?,?,...),(?,?,...)` bình thường — đã
+  test trực tiếp trước khi viết `indexHistory.ts`, không đoán.
+
+---
+
 ## Trạng thái nghỉ 2026-08-30 (nửa đêm) — My history quét thật, banner đúng ngưỡng, logo navbar to hơn
 
 3 việc user giao trong 1 lượt, cả 3 đã deploy + verify trong bundle production.
