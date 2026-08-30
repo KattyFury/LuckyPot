@@ -23,10 +23,10 @@ for (const entry of readdirSync(siteDir)) {
 
 cpSync(join(landingDir, "index.html"), join(siteDir, "index.html"));
 cpSync(join(landingDir, "icons"), join(siteDir, "icons"), { recursive: true });
-cpSync(join(landingDir, "favicon.png"), join(siteDir, "favicon.png"));
+cpSync(join(landingDir, "favicon.svg"), join(siteDir, "favicon.svg"));
 cpSync(join(landingDir, "apple-touch-icon.png"), join(siteDir, "apple-touch-icon.png"));
-// logo.png replaced logo-full.svg: the mark ships on its own now and the
+// logo.svg replaced logo-full.svg: the mark ships on its own now and the
 // "LuckyPot" beside it is live type, so there's no wordmark artwork to copy.
-cpSync(join(landingDir, "logo.png"), join(siteDir, "logo.png"));
+cpSync(join(landingDir, "logo.svg"), join(siteDir, "logo.svg"));
 
 console.log("Copied landing page into dist-site/");

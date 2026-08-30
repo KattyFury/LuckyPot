@@ -1,7 +1,7 @@
 import { USE_PRIVY } from "../config/authMode";
 import { NavbarInjected } from "./NavbarInjected";
 import { NavbarPrivy } from "./NavbarPrivy";
-import logoUrl from "../assets/logo.png";
+import logoUrl from "../assets/logo.svg";
 
 export type WalletMenuActions = {
   onDeposit: () => void;
