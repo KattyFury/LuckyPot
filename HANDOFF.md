@@ -12,6 +12,44 @@
 
 ---
 
+## Trạng thái nghỉ 2026-08-30 (tối) — bộ nhận dạng thương hiệu MỚI thay toàn bộ logo cũ
+
+`main` chưa push lúc viết dòng này, đang chuẩn bị commit ngay sau. Đã deploy live lên
+luckypot.cc, đã verify md5 live = local cho mọi file, đã chụp cả 2 navbar (landing + app).
+
+**Đây là bộ mark HOÀN TOÀN KHÁC** với hũ-vàng-cỏ-xanh của mục "logo mới" bên dưới (viết
+sáng cùng ngày) — chuyện logo đổi 2 lần trong 1 ngày. Mark mới: hũ bo tròn nền xanh lá
+`#3DCF88`, thân hũ vàng `#FCD34D`, dấu USD đen trong vòng tròn ở giữa (không còn cỏ 4 lá).
+User cầm nguyên bộ 4 file từ Desktop, dặn rõ vai trò từng file — **đọc kỹ trước khi tưởng
+nhầm file nào thay file nào**:
+
+| File Desktop  | Vai trò user chỉ định                              | Đích trong repo |
+|---------------|-----------------------------------------------------|-----------------|
+| `favicon.svg` | favicon + apple-touch-icon + **logo đứng lẻ** (mark)| `public/favicon.svg`, `landing/favicon.svg`, `landing/logo.svg`, `src/assets/logo.svg`, + apple-touch-icon.png render lại 180×180 (cả `public/` và `landing/`) |
+| `fulllogo.svg`| logo navbar website (đổi đen→trắng cho nền tối)      | `landing/logo-full.svg` (light, giữ nguyên đen) → tự sinh `logo-full-dark.svg` (light này thay `fill="black"` bằng `#FFFFFF`, đúng 9 chỗ, y hệt cách làm bản cũ) ở cả `landing/` và `src/assets/` |
+| `privy.svg`   | logo cho Privy Dashboard (login-screen logo, "cầm embed thành link") | render PNG `landing/privy-logo.png` (đen) + `privy-logo-dark.png` (trắng) — file này viewBox **200×100 sẵn đúng 2:1**, không cần padding như bộ trước |
+| `pfp.svg`     | lưu để dùng làm PFP app SAU NÀY, KHÔNG wire vào gì hết | `frontend/brand-assets/pfp.svg` — thư mục mới, KHÔNG nằm trong `build-site.mjs`, không lên site, chỉ backup trong git |
+
+`favicon.svg` và `pfp.svg` tự thân đã có nền (bo góc xanh lá / vuông xanh lá đặc), khác bộ
+cũ (mark trong suốt) — nên **không cần bản dark riêng cho 2 file này**, chỉ `fulllogo`/
+`privy` mới cần lật màu vì chữ wordmark của chúng vẽ đen trên nền trong suốt.
+
+Link dán vào ô Logo của Privy Dashboard: `https://luckypot.cc/privy-logo.png` (nếu modal
+Privy để theme dark thì dùng `privy-logo-dark.png`) — xem ghi chú cũ bên dưới, `main.tsx`
+không set `appearance` nên theme modal nằm ở Privy Dashboard, code không biết được.
+
+`build-site.mjs` **KHÔNG cần sửa gì** — chỉ thay NỘI DUNG file, giữ nguyên tên, nên pipeline
+copy cũ vẫn đúng luôn. `_headers` từ mục sửa cache bên dưới cũng ăn theo, nên đổi logo lần
+này KHÔNG bị kẹt cache 4 tiếng như lần trước — verify md5 live = local ngay sau deploy,
+không cần đợi.
+
+`logo.svg` (mark đứng lẻ) và `src/assets/logo.svg` đã cập nhật nội dung theo yêu cầu user,
+nhưng **2 file này hiện KHÔNG được import/dùng ở đâu trong code** (Navbar dùng
+`logo-full-dark.svg`, không dùng `logo.svg`) — giữ nguyên trạng thái "có sẵn nhưng chưa
+wire" đó, không tự ý thêm chỗ dùng mới vì user không yêu cầu.
+
+---
+
 ## Trạng thái nghỉ 2026-08-30 — redesign dark theo Privy, logo mới, và MỘT BUG DEPLOY LỚN
 
 `main` = `84dd8ec`, đã push, đã deploy lên luckypot.cc.
