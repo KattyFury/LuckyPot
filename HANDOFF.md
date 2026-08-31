@@ -94,40 +94,50 @@ song**:
     `getLogs` trên factory, lọc theo `lendingPoolParams.borrowToken == USDC` (hoặc
     `collateralToken`) để tìm đúng (các) pool có USDC.
 
-**✅ ĐÃ TÌM RA pool USDC thật + interface (2026-08-31).** Bỏ hướng `getLogs` factory (event
-scan chậm, tốn rate-limit) — cách nhanh hơn: search tên `"LendingPool"` trên ArcScan ra ~30
-địa chỉ, gọi thẳng `asset()` từng cái (RPC call thường, không phải `getLogs`) để lọc theo
-token, có kết quả trong vài giây thay vì vài phút.
+**✅ ĐÃ TÌM RA pool USDC THẬT + interface, đã tự sửa lại 1 lần vì đoán sai ban đầu
+(2026-08-31).**
 
-- **Pool USDC:** `0x50A452cD83E526400C763388c0642e6a14335319` — `asset() ==
-  0x3600...0000` (USDC), verified, TVL thật `totalSupplyUnderlying=553 USDC`,
-  `totalDebtUnderlying=170 USDC`, `utilizationRate≈30.8%`. Có 1 pool USDC khác
-  (`0x1CA2e7B022f13A546Deb665901A8EfE8d407d864`, TVL nhỏ hơn ~41 USDC) — chưa chắc cái nào
-  frontend `vitael.xyz/lend` trỏ vào mặc định, **nên hỏi thẳng em user** thay vì đoán tiếp.
-- Verify chéo: pool cirBTC `0xE8cb6B0F90B45776FBfA0E34a3db429449cFEdcF` và pool EURC
-  `0x73a569D240289DAAc4f947bC3c6bd532bb7A748C` — `asset()` trả về ĐÚNG y hệt địa chỉ cirBTC/
-  EURC đã hardcode sẵn trong `FaucetOrSellBanner.tsx` của LuckyPot → cùng hệ token Arc Testnet,
-  đáng tin.
-- **Interface thật (đọc ABI verified, không đoán):**
+Lượt đầu: search tên `"LendingPool"` trên ArcScan ra ~30 địa chỉ, gọi `asset()` từng cái lọc
+theo token — ra 2 pool USDC (`0x50A452cD...` TVL 553 USDC, `0x1CA2e7B0...` TVL 41 USDC).
+User đưa số liệu thật trên UI Vitael (APY 1.88%/4.38%, util 47.6%, **TVL $28.3K**) — **không
+khớp cả 2 pool đó** (TVL sai lệch quá xa, x50-700 lần). → 2 pool đó là kiến trúc **isolated
+pool CŨ, do factory cũ (`0x54f6Ff27...`, chỉ có đúng 4 giao dịch, tất cả từ 2026-02-07 — đã
+ngừng dùng từ lâu)**.
+
+**Cách tìm ra pool đúng: đọc `LendingPoolAddressesProvider` (`0xC48674acd3CafDd5746A94B5144
+eA57672592bF3`) — đây mới là registry hiện hành, gọi `getLendingPool()` trả về ĐÚNG pool
+đang sống:**
+
+- **Pool USDC/EURC chính thức: `0x1D1d19F958cDB6FA2e6C7E5DC16F0a39fe066c9f`** (verified) —
+  kiến trúc Aave V3 THẬT (1 pool, nhiều reserve), không phải isolated-pair như bản cũ.
+  `getReservesList()` trả về đúng **[USDC, EURC]** — khớp y hệt token LuckyPot đã biết. cirBTC
+  CHƯA có trong danh sách reserve (chưa list trên pool này, hoặc quản lý riêng — chưa rõ).
+- **Interface thật (ABI verified, đúng chuẩn Aave V3, không đoán):**
   ```solidity
-  function supply(uint256 amount) external;              // gửi vào, sinh lãi
-  function withdraw(uint256 amount) external;             // rút lại
-  function supplyBalanceOf(address) external view returns (uint256);
-  function totalSupplyUnderlying() external view returns (uint256);
-  function totalDebtUnderlying() external view returns (uint256);
-  function utilizationRate() external view returns (uint256);         // WAD (1e18)
-  function baseRatePerYear/slope1PerYear/slope2PerYear/optimalUtilization() ...  // WAD
+  function supply(address asset, uint256 amount, address onBehalfOf) external;
+  function withdraw(address asset, uint256 amount, address to) external;
+  function borrow(address asset, uint256 amount, address onBehalfOf) external;   // không cần cho LuckyPot
+  function repay(address asset, uint256 amount, address onBehalfOf) external returns (uint256);
+  function getReserveData(address asset) external view returns (ReserveData);
+  function getReservesList() external view returns (address[]);
+  function getUserAccountData(address user) external view returns (tuple);
   ```
-  Tự tính công thức lãi kiểu kink-rate 2 đoạn (base + slope1 tới optimal, base+slope1+slope2
-  sau optimal) ra supply APY ≈ **1,09%** cho pool TVL lớn — cùng bậc với 1,88% user báo (chênh
-  do utilization đổi theo thời gian hoặc công thức suy ra không 100% khớp nội bộ contract,
-  không quan trọng bằng việc đã có đúng interface).
+  `getReserveData(USDC)` lúc đọc trả `totalLiquidity≈302 USDC`, `totalBorrowed≈54 USDC`
+  (util ~18%) — KHÔNG khớp hẳn con số $28.3K/47.6% user đọc trên UI cùng lúc, nhiều khả năng
+  do dữ liệu testnet đổi liên tục (người khác đang test), không phải sai địa chỉ nữa — địa
+  chỉ này lấy từ chính registry hiện hành, không phải đoán theo TVL như lượt đầu.
+- **Bài học:** đừng đoán "pool nào TVL to hơn thì đúng" giữa nhiều pool tên giống nhau — luôn
+  tìm registry/factory HIỆN HÀNH trước (`getLendingPool()`/`getPool()` kiểu Aave luôn có 1
+  điểm entry chính thức), rồi mới tin theo địa chỉ nó trả về.
 
 **Việc còn dở, làm tiếp khi quay lại:**
-1. Hỏi em user xác nhận đúng pool nào (2 pool USDC ứng viên ở trên).
+1. Xác nhận lại 1 lần nữa với em user (giờ đã có địa chỉn nguồn từ registry, độ tin cậy cao
+   hơn nhiều so với đoán TVL — nhưng cirBTC thiếu trong reserve list nên vẫn đáng hỏi).
 2. Thiết kế `depositToVitael`/`withdrawFromVitael` — CHƯA CHỐT nên đặt trên `LuckyStakerPool`
-   (đụng contract đang giữ tiền thật) hay tách keeper tự giữ riêng 1 khoản gửi Vitael độc lập
-   (an toàn hơn, không sửa contract chính).
+   (đụng contract đang giữ tiền thật) hay tách keeper tự giữ riêng 1 khoản gửi Vitael độc lập.
+   **User đã chọn: sửa thẳng `LuckyStakerPool`** (đúng bản chất hơn — tiền user thật sự sinh
+   lãi — nhưng rủi ro cao hơn nhiều, contract đang giữ tiền thật, cần cẩn trọng khi code +
+   test kỹ trên pool đang trống/paused trước khi unpause).
 
 ### 3. Contract upgrade V5 — thêm `forceWithdrawAll()` (ĐÃ LÊN CHAIN THẬT)
 
