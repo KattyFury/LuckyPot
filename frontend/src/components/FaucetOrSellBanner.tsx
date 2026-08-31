@@ -54,14 +54,16 @@ export function FaucetOrSellBanner() {
   const eurcBal = (balances?.[0]?.result as bigint | undefined) ?? 0n;
   const cirbtcBal = (balances?.[1]?.result as bigint | undefined) ?? 0n;
   const usdcBal = (balances?.[2]?.result as bigint | undefined) ?? 0n;
-  const hasSomethingToSell = eurcBal > 0n || cirbtcBal > 0n;
-  // Circle's testnet faucet caps a single request at 20 USDC, so a wallet
-  // sitting above that has already been through the faucet at least once and
-  // is a fair candidate to be offered the sell flow. Below it, offering "sell"
-  // was the wrong message: USDC is Arc's gas token, so a wallet that's never
-  // faucet-ed can't pay for the swap it would be asked to approve.
-  const SELL_PROMPT_THRESHOLD = 20_000_000n; // 20 USDC, 6 decimals
-  const showSellBanner = hasSomethingToSell && usdcBal >= SELL_PROMPT_THRESHOLD;
+  // All three have to clear their own bar before "sell" is offered - a wallet
+  // that's short on even one of them still needs another faucet round first,
+  // and offering "sell" too early either can't pay for its own gas (USDC) or
+  // has nothing worth swapping yet (EURC/cirBTC). USDC/EURC: 10 units, 6
+  // decimals. cirBTC: half of its ~0.0005 faucet drip, 8 decimals.
+  const USDC_SELL_THRESHOLD = 10_000_000n;
+  const EURC_SELL_THRESHOLD = 10_000_000n;
+  const CIRBTC_SELL_THRESHOLD = 25_000n;
+  const showSellBanner =
+    usdcBal > USDC_SELL_THRESHOLD && eurcBal > EURC_SELL_THRESHOLD && cirbtcBal > CIRBTC_SELL_THRESHOLD;
 
   const [status, setStatus] = useState<"idle" | "eurc" | "cirbtc">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -89,7 +91,7 @@ export function FaucetOrSellBanner() {
   }
 
   async function handleSell() {
-    if (!address || !hasSomethingToSell || busy) return;
+    if (!address || (eurcBal === 0n && cirbtcBal === 0n) || busy) return;
     setError(null);
     // Worth saying plainly rather than letting the wallet throw: on Arc the gas
     // token IS USDC, so a wallet holding EURC/cirBTC but no USDC can't pay for
