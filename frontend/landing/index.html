@@ -134,10 +134,10 @@
      artwork any more, so the word picks up the page's own font. */
   /* One drawn lockup, same file the app uses. Its viewBox is cropped to the
      artwork, so this height is the pot's height rather than half of it.
-     38px matches Navbar.tsx / global.css .brand__lockup - the largest that
-     fits this nav's own locked 50px row (--row-h) without overflowing it. */
+     Matches Navbar.tsx / global.css .brand__lockup - was 38px, brought down
+     1/4 (x0.75) since it read too big in the navbar row. */
   nav.top .brand { display: flex; align-items: center; }
-  nav.top .brand img { height: 38px; width: auto; display: block; }
+  nav.top .brand img { height: 28.5px; width: auto; display: block; }
   nav.top a.enter-app {
     background: var(--color-primary); color: #04170e; text-decoration: none; font-weight: 700;
     padding: 7px 16px; border-radius: 999px; font-size: var(--fs-1);
