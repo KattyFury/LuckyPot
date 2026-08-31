@@ -139,8 +139,17 @@ sẵn Arc Testnet) thay vì chỉ báo lỗi suông.
 
 **✅ ĐÃ XONG (verify on-chain sau khi user bấm 2 nút 3-4 trên `upgrade-v5.html`):**
 `paused() == true`, `balancesTotal() == 0` — pool sạch hoàn toàn, an toàn để build/test tích
-hợp Vitael mà không đụng tiền thật của ai. Đang **paused**, cân nhắc `unpause()` (giờ làm
-qua trang `/app/admin` mới, mục 0) nếu muốn pool nhận deposit tiếp trong lúc build Vitael.
+hợp Vitael mà không đụng tiền thật của ai.
+
+⚠️ **Hệ quả đã xảy ra thật (2026-08-31, ~3h sáng UTC): GitHub báo `keeper.yml` fail.** KHÔNG
+phải bug — epoch #8 hết giờ đúng lịch (`endTime` Thứ Hai 00:00 UTC), keeper tự động thử
+`revealAndDraw` như bình thường nhưng revert `EnforcedPause()` vì pool vẫn đang pause từ hôm
+qua. **User đã xác nhận CHỦ Ý giữ pause thêm** (chưa sẵn sàng mở lại) — chấp nhận đánh đổi:
+job "Commit or reveal the weekly draw" trong `keeper.yml` sẽ **tiếp tục báo fail đều đặn mỗi
+6 tiếng** cho tới khi có ai gọi `unpause()` (qua `/app/admin`, mục 0). Đây là fail *mong đợi*,
+đừng tưởng nhầm là lỗi code keeper hay lỗi contract — chỉ cần nhớ khi quay lại: **epoch #8
+đang bị kẹt (đã commit, chưa quay được), sẽ tự quay ở lần keeper chạy kế tiếp sau khi
+unpause**, không cần can thiệp gì thêm ngoài việc unpause đúng lúc.
 
 ⚠️ `~/Desktop/upgrade-v5.html` + local server `python -m http.server` ở `127.0.0.1:8532` đã
 **dừng, không còn chạy** — mọi thao tác admin sau này (kể cả upgrade contract) làm qua
