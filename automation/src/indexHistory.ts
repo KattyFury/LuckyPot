@@ -40,7 +40,21 @@ const withdrawnEvent = parseAbiItem(
 const claimedEvent = parseAbiItem(
   "event Claimed(uint256 indexed epochId, address indexed winner, uint256 amount)"
 );
-const historyAbi = [depositedEvent, withdrawnEvent, claimedEvent];
+const sweptEvent = parseAbiItem(
+  "event Swept(uint256 indexed epochId, address indexed winner, uint256 amount)"
+);
+const referrerSetEvent = parseAbiItem("event ReferrerSet(address indexed user, address indexed referrer)");
+const referralPaidEvent = parseAbiItem("event ReferralPaid(address indexed referrer, uint256 amount)");
+const referralAccruedEvent = parseAbiItem("event ReferralAccrued(address indexed referrer, uint256 amount)");
+const historyAbi = [
+  depositedEvent,
+  withdrawnEvent,
+  claimedEvent,
+  sweptEvent,
+  referrerSetEvent,
+  referralPaidEvent,
+  referralAccruedEvent,
+];
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -78,23 +92,85 @@ type Row = {
   timestamp: number;
 };
 
-function toRows(logs: Log[]): Row[] {
-  return parseEventLogs({ abi: historyAbi, logs, strict: false })
-    .map((log) => {
-      const args = log.args as { user?: `0x${string}`; winner?: `0x${string}`; amount?: bigint };
-      const wallet = (log.eventName === "Claimed" ? args.winner : args.user)?.toLowerCase();
-      if (!wallet) return null;
-      return {
-        wallet,
-        type: (log.eventName === "Claimed" ? "Won" : log.eventName) as Row["type"],
-        amount: (args.amount ?? 0n).toString(),
+type ReferralRow = { referred: string; referrer: string; timestamp: number };
+
+// `referred` starts null and is filled in below once we reach the Claimed/Swept
+// event this earning fired alongside - the contract's ReferralPaid/Accrued
+// events only carry the referrer and amount, not whose prize generated the cut.
+type ReferralEarningRow = {
+  txHash: `0x${string}`;
+  logIndex: number;
+  referrer: string;
+  referred: string | null;
+  amount: string;
+  timestamp: number;
+};
+
+/** Splits one chunk's logs into the three tables this indexer feeds. Pairing an
+ *  earning to a winner relies on event ORDER, not anything explicit in the log
+ *  data: _settle() (LuckyStakerPool.sol) emits ReferralPaid/ReferralAccrued
+ *  immediately before the Claimed/Swept event for that same winner, in the same
+ *  transaction - so "the nearest ReferralPaid/Accrued still pending when we hit
+ *  a Claimed/Swept in the same tx" is always the right pairing, including
+ *  sweep()'s multi-winner-per-tx case (each winner's pair is adjacent, never
+ *  interleaved with another winner's). */
+function toRows(logs: Log[]): { history: Row[]; referrals: ReferralRow[]; earnings: ReferralEarningRow[] } {
+  const decoded = parseEventLogs({ abi: historyAbi, logs, strict: false });
+  const history: Row[] = [];
+  const referrals: ReferralRow[] = [];
+  const earnings: ReferralEarningRow[] = [];
+  let pendingEarning: ReferralEarningRow | null = null;
+
+  for (const log of decoded) {
+    const txHash = log.transactionHash!;
+    const timestamp = Number(log.blockTimestamp ?? 0n);
+
+    if (log.eventName === "Deposited" || log.eventName === "Withdrawn") {
+      const args = log.args as { user: `0x${string}`; amount: bigint };
+      history.push({
+        wallet: args.user.toLowerCase(),
+        type: log.eventName,
+        amount: args.amount.toString(),
         blockNumber: log.blockNumber!.toString(),
-        txHash: log.transactionHash!,
+        txHash,
         logIndex: log.logIndex!,
-        timestamp: Number(log.blockTimestamp ?? 0n),
+        timestamp,
+      });
+    } else if (log.eventName === "Claimed" || log.eventName === "Swept") {
+      const args = log.args as { winner: `0x${string}`; amount: bigint };
+      const winner = args.winner.toLowerCase();
+      history.push({
+        wallet: winner,
+        type: "Won",
+        amount: args.amount.toString(),
+        blockNumber: log.blockNumber!.toString(),
+        txHash,
+        logIndex: log.logIndex!,
+        timestamp,
+      });
+      if (pendingEarning?.txHash === txHash) {
+        pendingEarning.referred = winner;
+        pendingEarning = null;
+      }
+    } else if (log.eventName === "ReferrerSet") {
+      const args = log.args as { user: `0x${string}`; referrer: `0x${string}` };
+      referrals.push({ referred: args.user.toLowerCase(), referrer: args.referrer.toLowerCase(), timestamp });
+    } else if (log.eventName === "ReferralPaid" || log.eventName === "ReferralAccrued") {
+      const args = log.args as { referrer: `0x${string}`; amount: bigint };
+      const row: ReferralEarningRow = {
+        txHash,
+        logIndex: log.logIndex!,
+        referrer: args.referrer.toLowerCase(),
+        referred: null,
+        amount: args.amount.toString(),
+        timestamp,
       };
-    })
-    .filter((r): r is Row => r !== null);
+      earnings.push(row);
+      pendingEarning = row;
+    }
+  }
+
+  return { history, referrals, earnings };
 }
 
 async function insertRows(rows: Row[]) {
@@ -106,6 +182,29 @@ async function insertRows(rows: Row[]) {
   const params = rows.flatMap((r) => [r.wallet, r.type, r.amount, r.blockNumber, r.txHash, r.logIndex, r.timestamp]);
   await d1Query(
     `INSERT OR IGNORE INTO history (wallet, type, amount, block_number, tx_hash, log_index, timestamp) VALUES ${placeholders.join(",")}`,
+    params,
+  );
+}
+
+async function insertReferrals(rows: ReferralRow[]) {
+  if (rows.length === 0) return;
+  const placeholders = rows.map((_, i) => `(?${i * 3 + 1},?${i * 3 + 2},?${i * 3 + 3})`);
+  const params = rows.flatMap((r) => [r.referred, r.referrer, r.timestamp]);
+  await d1Query(
+    `INSERT OR IGNORE INTO referrals (referred, referrer, timestamp) VALUES ${placeholders.join(",")}`,
+    params,
+  );
+}
+
+async function insertEarnings(rows: ReferralEarningRow[]) {
+  if (rows.length === 0) return;
+  const placeholders = rows.map((_, i) => {
+    const base = i * 6;
+    return `(?${base + 1},?${base + 2},?${base + 3},?${base + 4},?${base + 5},?${base + 6})`;
+  });
+  const params = rows.flatMap((r) => [r.txHash, r.logIndex, r.referrer, r.referred, r.amount, r.timestamp]);
+  await d1Query(
+    `INSERT OR IGNORE INTO referral_earnings (tx_hash, log_index, referrer, referred, amount, timestamp) VALUES ${placeholders.join(",")}`,
     params,
   );
 }
@@ -133,9 +232,11 @@ async function main() {
   for (let start = fromBlock; start <= latest; start += LOG_WINDOW) {
     const end = start + LOG_WINDOW - 1n > latest ? latest : start + LOG_WINDOW - 1n;
     const logs = await getLogsWithRetry(start, end);
-    const rows = toRows(logs);
-    await insertRows(rows);
-    totalInserted += rows.length;
+    const { history, referrals, earnings } = toRows(logs);
+    await insertRows(history);
+    await insertReferrals(referrals);
+    await insertEarnings(earnings);
+    totalInserted += history.length + referrals.length + earnings.length;
     // Saved after every chunk, not just at the end: a run that gets cut off
     // resumes from here next time instead of re-scanning from the start.
     await saveSyncState(end);

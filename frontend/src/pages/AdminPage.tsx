@@ -398,7 +398,7 @@ export function AdminPage() {
   return (
     <div style={{ minHeight: "100vh", background: "var(--color-page-bg)" }}>
       <div style={{ height: 50 }}>
-        <Navbar onDeposit={noop} onWithdraw={noop} onDrawHistory={noop} onMyHistory={noop} />
+        <Navbar onDeposit={noop} onWithdraw={noop} onDrawHistory={noop} onMyHistory={noop} onMyReferral={noop} />
       </div>
       <div style={{ maxWidth: 480, margin: "0 auto", padding: "30px 20px" }}>
         <h1 style={{ fontSize: "var(--fs-3)", marginBottom: 20, color: "var(--color-text)" }}>Admin</h1>

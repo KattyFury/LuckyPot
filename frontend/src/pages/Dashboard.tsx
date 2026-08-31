@@ -85,6 +85,7 @@ export function Dashboard() {
             onWithdraw={() => setPopup("withdraw")}
             onDrawHistory={() => setPopup("draw-history")}
             onMyHistory={() => setPopup("my-history")}
+            onMyReferral={() => setPopup("referral")}
           />
         </div>
 

@@ -7,6 +7,7 @@ export function WalletAddressDisplay({
   onWithdraw,
   onDrawHistory,
   onMyHistory,
+  onMyReferral,
   onDisconnect,
 }: {
   address: `0x${string}`;
@@ -14,6 +15,7 @@ export function WalletAddressDisplay({
   onWithdraw: () => void;
   onDrawHistory: () => void;
   onMyHistory: () => void;
+  onMyReferral: () => void;
   onDisconnect: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -71,6 +73,7 @@ export function WalletAddressDisplay({
           <button onClick={() => pick(onWithdraw)}>Withdraw</button>
           <button onClick={() => pick(onDrawHistory)}>Draw history</button>
           <button onClick={() => pick(onMyHistory)}>My history</button>
+          <button onClick={() => pick(onMyReferral)}>My referral</button>
           <button className="is-danger" onClick={() => pick(onDisconnect)}>
             Disconnect
           </button>

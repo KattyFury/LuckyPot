@@ -2,12 +2,15 @@ import { useState } from "react";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { poolAbi, POOL_ADDRESS } from "../lib/contract";
 import { usePendingReferral } from "../hooks/usePoolData";
+import { useReferralSummary } from "../hooks/useReferralSummary";
 import { useAmount } from "../config/tokenUnit";
+import { plural, shortAddress } from "../lib/format";
 import { Modal } from "./Modal";
 
 export function ReferralInfoModal({ onClose }: { onClose: () => void }) {
   const { address } = useAccount();
   const { data: pendingRef } = usePendingReferral(address);
+  const { data: summary } = useReferralSummary(address);
   const fmt = useAmount();
   const [copied, setCopied] = useState(false);
 
@@ -77,6 +80,36 @@ export function ReferralInfoModal({ onClose }: { onClose: () => void }) {
           >
             {isPending || isConfirming ? "Claiming..." : "Claim"}
           </button>
+        </div>
+      )}
+
+      {address && (
+        <div>
+          <div
+            className="card-list__header"
+            style={{ height: "auto", padding: "0 0 10px", boxShadow: "none", borderBottom: "1px solid var(--color-line)" }}
+          >
+            <span>
+              {summary?.referredCount ?? 0} {plural(summary?.referredCount ?? 0, "referral")}
+            </span>
+            <span className="num">Total earned: {fmt(summary?.totalEarned ?? 0n)}</span>
+          </div>
+          <div>
+            {(summary?.referred.length ?? 0) === 0 ? (
+              <div style={{ padding: "12px 0", fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>
+                Nobody yet — share your link above.
+              </div>
+            ) : (
+              summary!.referred.map((r) => (
+                <div key={r.wallet} className="card-list__row">
+                  <span className="num">{shortAddress(r.wallet)}</span>
+                  <span className="num" style={{ fontWeight: 600 }}>
+                    {fmt(r.earned)}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       )}
     </Modal>

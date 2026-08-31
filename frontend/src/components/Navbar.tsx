@@ -8,6 +8,7 @@ export type WalletMenuActions = {
   onWithdraw: () => void;
   onDrawHistory: () => void;
   onMyHistory: () => void;
+  onMyReferral: () => void;
 };
 
 export function Navbar(actions: WalletMenuActions) {
