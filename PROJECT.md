@@ -207,7 +207,7 @@ Phần này quan trọng cho landing page: **đừng để copy nói quá sự t
 |---|---|
 | Web | https://luckypot.cc (Cloudflare Pages, landing ở root + dashboard ở `/app`) |
 | Chain | Arc Testnet, chainId `5042002` |
-| Contract (proxy) | `0x88dCB2f36356AA8DADdC2e8fb4A3E122Ba9D0Beb` — đã upgrade logic 1 lần (2026-08-24), giữ nguyên địa chỉ + dữ liệu cũ |
+| Contract (proxy) | `0xBdE568986a009eBaAE31Cb78033470c334Fad698` — deploy lại từ đầu 2026-08-31, pool sạch (0 USDC) sau khi rút hết để test |
 | Admin Safe 2-of-2 | `0x0f5514fCA02b639229528a5521dafd0a61bb27ef` |
 | Admin ví đơn (tạm, xem mục 4) | `0xb0ea48A1979326BA9e0b5027D105C8DF9CCAA12E` |
 | Ví bot (keeper) | `0x4672A3B3C14727629107711D9853B52e8E1E26B1` |

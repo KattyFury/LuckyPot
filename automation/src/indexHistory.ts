@@ -18,13 +18,14 @@ const D1_DATABASE_ID = "5d8b9b50-3903-4cc7-9dc4-d5d8374969c0";
 if (!CF_ACCOUNT_ID) throw new Error("CF_ACCOUNT_ID is not set");
 if (!CF_API_TOKEN) throw new Error("CF_API_TOKEN is not set");
 
-// Block the pool proxy was actually created at (found by binary-searching
-// eth_getCode for where its bytecode first appears - see HANDOFF). Nothing
-// happened before it, and eth_getLogs({ fromBlock: 0n }) unconditionally
-// throws "pruned history unavailable" on this RPC regardless, so it's also
-// the only starting point this RPC will serve. Update this if the proxy is
-// ever redeployed at a new address.
-const POOL_DEPLOY_BLOCK = 58_425_277n;
+// Block the pool proxy was actually created at - read straight off the deploy
+// transaction this time (the very first proxy needed a binary search over
+// eth_getCode instead, since nobody had the block number in hand after the
+// fact - see HANDOFF). Nothing happened before it, and
+// eth_getLogs({ fromBlock: 0n }) unconditionally throws "pruned history
+// unavailable" on this RPC regardless, so it's also the only starting point
+// this RPC will serve. Update this if the proxy is ever redeployed again.
+const POOL_DEPLOY_BLOCK = 59_715_964n;
 
 // The RPC's documented cap, from its own error message ("eth_getLogs is
 // limited to a 10,000 range") - not a guess.

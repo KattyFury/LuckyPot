@@ -107,6 +107,33 @@ export function AdminPage() {
   const [aprUsdcInput, setAprUsdcInput] = useState("");
   const [aprArcInput, setAprArcInput] = useState("");
   const [fundAmount, setFundAmount] = useState("");
+  const [sweepEpochId, setSweepEpochId] = useState("");
+  const [targetInput, setTargetInput] = useState("");
+  const [execTarget, setExecTarget] = useState("");
+  const [execApprove, setExecApprove] = useState("");
+  const [execCalldata, setExecCalldata] = useState("");
+
+  const isAddr = (v: string): v is `0x${string}` => /^0x[0-9a-fA-F]{40}$/.test(v);
+
+  const { data: totalExternalDeployed } = useReadContract({
+    address: POOL_ADDRESS,
+    abi: poolAbi,
+    functionName: "totalExternalDeployed",
+  });
+  const { data: targetAllowedAt, refetch: refetchTargetStatus } = useReadContract({
+    address: POOL_ADDRESS,
+    abi: poolAbi,
+    functionName: "targetAllowedAt",
+    args: isAddr(targetInput) ? [targetInput] : undefined,
+    query: { enabled: isAddr(targetInput) },
+  });
+  const { data: execTargetDeployed } = useReadContract({
+    address: POOL_ADDRESS,
+    abi: poolAbi,
+    functionName: "externalDeployed",
+    args: isAddr(execTarget) ? [execTarget] : undefined,
+    query: { enabled: isAddr(execTarget) },
+  });
 
   const call = (functionName: string, args: readonly unknown[] = []) =>
     writeContractAsync({ address: POOL_ADDRESS, abi: poolAbi, functionName, args } as Parameters<
@@ -196,6 +223,97 @@ export function AdminPage() {
               });
               return writeContractAsync({ address: POOL_ADDRESS, abi: poolAbi, functionName: "fundYield", args: [amount] });
             }}
+          />
+        </ActionCard>
+
+        <ActionCard
+          title="Force sweep ready"
+          description="Testnet only — coi như 3 ngày SWEEP_DELAY đã trôi qua cho 1 epoch, để test sweep() ngay thay vì chờ thật. Đóng luôn cửa self-claim của epoch đó."
+        >
+          <input
+            placeholder="Epoch ID"
+            value={sweepEpochId}
+            onChange={(e) => setSweepEpochId(e.target.value)}
+            style={inputStyle}
+          />
+          <TxButton label="Force sweep ready" onRun={() => call("forceSweepReady", [BigInt(sweepEpochId || "0")])} />
+        </ActionCard>
+
+        <ActionCard
+          title="External pool whitelist"
+          description={`Tổng đang triển khai ra ngoài: ${
+            totalExternalDeployed !== undefined ? (Number(totalExternalDeployed) / 1e6).toLocaleString() : "..."
+          } USDC. Thêm target mới có trễ 3 ngày mới dùng được (setAllowedTarget); gỡ thì tức thì.`}
+        >
+          <input
+            placeholder="0x... địa chỉ pool ngoài"
+            value={targetInput}
+            onChange={(e) => setTargetInput(e.target.value)}
+            style={inputStyle}
+          />
+          {isAddr(targetInput) && (
+            <div style={{ fontSize: "var(--fs-0)", color: "var(--color-text-faint)", marginBottom: 10 }}>
+              {targetAllowedAt === undefined || targetAllowedAt === 0n
+                ? "Chưa được đề xuất."
+                : Date.now() / 1000 >= Number(targetAllowedAt)
+                  ? "✓ Đã dùng được."
+                  : `Đang chờ trễ hiệu lực, dùng được từ ${new Date(Number(targetAllowedAt) * 1000).toLocaleString()}.`}
+            </div>
+          )}
+          <div style={{ display: "flex", gap: 10 }}>
+            <TxButton
+              label="Propose (3-day timelock)"
+              onRun={async () => {
+                const h = await call("proposeAllowedTarget", [targetInput]);
+                refetchTargetStatus();
+                return h;
+              }}
+            />
+            <TxButton
+              variant="accent"
+              label="Revoke (ngay lập tức)"
+              onRun={async () => {
+                const h = await call("revokeAllowedTarget", [targetInput]);
+                refetchTargetStatus();
+                return h;
+              }}
+            />
+          </div>
+        </ActionCard>
+
+        <ActionCard
+          title="Execute external call"
+          description={`Gửi tiền pool tới target đã whitelist, hoặc gọi lại để rút về. Đã triển khai ở target này: ${
+            execTargetDeployed !== undefined ? (Number(execTargetDeployed) / 1e6).toLocaleString() : "..."
+          } USDC. Cần pause trước.`}
+        >
+          <input
+            placeholder="0x... target (phải đã whitelist)"
+            value={execTarget}
+            onChange={(e) => setExecTarget(e.target.value)}
+            style={inputStyle}
+          />
+          <input
+            placeholder="Approve amount (USDC) — 0 nếu chỉ rút về"
+            value={execApprove}
+            onChange={(e) => setExecApprove(e.target.value)}
+            style={inputStyle}
+          />
+          <input
+            placeholder="Calldata (0x...) gọi hàm supply/withdraw của target"
+            value={execCalldata}
+            onChange={(e) => setExecCalldata(e.target.value)}
+            style={inputStyle}
+          />
+          <TxButton
+            label="Execute"
+            onRun={() =>
+              call("executeExternalCall", [
+                execTarget,
+                parseUnits(execApprove || "0", 6),
+                execCalldata || "0x",
+              ])
+            }
           />
         </ActionCard>
       </>

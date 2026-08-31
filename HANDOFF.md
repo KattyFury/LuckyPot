@@ -7,12 +7,156 @@
 
 **Repo:** https://github.com/KattyFury/LuckyPot (đổi tên từ `LuckyStaker` → `LuckyPot` ngày 2026-08-24, đổi thương hiệu — repo cũng đã chuyển **Private** cùng ngày vì user chưa muốn lộ dự án sớm)
 **Web đang chạy:** https://luckypot.cc (custom domain gắn vào Cloudflare Pages project `luckypot`) — landing page ở root, dashboard ở `/app`. Deploy tay bằng `cd frontend && npm run build:site && npx wrangler pages deploy dist-site --project-name=luckypot --branch=main` — **KHÔNG** auto-deploy từ GitHub. Project Cloudflare cũ `luckystaker`/`stableluck` vẫn còn tồn tại nhưng ngừng cập nhật.
-⚠️ **Contract Solidity CỐ Ý giữ nguyên tên `LuckyStakerPool`, KHÔNG redeploy khi đổi thương hiệu** — spec không yêu cầu tên contract khớp tên sản phẩm, và contract đang giữ dữ liệu thật (685 USDC, lịch sử epoch 3/4 đã quay). Mọi chỗ trong repo nhắc tới `LuckyStakerPool.sol` / `LuckyStakerPool (proxy)` là tên kỹ thuật thật, không phải sai sót quên đổi.
+⚠️ **Contract Solidity CỐ Ý giữ nguyên tên `LuckyStakerPool`** dù sản phẩm tên LuckyPot — spec không yêu cầu tên contract khớp tên sản phẩm. Mọi chỗ trong repo nhắc tới `LuckyStakerPool.sol` / `LuckyStakerPool (proxy)` là tên kỹ thuật thật, không phải sai sót quên đổi.
+⚠️ **Proxy đã đổi địa chỉ ngày 2026-08-31 — deploy lại từ đầu, KHÔNG phải cùng contract cũ.**
+Proxy hiện tại: **`0xBdE568986a009eBaAE31Cb78033470c334Fad698`** (deploy block `59715964`).
+Proxy CŨ `0x88dCB2f36356AA8DADdC2e8fb4A3E122Ba9D0Beb` vẫn tồn tại trên chain nhưng **đã bỏ
+hẳn** — đừng nhầm khi tra cứu lịch sử/lệnh cũ trong chat trước ngày này. Lý do & chi tiết đầy
+đủ ở mục "Deploy lại từ đầu" bên dưới.
 **Spec gốc:** [`arc-prize-pool-spec.md`](./arc-prize-pool-spec.md) — đã có trong repo, encoding sạch
 **Database:** Cloudflare D1 `luckypot-history` (đọc qua binding `HISTORY_DB` khai báo trong
 `wrangler.toml` ở gốc repo, ghi bởi `automation/src/indexHistory.ts` chạy trên lịch cron có
 sẵn của `keeper.yml`) — lưu lịch sử Deposited/Withdrawn/Claimed cho "My history". Chi tiết
 đầy đủ ở mục "My history chuyển sang D1" bên dưới.
+
+---
+
+## Trạng thái nghỉ 2026-08-31 — Deploy lại từ đầu (contract mới, `executeExternalCall` + whitelist), pool sạch
+
+Pool cũ đã rút sạch về 0 hôm trước (`forceWithdrawAll`). User quyết định: **thay vì vá thêm
+lần nữa lên proxy cũ**, deploy hẳn 1 proxy MỚI với logic "toàn vẹn" — gộp sạch những gì trước
+đây phải làm 2 bước (`initialize` + `initializeV2`) thành 1, và đưa luôn năng lực mới
+(`executeExternalCall`) vào ngay từ đầu thay vì tính là 1 bản vá riêng.
+
+### 1. Vì sao KHÔNG dùng Vitael — quyết định trước khi deploy lại
+
+Sau khi tìm ra đúng pool USDC thật của Vitael (`0x1D1d19F958cDB6FA2e6C7E5DC16F0a39fe066c9f`,
+2 lần đoán sai trước đó — xem mục "Kế hoạch dùng lending thật của Vitael" bên dưới để full
+context điều tra), user chốt: **KHÔNG tích hợp Vitael lúc này** — 2 lý do:
+1. Dự án Vitael còn testnet, rủi ro cao, chưa đủ tin cậy để phụ thuộc vào.
+2. Lãi thật quá thấp (~1-2%) không đủ hấp dẫn để làm nổi bật ưu điểm của pool.
+
+→ Thay vì tích hợp 1 protocol cụ thể, user muốn có sẵn **công cụ quản lý chung** để tự làm
+việc này bất cứ khi nào (`executeExternalCall`), không phụ thuộc Vitael hay bất kỳ ai.
+
+### 2. `executeExternalCall` — thiết kế qua nhiều vòng phản biện thật, không phải chốt 1 lần
+
+User ban đầu tưởng đây là ví admin tự gửi tiền cá nhân — SAI, đây là **công cụ quản lý
+protocol**: cho phép admin chuyển `balancesTotal` (tiền user đã gửi) sang bất kỳ contract nào
+để tạo yield, rồi rút về. Sau khi tôi phản biện kỹ 4 rủi ro cụ thể (Vitael tự nâng cấp contract
+sau khi đã whitelist — đã xảy ra thật với chính Vitael trong lúc điều tra; 1 chữ ký sai mất
+sạch chứ không mất 1 phần; không giới hạn số lượng chuyển mỗi lần; mỗi lần dùng phải pause),
+user tự chốt thêm 2 lớp chắn:
+
+- **Whitelist + trễ hiệu lực 3 ngày khi THÊM target mới** (`proposeAllowedTarget` →
+  `TARGET_TIMELOCK = 3 days` → `isTargetAllowed()`). Gỡ (`revokeAllowedTarget`) thì **ngay lập
+  tức**, không trễ — không có lý do gì phải trì hoãn việc tắt bớt quyền.
+- **1 pool không được giữ quá 50% tổng tiền đã triển khai ra ngoài** (`MAX_SINGLE_TARGET_BPS
+  = 5000`) — ép chia ra ít nhất 2 pool, đúng nguyên tắc user luôn theo ("tôi luôn nói cho tiền
+  vào ít nhất 2 pool cho an toàn"). Miễn trừ cho lần gửi đầu tiên (chưa có pool thứ 2 để so).
+
+Cơ chế đo: **so sánh số dư USDC thật của chính contract trước/sau mỗi lệnh gọi**
+(`poolToken.balanceOf(address(this))`), không tin số admin nhập tay — vừa đúng khi gửi tiền
+ra, vừa đúng khi rút về (kể cả rút về nhiều hơn gốc vì có lãi, phần dư clamp về 0 thay vì
+underflow).
+
+```solidity
+function executeExternalCall(address target, uint256 approveAmount, bytes calldata data)
+    external onlyRole(DEFAULT_ADMIN_ROLE) whenPaused nonReentrant returns (bytes memory)
+```
+
+`whenPaused` bắt buộc (như `withdrawReserve`) — không bao giờ chuyển tiền âm thầm lúc pool
+trông bình thường.
+
+### 3. `forceSweepReady` — mirror của `forceEndEpoch` nhưng cho cửa sổ sweep
+
+User muốn test luồng "không ai claim → sweep() quét tiền về" ngay trong buổi, không đợi 3 ngày
+thật. `sweep()` không có cách tua nhanh thời gian trên testnet thật (khác `forceEndEpoch` chỉ
+cần đổi 1 biến nội bộ), nên thêm hàm testnet-only mirror đúng pattern `forceEndEpoch`:
+
+```solidity
+function forceSweepReady(uint256 epochId) external onlyRole(KEEPER_ROLE) {
+    Epoch storage e = epochs[epochId];
+    require(e.drawn, "not drawn");
+    e.drawnAt = uint64(block.timestamp - SWEEP_DELAY);
+}
+```
+
+Lùi `drawnAt` về đúng lúc để `sweep()` mở ngay — đồng thời đóng luôn `claim()` cùng lúc, đúng
+bản chất (2 cửa sổ là 2 mặt của cùng 1 ranh giới, không phải side-effect cần né).
+
+⚠️ Cả `forceEndEpoch` LẪN `forceSweepReady` đều ghi rõ trong code: **PHẢI `revokeRole` trước
+khi pool có tiền thật** — 2 hàm này cho phép keeper né hoàn toàn thời gian chờ thật.
+
+### 4. Gộp `initialize` + `initializeV2` thành 1 hàm
+
+Bản gốc phải tách `initializeV2()` (`reinitializer(2)`) vì lúc thêm state kỹ thuật-spec thì
+proxy ĐÃ có tiền thật, không đổi thẳng chữ ký `initialize()` được. Giờ deploy mới hoàn toàn
+nên gộp lại — 1 hàm `initialize(token, admin, keeper, aprUSDC, aprARC, usdcAddress)` set hết
+trong 1 lần, đúng tinh thần "toàn vẹn logic" user yêu cầu. `initializeV2` đã xoá khỏi contract.
+
+### 5. Test: 22/22 pass, có mock contract mới `MockExternalPool.sol`
+
+Thêm `contracts/mocks/MockExternalPool.sol` (giả lập 1 lending pool ngoài: `supply()`,
+`withdraw()`, `withdrawWithBonus()` để test case "rút về nhiều hơn gốc vì có lãi"). 5 test mới:
+whitelist+trễ hiệu lực, giới hạn 50%/pool (kèm case miễn trừ lần đầu), rút về đúng bằng delta
+số dư thật (clamp), và `forceSweepReady`.
+
+⚠️ **Gotcha lúc viết:** "Stack too deep" khi compile `executeExternalCall` (quá nhiều biến cục
+bộ trong 1 hàm) — fix bằng tách phần tính accounting ra hàm `_updateExternalDeployment` riêng,
+KHÔNG bật `viaIR: true` (tránh đổi cả pipeline compile của project chỉ vì 1 hàm).
+
+### 6. Deploy lại từ đầu — quy trình + mọi chỗ đã cập nhật địa chỉ mới
+
+```bash
+cd contracts && npx hardhat ignition deploy ignition/modules/LuckyStakerPool.ts \
+  --network arcTestnet --parameters <file: adminAddress, keeperAddress>
+```
+
+Dry-run trên mạng ảo local trước (không tốn gas, bắt lỗi module trước khi lên thật) — thành
+công thì mới chạy thật. **Gotcha:** deployment-id mặc định trùng `chain-5042002` với lần deploy
+GỐC của dự án (từ thời tên contract còn lỗi chính tả "LuckyStackerPool") — output lệnh in ra
+CẢ 2 bộ địa chỉ cũ lẫn mới lẫn lộn, phải tự phân biệt bằng thời gian/tên module đúng chính tả.
+
+**Verify on-chain sau deploy (không tin CLI output):** `currentEpochId=1`, `paused=false`,
+`aprBpsUSDC=600`, admin/keeper role đúng, `balancesTotal=0`, `epoch1.endTime` = +7 ngày từ lúc
+deploy (chưa Monday-align, tự sửa ở lần quay đầu tiên — hành vi cũ, có test).
+
+**Mọi chỗ đã cập nhật sang proxy mới `0xBdE568986a009eBaAE31Cb78033470c334Fad698`:**
+- `frontend/.env` (`VITE_POOL_ADDRESS`), `automation/.env` (`POOL_ADDRESS`)
+- GitHub secret `POOL_ADDRESS` (dùng `gh secret set`, verify bằng `gh secret list` thấy
+  timestamp mới)
+- `frontend/landing/index.html` — 2 chỗ hardcode (link ArcScan + `const POOL = "..."` trong
+  script đọc dữ liệu live)
+- `automation/src/indexHistory.ts` → `POOL_DEPLOY_BLOCK = 59_715_964n` (lần này lấy thẳng từ
+  journal deploy, KHÔNG cần binary-search `eth_getCode` như proxy cũ)
+- **D1 `luckypot-history`: xoá sạch bảng `history` (49 dòng cũ) + `sync_state`** — dữ liệu cũ
+  thuộc proxy cũ, vô nghĩa với proxy mới, để lại sẽ làm sai `sync_state.last_block` (indexer
+  tưởng đã quét qua block đó rồi, bỏ sót toàn bộ lịch sử mới)
+- Xoá `automation/state/*.json` (secret commit-reveal cũ, thuộc epoch của proxy cũ)
+- `README.md`, `PROJECT.md` — cập nhật địa chỉ
+
+**Frontend đã deploy + verify bằng screenshot:** Epoch #01, TOTAL POOL 0/0, "No draws yet." —
+đúng trạng thái sạch.
+
+### 7. VIỆC CÒN LẠI — kế hoạch relaunch của user, CHƯA làm hết
+
+User mô tả cả chuỗi: (1) user tự deposit tiền thật từ các ví phụ, (2) Claude kích hoạt cho
+epoch 1 qua (deposit thành eligible), (3) kích hoạt epoch 2 quay số, (4) user CỐ Ý không cho
+ví nào claim, (5) kích hoạt `forceSweepReady` + `sweep()` xem có hoạt động đúng không, (6) sau
+đó để epoch chạy bình thường từ đó.
+
+**Đã xong: bước 0 (deploy sạch).** Từ bước (1) trở đi CẦN USER TỰ DEPOSIT trước (Claude không
+giữ tiền/ví user) — khi quay lại, hỏi user đã deposit chưa rồi mới tiếp tục kích hoạt
+`forceEndEpoch`/`fundYield`/`revealAndDraw`/`forceSweepReady` theo đúng thứ tự trên.
+
+⚠️ **Lỗ hổng thiết kế CŨ, chưa có giải pháp sạch:** cả `forceEndEpoch` lẫn `forceSweepReady`
+đều ghi "phải khoá lại trước khi có tiền thật" nhưng cả 2 dùng chung `KEEPER_ROLE` với
+`commitRandom`/`revealAndDraw`/`fundYield` — **không thể revoke riêng 2 hàm test-only mà giữ
+nguyên tự động hoá bình thường**, vì role áp dụng cho cả nhóm hàm chứ không tách theo từng
+hàm. Đây là khoảng trống có sẵn từ trước (không phải do lần deploy này tạo ra) — nếu sau này
+thật sự cần khoá, phải tách `KEEPER_ROLE` thành 2 role riêng (1 cho vận hành thật, 1 cho tiện
+ích testnet), là việc CHƯA làm.
 
 ---
 

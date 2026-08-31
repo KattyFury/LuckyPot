@@ -20,20 +20,23 @@ async function deployFixture() {
   const usdc = await hre.viem.deployContract("MockUSDC");
   const implementation = await hre.viem.deployContract("LuckyStakerPool");
 
+  // referenceUSDC is set to the mock token's own address so currentAprBps() exercises
+  // the USDC branch here, matching how it resolves in production against the real token.
   const initData = encodeFunctionData({
     abi: implementation.abi,
     functionName: "initialize",
-    args: [usdc.address, getAddress(admin.account.address), getAddress(keeper.account.address)],
+    args: [
+      usdc.address,
+      getAddress(admin.account.address),
+      getAddress(keeper.account.address),
+      APR_USDC,
+      APR_ARC,
+      usdc.address,
+    ],
   });
 
   const proxy = await hre.viem.deployContract("ERC1967Proxy", [implementation.address, initData]);
   const pool = await hre.viem.getContractAt("LuckyStakerPool", proxy.address);
-
-  // Simulates the multisig's upgrade transaction: same proxy, v2 state initialized.
-  // referenceUSDC is set to the mock token's own address so currentAprBps() exercises
-  // the USDC branch here, matching how it resolves in production against the real token.
-  const adminPool = await poolAs(pool, admin);
-  await adminPool.write.initializeV2([APR_USDC, APR_ARC, usdc.address]);
 
   for (const user of [alice, bob, carol]) {
     await usdc.write.mint([user.account.address, USDC(10_000)]);
@@ -99,18 +102,23 @@ describe("LuckyStakerPool", () => {
     const [admin, keeper, someOtherAddress] = await hre.viem.getWalletClients();
     const usdc = await hre.viem.deployContract("MockUSDC");
     const implementation = await hre.viem.deployContract("LuckyStakerPool");
+    // referenceUSDC points at a DIFFERENT address than the pool's actual token, so
+    // currentAprBps() must resolve through the ARC branch instead.
     const initData = encodeFunctionData({
       abi: implementation.abi,
       functionName: "initialize",
-      args: [usdc.address, getAddress(admin.account.address), getAddress(keeper.account.address)],
+      args: [
+        usdc.address,
+        getAddress(admin.account.address),
+        getAddress(keeper.account.address),
+        APR_USDC,
+        APR_ARC,
+        getAddress(someOtherAddress.account.address),
+      ],
     });
     const proxy = await hre.viem.deployContract("ERC1967Proxy", [implementation.address, initData]);
     const pool = await hre.viem.getContractAt("LuckyStakerPool", proxy.address);
-    const adminPool = await poolAs(pool, admin);
 
-    // referenceUSDC points at a DIFFERENT address than the pool's actual token, so
-    // currentAprBps() must resolve through the ARC branch instead.
-    await adminPool.write.initializeV2([APR_USDC, APR_ARC, getAddress(someOtherAddress.account.address)]);
     expect(await pool.read.currentAprBps()).to.equal(APR_ARC);
   });
 
@@ -302,6 +310,30 @@ describe("LuckyStakerPool", () => {
     expect(after - before).to.equal(expectedPrize - cut);
   });
 
+  it("lets the keeper force a sweep-ready state instead of waiting out the real 3 days", async () => {
+    const { pool, usdc, alice, keeper, bob } = await deployFixture();
+    const alicePool = await poolAs(pool, alice);
+    await alicePool.write.deposit([USDC(1000)]);
+    await advanceEpochWithDraw(pool, keeper, 0n);
+
+    const expectedPrize = weeklyPrizePool(USDC(1000));
+    const keeperPool = await poolAs(pool, keeper);
+    await keeperPool.write.fundYield([expectedPrize]);
+    await drawEpoch(pool, keeper);
+
+    // No time travel at all — sweep() would normally still be closed here.
+    const bobPool = await poolAs(pool, bob);
+    await expect(bobPool.write.sweep([2n])).to.be.rejectedWith("sweep not open yet");
+
+    await keeperPool.write.forceSweepReady([2n]);
+
+    const cut = (expectedPrize * 500n) / 10000n;
+    const before = await usdc.read.balanceOf([alice.account.address]);
+    await bobPool.write.sweep([2n]);
+    const after = await usdc.read.balanceOf([alice.account.address]);
+    expect(after - before).to.equal(expectedPrize - cut);
+  });
+
   it("only lets the admin change aprBps within its band, and rate-limits changes", async () => {
     const { pool, admin } = await deployFixture();
     const adminPool = await poolAs(pool, admin);
@@ -351,6 +383,118 @@ describe("LuckyStakerPool", () => {
     await adminPool.write.pause();
     await adminPool.write.withdrawReserve([reserve, admin.account.address, "incident payout"]);
     expect(await pool.read.vaultReserve()).to.equal(0n);
+  });
+
+  it("only lets executeExternalCall reach a target after it clears the proposal timelock", async () => {
+    const { pool, usdc, admin } = await deployFixture();
+    const adminPool = await poolAs(pool, admin);
+    const extPool = await hre.viem.deployContract("MockExternalPool", [usdc.address]);
+    await usdc.write.mint([pool.address, USDC(100)]);
+
+    const supplyCall = encodeFunctionData({
+      abi: extPool.abi,
+      functionName: "supply",
+      args: [USDC(100)],
+    });
+
+    // Pause up front so every rejection below is genuinely "target not allowed
+    // yet" and not just ExpectedPause() masking it.
+    await adminPool.write.pause();
+
+    // Never proposed at all.
+    await expect(
+      adminPool.write.executeExternalCall([extPool.address, USDC(100), supplyCall]),
+    ).to.be.rejectedWith("target not allowed yet");
+
+    // Proposed, but the timelock hasn't elapsed yet.
+    await adminPool.write.proposeAllowedTarget([extPool.address]);
+    expect(await pool.read.isTargetAllowed([extPool.address])).to.equal(false);
+    await expect(
+      adminPool.write.executeExternalCall([extPool.address, USDC(100), supplyCall]),
+    ).to.be.rejectedWith("target not allowed yet");
+
+    await hre.network.provider.send("evm_increaseTime", [3 * 24 * 60 * 60 + 1]);
+    await hre.network.provider.send("evm_mine");
+    expect(await pool.read.isTargetAllowed([extPool.address])).to.equal(true);
+    await adminPool.write.executeExternalCall([extPool.address, USDC(100), supplyCall]);
+    expect(await extPool.read.supplied([pool.address])).to.equal(USDC(100));
+
+    // Revoking is immediate — no timelock on turning a target back off.
+    await adminPool.write.revokeAllowedTarget([extPool.address]);
+    expect(await pool.read.isTargetAllowed([extPool.address])).to.equal(false);
+    await expect(
+      adminPool.write.executeExternalCall([extPool.address, USDC(1), supplyCall]),
+    ).to.be.rejectedWith("target not allowed yet");
+  });
+
+  it("caps any single external target at half of total deployed funds, exempting the very first deposit", async () => {
+    const { pool, usdc, admin } = await deployFixture();
+    const adminPool = await poolAs(pool, admin);
+    const poolA = await hre.viem.deployContract("MockExternalPool", [usdc.address]);
+    const poolB = await hre.viem.deployContract("MockExternalPool", [usdc.address]);
+    await usdc.write.mint([pool.address, USDC(1200)]);
+
+    for (const target of [poolA.address, poolB.address]) {
+      await adminPool.write.proposeAllowedTarget([target]);
+    }
+    await hre.network.provider.send("evm_increaseTime", [3 * 24 * 60 * 60 + 1]);
+    await hre.network.provider.send("evm_mine");
+    await adminPool.write.pause();
+
+    const supply = (amount: bigint) =>
+      encodeFunctionData({ abi: poolA.abi, functionName: "supply", args: [amount] });
+
+    // First-ever deposit is exempt from the cap — nothing else exists to compare
+    // against yet, so 100% of a lone pool is allowed once.
+    await adminPool.write.executeExternalCall([poolA.address, USDC(600), supply(USDC(600))]);
+    expect(await pool.read.externalDeployed([poolA.address])).to.equal(USDC(600));
+    expect(await pool.read.totalExternalDeployed()).to.equal(USDC(600));
+
+    // Adding more to the SAME pool now would push it past 50% of the (new) total
+    // — rejected.
+    await expect(
+      adminPool.write.executeExternalCall([poolA.address, USDC(100), supply(USDC(100))]),
+    ).to.be.rejectedWith("exceeds single-pool cap");
+
+    // Depositing the same amount into a SECOND pool keeps A's share at exactly
+    // 50% of the new total (600 / 1200) — allowed.
+    const supplyB = encodeFunctionData({ abi: poolB.abi, functionName: "supply", args: [USDC(600)] });
+    await adminPool.write.executeExternalCall([poolB.address, USDC(600), supplyB]);
+    expect(await pool.read.externalDeployed([poolB.address])).to.equal(USDC(600));
+    expect(await pool.read.totalExternalDeployed()).to.equal(USDC(1200));
+  });
+
+  it("reduces externalDeployed on withdrawal by the real balance delta, clamped at what was on record", async () => {
+    const { pool, usdc, admin } = await deployFixture();
+    const adminPool = await poolAs(pool, admin);
+    const extPool = await hre.viem.deployContract("MockExternalPool", [usdc.address]);
+    await usdc.write.mint([pool.address, USDC(500)]);
+    await usdc.write.mint([extPool.address, USDC(50)]); // funds the bonus below
+
+    await adminPool.write.proposeAllowedTarget([extPool.address]);
+    await hre.network.provider.send("evm_increaseTime", [3 * 24 * 60 * 60 + 1]);
+    await hre.network.provider.send("evm_mine");
+    await adminPool.write.pause();
+
+    const supplyCall = encodeFunctionData({ abi: extPool.abi, functionName: "supply", args: [USDC(500)] });
+    await adminPool.write.executeExternalCall([extPool.address, USDC(500), supplyCall]);
+    expect(await pool.read.externalDeployed([extPool.address])).to.equal(USDC(500));
+
+    // Withdraw the full principal plus a 50 USDC "yield" bonus in one call.
+    const withdrawCall = encodeFunctionData({
+      abi: extPool.abi,
+      functionName: "withdrawWithBonus",
+      args: [USDC(500), USDC(50)],
+    });
+    const before = await usdc.read.balanceOf([pool.address]);
+    await adminPool.write.executeExternalCall([extPool.address, 0n, withdrawCall]);
+    const after = await usdc.read.balanceOf([pool.address]);
+
+    expect(after - before).to.equal(USDC(550));
+    // Clamped at what was actually on record (500), not reduced by the full 550
+    // received, which would have underflowed to a huge number instead of 0.
+    expect(await pool.read.externalDeployed([extPool.address])).to.equal(0n);
+    expect(await pool.read.totalExternalDeployed()).to.equal(0n);
   });
 
   it("anchors epoch boundaries to Monday 00:00 UTC, self-correcting on the first draw after deploy", async () => {

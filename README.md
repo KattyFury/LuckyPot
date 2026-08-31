@@ -38,7 +38,7 @@ people out of a raffle (losing the stake) is removed entirely.
 |---|---|
 | App | [luckypot.cc](https://luckypot.cc) / [luckypot.cc/app](https://luckypot.cc/app) |
 | Chain | Arc Testnet, chain ID `5042002` |
-| Contract (proxy) | [`0x88dCB2f36356AA8DADdC2e8fb4A3E122Ba9D0Beb`](https://testnet.arcscan.app/address/0x88dCB2f36356AA8DADdC2e8fb4A3E122Ba9D0Beb) |
+| Contract (proxy) | [`0xBdE568986a009eBaAE31Cb78033470c334Fad698`](https://testnet.arcscan.app/address/0xBdE568986a009eBaAE31Cb78033470c334Fad698) |
 | Admin | 2-of-2 [Safe multisig](https://app.safe.global/home?safe=arc-testnet:0x0f5514fCA02b639229528a5521dafd0a61bb27ef) |
 
 Real deposits, real draws, real winners — this isn't a static demo. The contract itself

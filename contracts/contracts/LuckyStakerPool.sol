@@ -102,6 +102,29 @@ contract LuckyStakerPool is
     uint256 public vaultReserve;
     uint256 public vaultDev;
 
+    // --- Appended in V5: admin-controlled deployment into external yield sources ---
+    // New storage must go after every existing variable, never interleaved, or
+    // upgrading would read old slots as the wrong type.
+
+    /// @dev 0 = never proposed (or revoked); a timestamp = the moment it BECOMES
+    /// usable. Revoking is immediate (sets back to 0) - only newly *adding* a
+    /// target carries the delay, so a compromised admin key can't whitelist a
+    /// fresh malicious contract and drain into it in the same breath.
+    mapping(address => uint256) public targetAllowedAt;
+    uint256 public constant TARGET_TIMELOCK = 3 days;
+
+    /// @dev Tracked by measuring this contract's own poolToken balance before/after
+    /// each executeExternalCall, not by trusting a caller-supplied number - so it
+    /// stays correct whether a call sends money out, pulls money (plus yield) back,
+    /// or a partial/unexpected amount moves for any other reason.
+    mapping(address => uint256) public externalDeployed;
+    uint256 public totalExternalDeployed;
+    /// @dev No single target may hold more than half of whatever is currently
+    /// deployed externally - money is always split across at least two pools once
+    /// a second one is in use. The very first-ever deployment is exempt (there is
+    /// no second pool yet to compare against).
+    uint256 public constant MAX_SINGLE_TARGET_BPS = 5000;
+
     event Deposited(address indexed user, uint256 amount, uint256 newBalance);
     event Withdrawn(address indexed user, uint256 amount, uint256 newBalance, bool forfeitedTicket);
     event YieldFunded(uint256 indexed epochId, uint256 amount);
@@ -116,13 +139,29 @@ contract LuckyStakerPool is
     event ReferralClaimed(address indexed referrer, uint256 amount);
     event VaultAccrued(uint256 reserveAmount, uint256 devAmount);
     event VaultWithdrawn(bool indexed isReserve, address indexed to, uint256 amount, string reason);
+    event AllowedTargetProposed(address indexed target, uint256 allowedAt);
+    event AllowedTargetRevoked(address indexed target);
+    event ExternalCallExecuted(address indexed target, uint256 approveAmount, bytes data, int256 balanceDelta);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
-    function initialize(address token, address admin, address keeper) external initializer {
+    /// @notice One clean initializer for a fresh deployment. The original launch
+    /// used a second `initializeV2(...)` (`reinitializer(2)`) to add the
+    /// technical-spec fields on top of a proxy that already held real deposits and
+    /// couldn't take a new initialize() signature — that split-initializer history
+    /// ends here: this is a fresh proxy with nothing deployed to it yet, so
+    /// everything sets in one call, matching how the contract actually reads today.
+    function initialize(
+        address token,
+        address admin,
+        address keeper,
+        uint256 aprUSDC,
+        uint256 aprARC,
+        address usdcAddress
+    ) external initializer {
         __AccessControl_init();
         __Pausable_init();
 
@@ -130,20 +169,15 @@ contract LuckyStakerPool is
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(KEEPER_ROLE, keeper);
 
-        currentEpochId = 1;
-        epochs[1].startTime = uint64(block.timestamp);
-        epochs[1].endTime = uint64(block.timestamp + EPOCH_DURATION);
-    }
-
-    /// @notice Sets the LuckyPot technical-spec state added on top of the live pool.
-    /// Called once, in the same multisig transaction that upgrades the implementation
-    /// (`upgradeToAndCall(newImpl, abi.encodeCall(initializeV2, (...)))`).
-    function initializeV2(uint256 aprUSDC, uint256 aprARC, address usdcAddress) external reinitializer(2) {
         require(aprUSDC >= APR_BPS_USDC_MIN && aprUSDC <= APR_BPS_USDC_MAX, "aprUSDC out of band");
         require(aprARC >= APR_BPS_ARC_MIN && aprARC <= APR_BPS_ARC_MAX, "aprARC out of band");
         aprBpsUSDC = aprUSDC;
         aprBpsARC = aprARC;
         referenceUSDC = usdcAddress;
+
+        currentEpochId = 1;
+        epochs[1].startTime = uint64(block.timestamp);
+        epochs[1].endTime = uint64(block.timestamp + EPOCH_DURATION);
     }
 
     function _authorizeUpgrade(address) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
@@ -443,6 +477,20 @@ contract LuckyStakerPool is
         }
     }
 
+    /// @notice Testnet convenience: lets the keeper treat an epoch's 3-day
+    /// self-claim window as already elapsed, so sweep() can be exercised on demand
+    /// instead of waiting out SWEEP_DELAY for real. Mirrors forceEndEpoch's role
+    /// for the epoch's own end time. Rewinding drawnAt also closes claim() at the
+    /// same moment, which is the correct effect (the two windows are two sides of
+    /// the same boundary) — not a side effect to work around.
+    /// MUST be locked out (see revokeRole) before this pool holds real winners it
+    /// can force out of a real 3-day grace period.
+    function forceSweepReady(uint256 epochId) external onlyRole(KEEPER_ROLE) {
+        Epoch storage e = epochs[epochId];
+        require(e.drawn, "not drawn");
+        e.drawnAt = uint64(block.timestamp - SWEEP_DELAY);
+    }
+
     /// @dev Takes the 5% cut out of a gross prize and splits it in half: 2.5% always
     /// tops up vaultReserve, regardless of referral status. The other 2.5% is pushed
     /// straight to the winner's referrer wallet if they have one — falling back to
@@ -521,6 +569,96 @@ contract LuckyStakerPool is
         vaultDev -= amount;
         poolToken.safeTransfer(to, amount);
         emit VaultWithdrawn(false, to, amount, "");
+    }
+
+    // ---------------------------------------------------------------------
+    // Deploying pool liquidity into external yield sources (V5). Generic by
+    // design - takes a target address and raw calldata rather than one fixed
+    // protocol's function signatures, so a new pool can be used without another
+    // contract upgrade. Two guardrails keep that generality from becoming a
+    // blank check: a target must be explicitly whitelisted (and wait out
+    // TARGET_TIMELOCK after being proposed) before it can be called at all, and
+    // no single target may ever hold more than half of whatever's currently
+    // deployed - money is always split across at least two pools once a second
+    // one is in use.
+    // ---------------------------------------------------------------------
+
+    function proposeAllowedTarget(address target) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(target != address(0), "zero address");
+        uint256 allowedAt = block.timestamp + TARGET_TIMELOCK;
+        targetAllowedAt[target] = allowedAt;
+        emit AllowedTargetProposed(target, allowedAt);
+    }
+
+    /// @notice Immediate, unlike proposing - there is no reason to delay turning
+    /// a target back off.
+    function revokeAllowedTarget(address target) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        targetAllowedAt[target] = 0;
+        emit AllowedTargetRevoked(target);
+    }
+
+    function isTargetAllowed(address target) public view returns (bool) {
+        uint256 allowedAt = targetAllowedAt[target];
+        return allowedAt != 0 && block.timestamp >= allowedAt;
+    }
+
+    /// @notice Admin-only escape hatch to move pool liquidity into (or back out of)
+    /// a whitelisted external protocol. Requires pausing first, same as
+    /// withdrawReserve, so a fund movement this size can never happen silently
+    /// while the pool looks normal to depositors.
+    function executeExternalCall(address target, uint256 approveAmount, bytes calldata data)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+        whenPaused
+        nonReentrant
+        returns (bytes memory)
+    {
+        require(isTargetAllowed(target), "target not allowed yet");
+
+        if (approveAmount > 0) {
+            poolToken.forceApprove(target, approveAmount);
+        }
+
+        uint256 balBefore = poolToken.balanceOf(address(this));
+        (bool success, bytes memory result) = target.call(data);
+        require(success, "external call failed");
+        uint256 balAfter = poolToken.balanceOf(address(this));
+
+        int256 delta = _updateExternalDeployment(target, balBefore, balAfter);
+        emit ExternalCallExecuted(target, approveAmount, data, delta);
+        return result;
+    }
+
+    /// @dev Split out of executeExternalCall purely to keep that function's stack
+    /// shallow enough to compile without viaIR - no behavior reason to separate it.
+    function _updateExternalDeployment(address target, uint256 balBefore, uint256 balAfter) private returns (int256) {
+        if (balAfter < balBefore) {
+            // Net outflow to `target` - measured from the actual balance change,
+            // not approveAmount, so this stays correct even if the call pulled
+            // less than it was approved for.
+            uint256 sent = balBefore - balAfter;
+            uint256 newTargetTotal = externalDeployed[target] + sent;
+            uint256 newGrandTotal = totalExternalDeployed + sent;
+            if (totalExternalDeployed > 0) {
+                require(newTargetTotal * 10000 <= newGrandTotal * MAX_SINGLE_TARGET_BPS, "exceeds single-pool cap");
+            }
+            externalDeployed[target] = newTargetTotal;
+            totalExternalDeployed = newGrandTotal;
+            return -int256(sent);
+        }
+        if (balAfter > balBefore) {
+            // Net inflow from `target` - a withdrawal, possibly including yield.
+            // Yield earned above what this contract tracked as deployed there
+            // isn't "un-deployed" from anywhere, so the reduction clamps at what
+            // was actually on record.
+            uint256 received = balAfter - balBefore;
+            uint256 deployedHere = externalDeployed[target];
+            uint256 reduce = received > deployedHere ? deployedHere : received;
+            externalDeployed[target] = deployedHere - reduce;
+            totalExternalDeployed = totalExternalDeployed > reduce ? totalExternalDeployed - reduce : 0;
+            return int256(received);
+        }
+        return 0;
     }
 
     // ---------------------------------------------------------------------
