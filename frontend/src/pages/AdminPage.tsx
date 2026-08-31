@@ -112,8 +112,23 @@ export function AdminPage() {
   const [execTarget, setExecTarget] = useState("");
   const [execApprove, setExecApprove] = useState("");
   const [execCalldata, setExecCalldata] = useState("");
+  const [roleAddrInput, setRoleAddrInput] = useState("");
+  const [roleChoice, setRoleChoice] = useState<"admin" | "keeper">("admin");
 
   const isAddr = (v: string): v is `0x${string}` => /^0x[0-9a-fA-F]{40}$/.test(v);
+
+  const { data: adminRoleHash } = useReadContract({ address: POOL_ADDRESS, abi: poolAbi, functionName: "DEFAULT_ADMIN_ROLE" });
+  const { data: keeperRoleHash } = useReadContract({ address: POOL_ADDRESS, abi: poolAbi, functionName: "KEEPER_ROLE" });
+  const { data: roleAddrHasIt, refetch: refetchRoleAddr } = useReadContract({
+    address: POOL_ADDRESS,
+    abi: poolAbi,
+    functionName: "hasRole",
+    args:
+      isAddr(roleAddrInput) && (roleChoice === "admin" ? adminRoleHash : keeperRoleHash) !== undefined
+        ? [roleChoice === "admin" ? adminRoleHash! : keeperRoleHash!, roleAddrInput]
+        : undefined,
+    query: { enabled: isAddr(roleAddrInput) && (roleChoice === "admin" ? adminRoleHash : keeperRoleHash) !== undefined },
+  });
 
   const { data: totalExternalDeployed } = useReadContract({
     address: POOL_ADDRESS,
@@ -156,6 +171,66 @@ export function AdminPage() {
           <div style={{ display: "flex", gap: 10 }}>
             <TxButton label="Pause" onRun={() => call("pause")} />
             <TxButton label="Unpause" onRun={() => call("unpause")} />
+          </div>
+        </ActionCard>
+
+        <ActionCard
+          title="Grant / Revoke role"
+          description="Cấp hoặc thu quyền DEFAULT_ADMIN_ROLE / KEEPER_ROLE cho 1 địa chỉ (vd Safe multisig)."
+        >
+          <input
+            placeholder="0x... địa chỉ"
+            value={roleAddrInput}
+            onChange={(e) => setRoleAddrInput(e.target.value)}
+            style={inputStyle}
+          />
+          <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: "var(--fs-1)" }}>
+              <input
+                type="radio"
+                checked={roleChoice === "admin"}
+                onChange={() => setRoleChoice("admin")}
+              />
+              DEFAULT_ADMIN_ROLE
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: "var(--fs-1)" }}>
+              <input
+                type="radio"
+                checked={roleChoice === "keeper"}
+                onChange={() => setRoleChoice("keeper")}
+              />
+              KEEPER_ROLE
+            </label>
+          </div>
+          {isAddr(roleAddrInput) && (
+            <div style={{ fontSize: "var(--fs-0)", color: "var(--color-text-faint)", marginBottom: 10 }}>
+              {roleAddrHasIt === undefined
+                ? "Đang kiểm tra..."
+                : roleAddrHasIt
+                  ? "✓ Địa chỉ này đang có quyền này."
+                  : "Địa chỉ này chưa có quyền này."}
+            </div>
+          )}
+          <div style={{ display: "flex", gap: 10 }}>
+            <TxButton
+              label="Grant"
+              onRun={async () => {
+                const roleHash = roleChoice === "admin" ? adminRoleHash : keeperRoleHash;
+                const h = await call("grantRole", [roleHash, roleAddrInput]);
+                refetchRoleAddr();
+                return h;
+              }}
+            />
+            <TxButton
+              variant="accent"
+              label="Revoke"
+              onRun={async () => {
+                const roleHash = roleChoice === "admin" ? adminRoleHash : keeperRoleHash;
+                const h = await call("revokeRole", [roleHash, roleAddrInput]);
+                refetchRoleAddr();
+                return h;
+              }}
+            />
           </div>
         </ActionCard>
 
