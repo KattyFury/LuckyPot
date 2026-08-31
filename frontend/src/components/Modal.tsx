@@ -19,7 +19,10 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
       <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <span>{title}</span>
-          <button onClick={onClose} style={{ background: "none", padding: 0, lineHeight: 0 }}>
+          {/* Padding expands the tap target well past the tiny glyph; the matching
+              negative margin cancels it back out so the icon still sits flush
+              with the header's edge, same as before. */}
+          <button onClick={onClose} style={{ background: "none", padding: 10, margin: -10, lineHeight: 0 }}>
             <span className="icon icon-x" style={{ fontSize: "var(--fs-1)" }} />
           </button>
         </div>
