@@ -1,9 +1,10 @@
 import { useState, type CSSProperties } from "react";
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { parseUnits } from "viem";
+import { parseUnits, keccak256, encodePacked } from "viem";
 import { poolAbi, POOL_ADDRESS, USDC_ADDRESS } from "../lib/contract";
 import { erc20Abi } from "../lib/erc20Abi";
 import { Navbar } from "../components/Navbar";
+import { saveCommitSecret, loadCommitSecret } from "../lib/commitSecret";
 
 const noop = () => {};
 
@@ -101,6 +102,16 @@ export function AdminPage() {
   const { data: paused } = useReadContract({ address: POOL_ADDRESS, abi: poolAbi, functionName: "paused" });
   const { data: balancesTotal } = useReadContract({ address: POOL_ADDRESS, abi: poolAbi, functionName: "balancesTotal" });
   const { data: currentEpochId } = useReadContract({ address: POOL_ADDRESS, abi: poolAbi, functionName: "currentEpochId" });
+  const { data: currentEpochData, refetch: refetchCurrentEpoch } = useReadContract({
+    address: POOL_ADDRESS,
+    abi: poolAbi,
+    functionName: "getEpoch",
+    args: currentEpochId !== undefined ? [currentEpochId] : undefined,
+    query: { enabled: currentEpochId !== undefined },
+  });
+  const epochCommitted = Boolean((currentEpochData as readonly unknown[] | undefined)?.[7]);
+  const epochDrawn = Boolean((currentEpochData as readonly unknown[] | undefined)?.[8]);
+  const savedSecret = currentEpochId !== undefined ? loadCommitSecret(currentEpochId as bigint) : null;
   const { data: aprUSDC } = useReadContract({ address: POOL_ADDRESS, abi: poolAbi, functionName: "aprBpsUSDC" });
   const { data: aprARC } = useReadContract({ address: POOL_ADDRESS, abi: poolAbi, functionName: "aprBpsARC" });
 
@@ -307,12 +318,69 @@ export function AdminPage() {
         </ActionCard>
 
         <ActionCard
+          title="Commit random"
+          description={`Epoch hiện tại (#${
+            currentEpochId != null ? String(currentEpochId) : "..."
+          }): ${epochDrawn ? "đã quay số rồi." : epochCommitted ? "✓ đã commit." : "chưa commit — cần bước này trước khi Force end epoch."} Bí mật sinh ngay trên trình duyệt này và lưu local để dùng cho Reveal & draw — mất bí mật (xoá dữ liệu trình duyệt) thì epoch này kẹt vĩnh viễn, không có đường thoát.`}
+        >
+          <TxButton
+            label="Commit random"
+            onRun={async () => {
+              const bytes = crypto.getRandomValues(new Uint8Array(32));
+              const hex = Array.from(bytes)
+                .map((b) => b.toString(16).padStart(2, "0"))
+                .join("");
+              const secret = BigInt(`0x${hex}`);
+              const commitHash = keccak256(encodePacked(["uint256"], [secret]));
+              const h = await call("commitRandom", [commitHash]);
+              if (currentEpochId !== undefined) saveCommitSecret(currentEpochId as bigint, secret);
+              refetchCurrentEpoch();
+              return h;
+            }}
+          />
+        </ActionCard>
+
+        <ActionCard
           title="Force end epoch"
           description={`Testnet only — kết thúc ngay epoch hiện tại (#${
             currentEpochId != null ? String(currentEpochId) : "..."
           }) thay vì chờ đủ 7 ngày. Phải commitRandom() trước, chưa quay số. Bỏ qua luôn luật "giữ đủ 1 tuần". Cần KEEPER_ROLE (không phải admin) — tự cấp cho mình ở mục Grant/Revoke role phía trên nếu chưa có.`}
         >
-          <TxButton label="Force end epoch" variant="accent" onRun={() => call("forceEndEpoch")} />
+          <TxButton
+            label="Force end epoch"
+            variant="accent"
+            onRun={async () => {
+              const h = await call("forceEndEpoch");
+              refetchCurrentEpoch();
+              return h;
+            }}
+          />
+        </ActionCard>
+
+        <ActionCard
+          title="Reveal & draw"
+          description={`Epoch hiện tại (#${currentEpochId != null ? String(currentEpochId) : "..."}): ${
+            epochDrawn
+              ? "đã quay số rồi."
+              : !epochCommitted
+                ? "chưa commit."
+                : savedSecret !== null
+                  ? "✓ có sẵn bí mật đã lưu ở trình duyệt này, sẵn sàng quay."
+                  : "đã commit nhưng KHÔNG tìm thấy bí mật ở trình duyệt này (có thể đã commit từ máy khác hoặc do bot) — không quay được từ đây."
+          } Gọi revealAndDraw(secret) — cần epoch đã hết giờ (hoặc đã Force end epoch) trước.`}
+        >
+          <TxButton
+            label="Reveal & draw"
+            variant="accent"
+            onRun={async () => {
+              if (currentEpochId === undefined) throw new Error("chưa có currentEpochId");
+              const secret = loadCommitSecret(currentEpochId as bigint);
+              if (secret === null) throw new Error("Không có bí mật đã lưu cho epoch này ở trình duyệt này.");
+              const h = await call("revealAndDraw", [secret]);
+              refetchCurrentEpoch();
+              return h;
+            }}
+          />
         </ActionCard>
 
         <ActionCard
