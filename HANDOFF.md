@@ -94,12 +94,40 @@ song**:
     `getLogs` trên factory, lọc theo `lendingPoolParams.borrowToken == USDC` (hoặc
     `collateralToken`) để tìm đúng (các) pool có USDC.
 
-**Việc còn dở, làm tiếp khi quay lại:** `getLogs` factory để liệt kê hết `LendingPoolCreated`,
-tìm đúng pool USDC (borrowToken hoặc collateralToken = `0x3600...0000`), đọc ABI 1
-`LendingPool` instance cụ thể để biết hàm supply/withdraw đặt tên gì (chưa xem — factory chỉ
-cho biết THAM SỐ tạo pool, không cho biết interface của chính pool). Rồi mới thiết kế
-`depositToVitael`/`withdrawFromVitael` trên `LuckyStakerPool` (hoặc tách keeper tự giữ riêng
-— chưa chốt).
+**✅ ĐÃ TÌM RA pool USDC thật + interface (2026-08-31).** Bỏ hướng `getLogs` factory (event
+scan chậm, tốn rate-limit) — cách nhanh hơn: search tên `"LendingPool"` trên ArcScan ra ~30
+địa chỉ, gọi thẳng `asset()` từng cái (RPC call thường, không phải `getLogs`) để lọc theo
+token, có kết quả trong vài giây thay vì vài phút.
+
+- **Pool USDC:** `0x50A452cD83E526400C763388c0642e6a14335319` — `asset() ==
+  0x3600...0000` (USDC), verified, TVL thật `totalSupplyUnderlying=553 USDC`,
+  `totalDebtUnderlying=170 USDC`, `utilizationRate≈30.8%`. Có 1 pool USDC khác
+  (`0x1CA2e7B022f13A546Deb665901A8EfE8d407d864`, TVL nhỏ hơn ~41 USDC) — chưa chắc cái nào
+  frontend `vitael.xyz/lend` trỏ vào mặc định, **nên hỏi thẳng em user** thay vì đoán tiếp.
+- Verify chéo: pool cirBTC `0xE8cb6B0F90B45776FBfA0E34a3db429449cFEdcF` và pool EURC
+  `0x73a569D240289DAAc4f947bC3c6bd532bb7A748C` — `asset()` trả về ĐÚNG y hệt địa chỉ cirBTC/
+  EURC đã hardcode sẵn trong `FaucetOrSellBanner.tsx` của LuckyPot → cùng hệ token Arc Testnet,
+  đáng tin.
+- **Interface thật (đọc ABI verified, không đoán):**
+  ```solidity
+  function supply(uint256 amount) external;              // gửi vào, sinh lãi
+  function withdraw(uint256 amount) external;             // rút lại
+  function supplyBalanceOf(address) external view returns (uint256);
+  function totalSupplyUnderlying() external view returns (uint256);
+  function totalDebtUnderlying() external view returns (uint256);
+  function utilizationRate() external view returns (uint256);         // WAD (1e18)
+  function baseRatePerYear/slope1PerYear/slope2PerYear/optimalUtilization() ...  // WAD
+  ```
+  Tự tính công thức lãi kiểu kink-rate 2 đoạn (base + slope1 tới optimal, base+slope1+slope2
+  sau optimal) ra supply APY ≈ **1,09%** cho pool TVL lớn — cùng bậc với 1,88% user báo (chênh
+  do utilization đổi theo thời gian hoặc công thức suy ra không 100% khớp nội bộ contract,
+  không quan trọng bằng việc đã có đúng interface).
+
+**Việc còn dở, làm tiếp khi quay lại:**
+1. Hỏi em user xác nhận đúng pool nào (2 pool USDC ứng viên ở trên).
+2. Thiết kế `depositToVitael`/`withdrawFromVitael` — CHƯA CHỐT nên đặt trên `LuckyStakerPool`
+   (đụng contract đang giữ tiền thật) hay tách keeper tự giữ riêng 1 khoản gửi Vitael độc lập
+   (an toàn hơn, không sửa contract chính).
 
 ### 3. Contract upgrade V5 — thêm `forceWithdrawAll()` (ĐÃ LÊN CHAIN THẬT)
 
