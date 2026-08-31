@@ -100,6 +100,7 @@ export function AdminPage() {
   const { writeContractAsync } = useWriteContract();
   const { data: paused } = useReadContract({ address: POOL_ADDRESS, abi: poolAbi, functionName: "paused" });
   const { data: balancesTotal } = useReadContract({ address: POOL_ADDRESS, abi: poolAbi, functionName: "balancesTotal" });
+  const { data: currentEpochId } = useReadContract({ address: POOL_ADDRESS, abi: poolAbi, functionName: "currentEpochId" });
   const { data: aprUSDC } = useReadContract({ address: POOL_ADDRESS, abi: poolAbi, functionName: "aprBpsUSDC" });
   const { data: aprARC } = useReadContract({ address: POOL_ADDRESS, abi: poolAbi, functionName: "aprBpsARC" });
 
@@ -157,12 +158,16 @@ export function AdminPage() {
 
   let content: React.ReactNode;
   if (!address) {
-    content = <p>Kết nối ví admin để tiếp tục.</p>;
+    content = (
+      <div className="card" style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>
+        Kết nối ví admin để tiếp tục.
+      </div>
+    );
   } else if (!isAdmin) {
     content = (
-      <p>
-        Ví <code>{address}</code> không có quyền admin trên contract.
-      </p>
+      <div className="card" style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>
+        Ví <code className="num">{address}</code> không có quyền admin trên contract.
+      </div>
     );
   } else {
     content = (
@@ -302,8 +307,17 @@ export function AdminPage() {
         </ActionCard>
 
         <ActionCard
+          title="Force end epoch"
+          description={`Testnet only — kết thúc ngay epoch hiện tại (#${
+            currentEpochId != null ? String(currentEpochId) : "..."
+          }) thay vì chờ đủ 7 ngày. Phải commitRandom() trước, chưa quay số. Bỏ qua luôn luật "giữ đủ 1 tuần". Cần KEEPER_ROLE (không phải admin) — tự cấp cho mình ở mục Grant/Revoke role phía trên nếu chưa có.`}
+        >
+          <TxButton label="Force end epoch" variant="accent" onRun={() => call("forceEndEpoch")} />
+        </ActionCard>
+
+        <ActionCard
           title="Force sweep ready"
-          description="Testnet only — coi như 3 ngày SWEEP_DELAY đã trôi qua cho 1 epoch, để test sweep() ngay thay vì chờ thật. Đóng luôn cửa self-claim của epoch đó."
+          description="Testnet only — coi như 3 ngày SWEEP_DELAY đã trôi qua cho 1 epoch, để test sweep() ngay thay vì chờ thật. Đóng luôn cửa self-claim của epoch đó. Cần KEEPER_ROLE (không phải admin)."
         >
           <input
             placeholder="Epoch ID"
@@ -396,12 +410,23 @@ export function AdminPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--color-page-bg)" }}>
-      <div style={{ height: 50 }}>
+    <div className="app-shell">
+      <div style={{ height: "var(--row-h)", position: "sticky", top: 0, zIndex: 20 }}>
         <Navbar onDeposit={noop} onWithdraw={noop} onDrawHistory={noop} onMyHistory={noop} onMyReferral={noop} />
       </div>
-      <div style={{ maxWidth: 480, margin: "0 auto", padding: "30px 20px" }}>
-        <h1 style={{ fontSize: "var(--fs-3)", marginBottom: 20, color: "var(--color-text)" }}>Admin</h1>
+      <div style={{ padding: "16px" }}>
+        <div
+          style={{
+            fontSize: "var(--fs-3)",
+            fontWeight: 700,
+            fontFamily: "var(--font-display)",
+            letterSpacing: "-0.01em",
+            color: "var(--color-text)",
+            marginBottom: "var(--gap)",
+          }}
+        >
+          Admin
+        </div>
         {content}
       </div>
     </div>
