@@ -5,6 +5,22 @@
 Deposit USDC, hold it for one week, and you're in the draw. The winner(s) take that
 week's yield. Everyone else loses nothing — principal is withdrawable, in full, any time.
 
+## Core belief
+
+> The only thing that normally keeps someone out of a game of chance is the risk of
+> losing money. Remove that risk while keeping the thrill and a shot at a big reward,
+> and people engage far more than they would with a flat, unexciting interest rate.
+
+Two things follow from that, and every design choice here answers to them:
+
+- **Fun is the requirement, not yield optimization.** The scratch-card reveal is the
+  product; the yield rate is just fuel for it.
+- **The chance is free.** Since principal is never at risk, the real cost of playing is
+  zero — you only give up the yield you'd have gotten by splitting it evenly instead.
+  That's why the prize is kept concentrated (see the `sqrt` formula below) instead of
+  diluted into many small payouts: a free shot at something forgettable isn't worth
+  taking, a free shot at something big is.
+
 ## The idea
 
 Someone with a few hundred idle dollars looks at real yield and shrugs: $100 locked up
