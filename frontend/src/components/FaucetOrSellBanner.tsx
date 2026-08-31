@@ -61,7 +61,7 @@ export function FaucetOrSellBanner() {
   // was the wrong message: USDC is Arc's gas token, so a wallet that's never
   // faucet-ed can't pay for the swap it would be asked to approve.
   const SELL_PROMPT_THRESHOLD = 20_000_000n; // 20 USDC, 6 decimals
-  const showSellBanner = hasSomethingToSell && usdcBal > SELL_PROMPT_THRESHOLD;
+  const showSellBanner = hasSomethingToSell && usdcBal >= SELL_PROMPT_THRESHOLD;
 
   const [status, setStatus] = useState<"idle" | "eurc" | "cirbtc">("idle");
   const [error, setError] = useState<string | null>(null);
