@@ -54,16 +54,19 @@ export function FaucetOrSellBanner() {
   const eurcBal = (balances?.[0]?.result as bigint | undefined) ?? 0n;
   const cirbtcBal = (balances?.[1]?.result as bigint | undefined) ?? 0n;
   const usdcBal = (balances?.[2]?.result as bigint | undefined) ?? 0n;
-  // All three have to clear their own bar before "sell" is offered - a wallet
-  // that's short on even one of them still needs another faucet round first,
-  // and offering "sell" too early either can't pay for its own gas (USDC) or
-  // has nothing worth swapping yet (EURC/cirBTC). USDC/EURC: 10 units, 6
-  // decimals. cirBTC: half of its ~0.0005 faucet drip, 8 decimals.
+  // Majority rule, not unanimous: "sell" shows once at least 2 of the 3
+  // tokens clear their own bar, so one straggler (e.g. cirBTC's faucet drip
+  // being tiny and slow to stack up) doesn't keep blocking the sell flow for
+  // two tokens the wallet is already flush with. USDC/EURC: 10 units, 6
+  // decimals. cirBTC: 0.00005, 8 decimals.
   const USDC_SELL_THRESHOLD = 10_000_000n;
   const EURC_SELL_THRESHOLD = 10_000_000n;
-  const CIRBTC_SELL_THRESHOLD = 25_000n;
-  const showSellBanner =
-    usdcBal > USDC_SELL_THRESHOLD && eurcBal > EURC_SELL_THRESHOLD && cirbtcBal > CIRBTC_SELL_THRESHOLD;
+  const CIRBTC_SELL_THRESHOLD = 5_000n; // 0.00005 cirBTC, 8 decimals
+  const tokensOverThreshold =
+    Number(usdcBal > USDC_SELL_THRESHOLD) +
+    Number(eurcBal > EURC_SELL_THRESHOLD) +
+    Number(cirbtcBal > CIRBTC_SELL_THRESHOLD);
+  const showSellBanner = tokensOverThreshold >= 2;
 
   const [status, setStatus] = useState<"idle" | "eurc" | "cirbtc">("idle");
   const [error, setError] = useState<string | null>(null);
