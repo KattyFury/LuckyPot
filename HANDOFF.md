@@ -21,6 +21,128 @@ sẵn của `keeper.yml`) — lưu lịch sử Deposited/Withdrawn/Claimed cho "
 
 ---
 
+## Trạng thái nghỉ 2026-08-31 (tối) — referral summary, sửa logo, admin layout + commit/reveal, banner đa số
+
+Tiếp nối phiên deploy lại từ đầu cùng ngày (mục ngay bên dưới). Contract KHÔNG đổi địa chỉ
+lần này — chỉ frontend/automation/D1.
+
+### 1. My referral — thêm bảng D1 mới, không chỉ đọc `pendingRef`
+
+Popup "Invite & Earn" (`ReferralInfoModal.tsx`) trước đó chỉ hiện link mời + số dư
+`pendingRef` chưa claim. Giờ thêm: **số người đã ref, tổng đã kiếm được (lifetime), danh
+sách từng ví kèm số tiền kiếm từ ví đó** — thêm mục "My referral" vào dropdown ví (giữa "My
+history" và "Disconnect"), gọi đúng popup này.
+
+Dữ liệu lấy từ 2 bảng D1 mới (`referrals`, `referral_earnings`, xem `functions/schema.sql`),
+đổ bởi `automation/src/indexHistory.ts` (đã mở rộng bắt thêm event `ReferrerSet`,
+`ReferralPaid`, `ReferralAccrued`, `Swept`). Điểm khó: contract **không lưu ai tạo ra khoản
+referral nào** — `ReferralPaid(referrer, amount)` không có tham số winner. Ghép bằng thứ tự
+event: `_settle()` luôn emit `ReferralPaid`/`ReferralAccrued` NGAY TRƯỚC `Claimed`/`Swept`
+của đúng người thắng đó, trong cùng 1 tx — nên indexer giữ 1 "pending earning" theo tx hash,
+gán `referred = winner` khi gặp `Claimed`/`Swept` kế tiếp cùng tx. Cũng tiện tay fix luôn 1
+lỗ hổng cũ: `Swept` (thắng qua `sweep()`) trước đây KHÔNG được ghi vào lịch sử "Won" như
+`Claimed` — giờ ghi như nhau.
+
+API mới: `functions/api/referrals.js` (`GET /api/referrals?wallet=0x...`). Hook mới:
+`useReferralSummary.ts`, cùng pattern `useMyHistory.ts`.
+
+### 2. Logo bị lỗi — dark-variant làm trắng luôn cả nét đen trong mark
+
+Từ phiên deploy lại (mục dưới) tôi lấy 3 file mới trên Desktop (`logo.svg`, `fulllogo.svg`,
+`privy.svg`) rồi sinh bản "dark" (chữ trắng cho nền tối) bằng cách thay TOÀN BỘ
+`fill="black"` → `#FFFFFF`. **Sai**: file `fulllogo.svg`/`privy.svg` có 10 path fill=black,
+trong đó chỉ 8 path là chữ "LuckyPot" (nên đổi trắng), còn 2 path là **nét vẽ bên trong mark**
+(viền hũ + ký hiệu $) — 2 path này PHẢI giữ đen ở cả 2 bản, chỉ có nền xanh lá + hũ vàng đổi
+theo mark, không phải chữ. User bắt lỗi bằng mắt, so với `luckypot.cc/app` làm chuẩn.
+
+Fix: phân biệt bằng toạ độ x của điểm `M` đầu tiên trong `d` — path nào có x nằm ngoài bbox
+của mark (>260 với fulllogo cỡ 944×279, >52 với privy cỡ 200×100) mới là chữ, mới đổi màu.
+Áp dụng lại cho cả `src/assets/logo-full-dark.svg`, `landing/logo-full-dark.svg`, và render
+lại `landing/privy-logo-dark.png` bằng Chrome headless (xem "CHỤP MÀN HÌNH ĐƯỢC RỒI" bên
+dưới để biết cách rasterize SVG→PNG không cần thư viện). Vì admin page dùng chung
+`Navbar.tsx` với app nên sửa 1 file `src/assets/logo-full-dark.svg` là app + admin tự khớp.
+
+Nhân tiện cũng giảm size logo navbar 1/4 theo yêu cầu: `--row-h` lockup 38px → 28.5px
+(`.brand__lockup` trong `global.css`, và bản HTML tương ứng trong `landing/index.html`).
+
+### 3. Admin page layout xấu — do không dùng chung `.app-shell`
+
+`AdminPage.tsx` trước đó tự chế `<div style={{maxWidth:480, background:page-bg}}>` thay vì
+dùng class `.app-shell` chung (đúng breakpoint 430/860px + màu `--color-surface`) mà
+Dashboard đang dùng — nên nhìn lệch hẳn so với 2 trang kia dù chạy chung 1 React app. Đổi
+sang `.app-shell` + navbar `position: sticky` giống hệt Dashboard, tiêu đề "Admin" dùng
+`font-display` khớp typography chung. Đã verify bằng screenshot cả 2 breakpoint.
+
+### 4. `forceEndEpoch` báo lỗi dù đã có `KEEPER_ROLE` — thiếu bước commit
+
+`forceEndEpoch()` yêu cầu `e.committed == true` (`require(e.committed, "commit first")`) —
+epoch #1 của contract mới **chưa từng được `commitRandom()`** (bot tự động chưa kịp/chưa
+chạy), nên bấm Force end epoch luôn revert dù ví admin đã tự cấp `KEEPER_ROLE` cho mình.
+Admin page trước đó không có cách tự commit. Thêm 2 ActionCard mới:
+
+- **Commit random** — sinh số bí mật bằng `crypto.getRandomValues` ngay trên trình duyệt,
+  gọi `commitRandom(keccak256(secret))`, lưu secret vào `localStorage` (khoá theo địa chỉ
+  pool + epoch id, xem `lib/commitSecret.ts`). **Mất secret (xoá dữ liệu trình duyệt) = epoch
+  đó kẹt vĩnh viễn**, không có đường thoát nào khác — y hệt rủi ro bot gặp với cache GitHub
+  Actions, chỉ là giờ bản sao đó nằm ở trình duyệt admin.
+- **Reveal & draw** — đọc lại secret đã lưu, gọi `revealAndDraw(secret)`.
+
+Quy trình đúng trên admin page giờ là: **Commit random → Force end epoch (nếu chưa hết giờ)
+→ Reveal & draw**. Cả `forceEndEpoch` lẫn `forceSweepReady` đều cần `KEEPER_ROLE`, KHÔNG
+phải `DEFAULT_ADMIN_ROLE` — đã ghi rõ trong mô tả từng ActionCard để khỏi nhầm lần sau.
+
+⚠️ **User hỏi "epoch 0 người tham gia vẫn phải reveal hả" — CÓ, bắt buộc.**
+`currentEpochId` chỉ tăng lên bên trong `revealAndDraw()`, contract không có đường nào khác
+để đóng epoch. Với epoch rỗng, reveal vẫn chạy nhưng vô hại: `eligibleCount=0` →
+`numWinners=0`, không cần `fundYield` trước (điều kiện `funded >= weeklyPrizePool` tự đúng
+vì cả 2 vế đều 0), không ai trúng, không tiền di chuyển — chỉ tốn gas cho 1 vòng ngẫu nhiên
+không dùng tới. **Không phải bug**, nhưng KHÔNG có hàm "skip epoch rỗng" rẻ hơn — nếu muốn có
+thì đó là thay đổi logic contract thật (cần deploy lại theo đúng nguyên tắc user đã chốt),
+chưa làm.
+
+⚠️ User cũng nghi ngờ 1 chỗ khác là bug: "cào số" cho user **KHÔNG** liên quan tới việc admin
+bấm Reveal & draw — cào thẻ ở Dashboard chỉ hiện cho ai có `myPoolBalance > 0`
+(`Dashboard.tsx`), epoch 0 người tham gia thì không ai thấy cào thẻ cả. Đã giải thích rõ,
+KHÔNG phải sửa code — nhưng lưu ý đây vẫn là 1 gate chưa hoàn toàn chính xác về lý thuyết
+(dùng tổng `balances()` chứ không phải "có eligible ở đúng epoch vừa quay hay không" — 1 ví
+vừa gửi tiền pending giữa epoch có thể vẫn bị nhắc cào 1 epoch mà mình chưa từng có vé), chỉ
+là chưa có bằng chứng nó đã xảy ra thật; muốn sửa triệt để cần lưu thêm block/epoch lúc quay
+vào D1 để so lịch sử — chưa làm, ghi lại đây để nhớ nếu sau này có report thật.
+
+### 5. Banner faucet/bán USDC-EURC-cirBTC — sửa 3 lần trong phiên, chốt lại luật đa số
+
+Thứ tự các lần sửa (để hiểu vì sao code trông "chưa ổn định"):
+1. Off-by-one `usdcBal > 20_000_000n` → `>=` (ví đúng 20 USDC bị tính nhầm là "chưa từng
+   faucet").
+2. Đổi hẳn điều kiện: **cả 3 đồng đều phải vượt ngưỡng riêng** (USDC>10, EURC>10,
+   cirBTC>ngưỡng) thay vì `eurcBal>0 || cirbtcBal>0`.
+3. **Sai theo hướng ngược lại**: bắt CẢ 3 (AND) hoá ra quá khắt khe — ví thật có 41 USDC/40
+   EURC/0.0001 cirBTC (2/3 đã dư dả) vẫn không hiện nút bán vì cirBTC chưa qua ngưỡng
+   `0.00025` (đoán sai từ đầu). User chốt lại đúng luật: **đa số 2/3**, không phải cả 3 —
+   `tokensOverThreshold >= 2`. Ngưỡng cirBTC sửa lại `0.00005` (8 decimals, `5_000n`), không
+   phải `0.00025`.
+
+Ngưỡng cuối cùng: USDC>10 / EURC>10 / cirBTC>0.00005 (mỗi loại 6/6/8 decimals), cần **ít
+nhất 2 trong 3** đồng vượt mốc mới hiện "sell", còn lại hiện "faucet".
+
+### 6. Nút X đóng popup khó bấm
+
+`Modal.tsx` — nút X chỉ to bằng icon (`padding: 0`), khó trúng trên di động. Thêm
+`padding: 10px; margin: -10px` (mở rộng vùng chạm, giữ nguyên vị trí icon vì margin âm triệt
+tiêu padding). Áp dụng cho toàn bộ popup vì tất cả đều dùng chung `Modal.tsx`.
+
+### Hiện trạng on-chain sau phiên này
+
+| | |
+|---|---|
+| Contract (proxy) | `0xBdE568986a009eBaAE31Cb78033470c334Fad698` — KHÔNG đổi trong phiên này |
+| Epoch hiện tại | #1, `committed=false`, `drawn=false`, 0/0 eligible |
+| Ví admin `0xb0ea48A1...A12E` | có cả `DEFAULT_ADMIN_ROLE` **và** `KEEPER_ROLE` (tự cấp keeper qua trang admin trong phiên này) |
+| Ví keeper bot `0x4672A3B3...` | 80 USDC, 0 EURC, 0 cirBTC |
+| Ví admin (để test faucet/sell banner) | ~41 USDC, ~40 EURC, ~0.0001 cirBTC |
+
+---
+
 ## Trạng thái nghỉ 2026-08-31 — Deploy lại từ đầu (contract mới, `executeExternalCall` + whitelist), pool sạch
 
 Pool cũ đã rút sạch về 0 hôm trước (`forceWithdrawAll`). User quyết định: **thay vì vá thêm
