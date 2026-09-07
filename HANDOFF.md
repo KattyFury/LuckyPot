@@ -1126,6 +1126,19 @@ biến mới nên không cần `initializeV2`/reinitializer, upgrade bằng
 
 1. Đưa quyền admin về lại ĐÚNG chuẩn multisig (thu bớt quyền ví đơn `0xb0ea48A1...`, hoặc ít nhất đảm bảo Safe 2-of-2 vẫn là nơi quyết định cuối cùng) trước khi bật yield thật/nhận tiền thật quy mô lớn.
 2. `IYieldSource` interface đã khai báo sẵn trong contract nhưng chưa có implementation — chờ Arc có nguồn yield DeFi thật đáng tin.
+3. **Thay commit-reveal tự chế bằng VRF oracle thật (2026-09-07).** Randomness hiện tại
+   (`commitRandom`/`revealAndDraw`, trộn `blockhash` — xem PROJECT.md mục 4) là tự viết,
+   KHÔNG phải VRF, dù đã đúng hướng tránh `PREVRANDAO` (Arc docs xác nhận luôn trả `0`,
+   docs khuyên "use an oracle or VRF" — xem `/arc/references/evm-differences`). Điểm yếu
+   thật: keeper (bên duy nhất giữ secret) biết `blockhash` trước khi reveal, có thể tính
+   trước kết quả off-chain rồi CHỌN không gửi tx nếu bất lợi ("last-revealer bias") — rủi
+   ro có thật vì chỉ 1 bên giữ quyền reveal, không phải mạng nhiều node độc lập như VRF
+   thật. Đã tra `/arc/tools/oracles`: Chainlink, Chronicle, Pyth, RedStone, Stork đều là
+   **price oracle**, không có VRF chuyên biệt nào được xác nhận đã deploy sẵn trên Arc
+   Testnet trong docs — cần tự kiểm tra Chainlink VRF (sản phẩm riêng, khác Data Feeds)
+   có VRF Coordinator trên chain 5042002 hay chưa trước khi thiết kế lại
+   `revealAndDraw`. Chấp nhận được cho testnet/demo hiện tại (giải nhỏ, chưa audit,
+   chưa mainnet), nhưng PHẢI làm trước khi quảng bá "provably fair"/mainnet.
 
 ## Trạng thái nghỉ 2026-08-24 — repo chuyển Private, TOTAL POOL đổi sang eligible/total thật
 
