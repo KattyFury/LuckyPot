@@ -48,9 +48,19 @@ epoch đã quay (rẻ vì epoch theo tuần, vài chục epoch sau nhiều năm 
 sổ claim() của 2 người trúng thật của epoch 2 — CHƯA làm vì ảnh hưởng tới state thật,
 cần hỏi user trước).
 
-**Việc còn treo:** quyết định có forceSweepReady epoch 2 để test end-to-end trước demo
-hay không (đánh đổi: 2 ví đang chờ tự claim sẽ bị trả tiền qua sweep ngay thay vì chờ họ
-tự bấm).
+**Đã test end-to-end thật trên chain (user chọn force test ngay trước demo):**
+`forceSweepReady(2)` → `sweep(2)`, cả 2 tx `status: success`. Số dư USDC 2 ví trúng
+tăng đúng **chính xác tuyệt đối** theo công thức tính tay từ `prizeForRank` + 5%
+referral cut (`0x2442...ebc10`: 1.813195→4.827618, `0xe7d7...93c1`: 1.158905→4.173329),
+`hasClaimed` cả 2 chuyển `true`, `vaultReserve`/`vaultDev` tăng đúng phần cut
+(133846→292498 / 133847→292501). Gọi lại `sweep(2)` lần 2: `status: success` nhưng
+`logs: []` — xác nhận idempotent, không trả đúp. Script `sweep.ts` mới sau đó tự nhận
+ra "nothing to do" đúng như kỳ vọng. Cơ chế sweep giờ đã verify đúng thật trên chain,
+không chỉ đọc code — an toàn để đưa vào demo.
+
+⚠️ **Tác dụng phụ đã biết trước và chấp nhận:** 2 ví trúng epoch 2 giờ nhận tiền qua
+event `Swept` thay vì tự bấm Claim — không mất tiền, chỉ khác cơ chế nhận, y hệt UX
+thật nếu người dùng thật không claim kịp trong 3 ngày.
 
 ---
 
