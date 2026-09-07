@@ -1124,21 +1124,37 @@ biến mới nên không cần `initializeV2`/reinitializer, upgrade bằng
 
 ### Roadmap — cần làm trước khi có yield/tiền thật (không phải bây giờ)
 
-1. Đưa quyền admin về lại ĐÚNG chuẩn multisig (thu bớt quyền ví đơn `0xb0ea48A1...`, hoặc ít nhất đảm bảo Safe 2-of-2 vẫn là nơi quyết định cuối cùng) trước khi bật yield thật/nhận tiền thật quy mô lớn.
-2. `IYieldSource` interface đã khai báo sẵn trong contract nhưng chưa có implementation — chờ Arc có nguồn yield DeFi thật đáng tin.
-3. **Thay commit-reveal tự chế bằng VRF oracle thật (2026-09-07).** Randomness hiện tại
-   (`commitRandom`/`revealAndDraw`, trộn `blockhash` — xem PROJECT.md mục 4) là tự viết,
-   KHÔNG phải VRF, dù đã đúng hướng tránh `PREVRANDAO` (Arc docs xác nhận luôn trả `0`,
-   docs khuyên "use an oracle or VRF" — xem `/arc/references/evm-differences`). Điểm yếu
-   thật: keeper (bên duy nhất giữ secret) biết `blockhash` trước khi reveal, có thể tính
-   trước kết quả off-chain rồi CHỌN không gửi tx nếu bất lợi ("last-revealer bias") — rủi
-   ro có thật vì chỉ 1 bên giữ quyền reveal, không phải mạng nhiều node độc lập như VRF
-   thật. Đã tra `/arc/tools/oracles`: Chainlink, Chronicle, Pyth, RedStone, Stork đều là
-   **price oracle**, không có VRF chuyên biệt nào được xác nhận đã deploy sẵn trên Arc
-   Testnet trong docs — cần tự kiểm tra Chainlink VRF (sản phẩm riêng, khác Data Feeds)
-   có VRF Coordinator trên chain 5042002 hay chưa trước khi thiết kế lại
-   `revealAndDraw`. Chấp nhận được cho testnet/demo hiện tại (giải nhỏ, chưa audit,
-   chưa mainnet), nhưng PHẢI làm trước khi quảng bá "provably fair"/mainnet.
+User đã chốt hướng 2 việc lớn (2026-09-07), thứ tự dưới đây phản ánh đúng ý đó:
+
+1. **Tích hợp Chainlink VRF thật để tăng trust cho cơ chế xổ số** — thay commit-reveal
+   tự chế hiện tại (`commitRandom`/`revealAndDraw`, trộn `blockhash` — xem PROJECT.md
+   mục 4). Randomness hiện tại là tự viết, KHÔNG phải VRF, dù đã đúng hướng tránh
+   `PREVRANDAO` (Arc docs xác nhận luôn trả `0`, khuyên "use an oracle or VRF" — xem
+   `/arc/references/evm-differences`). Điểm yếu thật: keeper (bên duy nhất giữ secret)
+   biết `blockhash` trước khi reveal, có thể tính trước kết quả off-chain rồi CHỌN
+   không gửi tx nếu bất lợi ("last-revealer bias") — rủi ro có thật vì chỉ 1 bên giữ
+   quyền reveal, không phải mạng nhiều node độc lập như VRF thật. Đã tra
+   `/arc/tools/oracles` (2026-09-07): Chainlink, Chronicle, Pyth, RedStone, Stork đều
+   là **price oracle**, không có VRF chuyên biệt nào được xác nhận đã deploy sẵn trên
+   Arc Testnet trong docs — bước đầu tiên khi làm việc này là tự kiểm tra Chainlink VRF
+   (sản phẩm riêng, khác Data Feeds) đã có VRF Coordinator trên chain `5042002` chưa,
+   rồi mới thiết kế lại `revealAndDraw` theo đúng flow request/fulfill của VRF. Chấp
+   nhận được cho testnet/demo hiện tại (giải nhỏ, chưa audit, chưa mainnet).
+2. **Sau mainnet: tích hợp yield thật + viết lại contract + siết quyền admin về đúng
+   chuẩn multisig** — 3 việc đi cùng nhau vì đều chỉ đáng làm khi có tiền thật quy mô
+   lớn, không phải bây giờ:
+   - Yield thật: `IYieldSource` interface đã khai báo sẵn trong contract nhưng chưa có
+     implementation — chờ Arc có nguồn DeFi thật đáng tin (xem thêm điều tra Vitael ở
+     mục "Kế hoạch dùng lending thật của Vitael" phía trên — quyết định lúc đó là CHƯA
+     tích hợp vì còn testnet + lãi quá thấp, có thể đổi lại sau mainnet).
+   - Viết lại contract: bản hiện tại (`LuckyStakerPool.sol`) được thiết kế/vá dần qua
+     nhiều lần nâng cấp UUPS trên testnet (V2→V5, deploy lại từ đầu 2026-08-31) — sau
+     mainnet nên viết lại sạch từ đầu theo đúng kiến trúc yield thật + VRF thay vì tiếp
+     tục vá lên nền cũ.
+   - Multisig: đưa quyền admin về lại ĐÚNG chuẩn (thu bớt quyền ví đơn `0xb0ea48A1...`,
+     đảm bảo Safe 2-of-2 là nơi quyết định cuối cùng) trước khi bật yield thật/nhận tiền
+     thật quy mô lớn — hiện ví đơn đang có quyền ngang Safe chỉ vì tiện test trên
+     testnet (xem PROJECT.md mục 4, Quản trị).
 
 ## Trạng thái nghỉ 2026-08-24 — repo chuyển Private, TOTAL POOL đổi sang eligible/total thật
 
