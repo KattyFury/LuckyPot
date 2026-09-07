@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { keccak256, encodePacked } from "viem";
-import { pool, publicClient, keeperWalletClient } from "./client";
+import { pool, publicClient, keeperWalletClient, waitForSuccess } from "./client";
 
 // Testnet-only convenience: runs a full commit -> forceEndEpoch -> reveal cycle
 // in one shot, using LuckyStakerPool.forceEndEpoch() to skip the real epochDuration
@@ -17,8 +17,18 @@ function secretFile(epochId: bigint) {
 }
 
 async function send(functionName: string, args: readonly unknown[] = []) {
-  const hash = await keeperWalletClient.writeContract({ ...pool, functionName, args } as never);
-  await publicClient.waitForTransactionReceipt({ hash });
+  // revealAndDraw's cost scales with participantCount and has undershot the RPC's
+  // raw estimate before (see draw.ts) — add the same headroom here.
+  const gasEstimate = await publicClient.estimateContractGas({
+    ...pool,
+    functionName,
+    args,
+    account: keeperWalletClient.account,
+  } as never);
+  const gas = (gasEstimate * 160n) / 100n;
+
+  const hash = await keeperWalletClient.writeContract({ ...pool, functionName, args, gas } as never);
+  await waitForSuccess(hash, `${functionName}()`);
   console.log(`${functionName}() tx=${hash}`);
   return hash;
 }

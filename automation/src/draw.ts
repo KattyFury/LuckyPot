@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { keccak256, encodePacked } from "viem";
-import { pool, publicClient, keeperWalletClient } from "./client";
+import { pool, publicClient, keeperWalletClient, waitForSuccess } from "./client";
 
 // Commit-reveal randomness (spec 3.5). This script is idempotent and stateless
 // across invocations except for the secret, which must survive from the
@@ -37,7 +37,7 @@ async function main() {
     const commitHash = keccak256(encodePacked(["uint256"], [secret]));
 
     const hash = await keeperWalletClient.writeContract({ ...pool, functionName: "commitRandom", args: [commitHash] });
-    await publicClient.waitForTransactionReceipt({ hash });
+    await waitForSuccess(hash, `commitRandom(epoch ${currentEpochId})`);
 
     fs.mkdirSync(STATE_DIR, { recursive: true });
     fs.writeFileSync(secretFile(currentEpochId), JSON.stringify({ secret: secret.toString() }));
@@ -59,12 +59,26 @@ async function main() {
   }
   const { secret } = JSON.parse(fs.readFileSync(file, "utf8")) as { secret: string };
 
+  // revealAndDraw loops over every participant ever (settle winners + reset balances),
+  // so its real cost scales with participantCount and grows over time. The RPC's
+  // eth_estimateGas has undershot that loop's true cost before (a reveal ran out of
+  // gas at 416242/422392 — 98.5% of the "estimate" — reverting the whole draw), so add
+  // real headroom on top of the raw estimate instead of trusting it as-is.
+  const gasEstimate = await publicClient.estimateContractGas({
+    ...pool,
+    functionName: "revealAndDraw",
+    args: [BigInt(secret)],
+    account: keeperWalletClient.account,
+  });
+  const gas = (gasEstimate * 160n) / 100n;
+
   const hash = await keeperWalletClient.writeContract({
     ...pool,
     functionName: "revealAndDraw",
     args: [BigInt(secret)],
+    gas,
   });
-  await publicClient.waitForTransactionReceipt({ hash });
+  await waitForSuccess(hash, `revealAndDraw(epoch ${currentEpochId})`);
   console.log(`Drew epoch ${currentEpochId}. tx=${hash}`);
 }
 

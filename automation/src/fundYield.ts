@@ -1,4 +1,4 @@
-import { pool, publicClient, keeperWalletClient, keeperAddress, USDC_ADDRESS } from "./client";
+import { pool, publicClient, keeperWalletClient, keeperAddress, USDC_ADDRESS, waitForSuccess } from "./client";
 
 // Technical-spec upgrade (2026-08-24): realYieldEarned = balancesTotal * currentAprBps()
 // / 10000 / 52 — read live from the contract, since aprBps is now admin-adjustable
@@ -86,7 +86,7 @@ async function main() {
       functionName: "approve",
       args: [pool.address, weeklyYield * 10n], // headroom so we don't re-approve every run
     });
-    await publicClient.waitForTransactionReceipt({ hash: approveHash });
+    await waitForSuccess(approveHash, "USDC approve");
   }
 
   const hash = await keeperWalletClient.writeContract({
@@ -94,7 +94,7 @@ async function main() {
     functionName: "fundYield",
     args: [amount],
   });
-  await publicClient.waitForTransactionReceipt({ hash });
+  await waitForSuccess(hash, "fundYield");
   console.log(`Topped the prize pot up by ${amount} (6dp) to ${weeklyYield}. tx=${hash}`);
 }
 

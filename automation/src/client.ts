@@ -19,3 +19,15 @@ const account = privateKeyToAccount(KEEPER_PRIVATE_KEY as `0x${string}`);
 export const publicClient = createPublicClient({ chain: arcTestnet, transport: http() });
 export const keeperWalletClient = createWalletClient({ account, chain: arcTestnet, transport: http() });
 export const keeperAddress = account.address;
+
+// A tx can be mined but still revert (status "reverted") — waitForTransactionReceipt
+// alone doesn't throw for that. Callers must check the receipt or use this helper,
+// otherwise a reverted keeper action silently reports success (this bit us for real:
+// a revealAndDraw ran out of gas mid-loop and the workflow still went green).
+export async function waitForSuccess(hash: `0x${string}`, label: string) {
+  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  if (receipt.status !== "success") {
+    throw new Error(`${label} reverted on-chain. tx=${hash}`);
+  }
+  return receipt;
+}

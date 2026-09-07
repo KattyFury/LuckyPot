@@ -21,6 +21,40 @@ sẵn của `keeper.yml`) — lưu lịch sử Deposited/Withdrawn/Claimed cho "
 
 ---
 
+## Trạng thái nghỉ 2026-09-07 (sáng) — bug: epoch không xổ số, keeper báo xanh giả
+
+User báo thứ Hai sáng mà pool không quay số. Đào ra 2 lỗi lồng nhau:
+
+1. **`revealAndDraw` bị revert do hết gas (OOG)**, không phải do logic sai. Tx
+   `0xab835c9b352c4903095c1f18bcbe7bf6ec91103a3b32a2d4303e18d6395ac0e5` (run keeper
+   `34074954155`, 2026-09-07T02:02 UTC) dùng hết 416242/422392 gas — hàm này loop qua
+   TOÀN BỘ `participants` (hiện 14 ví) để settle/reset balance, chi phí scale theo số
+   người tham gia, và `eth_estimateGas` của RPC Arc Testnet ước lượng thiếu (viem
+   dùng đúng số RPC trả về, không tự thêm buffer). Trace (`cast run <tx>`) cho thấy tx
+   đã emit `Drawn` với 2 người trúng thật rồi mới OOG ở đoạn reset balance cuối hàm —
+   không phải bug logic hay sai secret.
+2. **`draw.ts` không kiểm tra `receipt.status`** — chỉ gọi `waitForTransactionReceipt`
+   rồi in "Drew epoch N" bất kể tx revert hay không. `fundYield.ts` có cùng lỗ hổng ở
+   cả `approve` lẫn `fundYield`. Hệ quả: GitHub Actions báo **success** dù draw thất
+   bại thật trên chain — không có cách nào nhận ra ngoài tự tra tx trên ArcScan.
+   Epoch revert thì rollback sạch state (vẫn `committed=true, drawn=false`, secret vẫn
+   còn nguyên trong cache Actions) nên không mất gì, nhưng sẽ kẹt vĩnh viễn ở lần
+   keeper chạy kế (6 tiếng/lần) vì cùng 1 gas limit lại tiếp tục thiếu.
+
+**Fix (`automation/src/`):**
+- Thêm `waitForSuccess(hash, label)` dùng chung trong `client.ts` — throw rõ ràng nếu
+  `receipt.status !== "success"`, áp dụng cho mọi tx gửi đi (`draw.ts`, `fundYield.ts`,
+  `drawNow.ts`) thay vì chỉ đợi receipt rồi coi như xong.
+- `revealAndDraw` (cả `draw.ts` lẫn `drawNow.ts`) giờ tự `estimateContractGas` rồi
+  nhân **1.6x** làm gas limit thật sự gửi lên, thay vì tin thẳng số RPC trả về — vì
+  chi phí hàm này tăng theo `participantCount` nên buffer tỉ lệ sẽ tự scale theo, không
+  hardcode 1 con số cố định dễ lỗi thời khi pool đông người hơn.
+
+**Chưa làm:** chưa merge/push + chưa trigger lại keeper để xổ epoch 2 — xem bước tiếp
+theo ngay dưới đây khi quay lại phiên.
+
+---
+
 ## Trạng thái nghỉ 2026-08-31 (tối) — referral summary, sửa logo, admin layout + commit/reveal, banner đa số
 
 Tiếp nối phiên deploy lại từ đầu cùng ngày (mục ngay bên dưới). Contract KHÔNG đổi địa chỉ
