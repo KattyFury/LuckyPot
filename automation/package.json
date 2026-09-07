@@ -7,6 +7,7 @@
     "fund-yield": "tsx src/fundYield.ts",
     "draw": "tsx src/draw.ts",
     "draw:now": "tsx src/drawNow.ts",
+    "sweep": "tsx src/sweep.ts",
     "index-history": "tsx src/indexHistory.ts"
   },
   "dependencies": {

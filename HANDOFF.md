@@ -21,6 +21,39 @@ sẵn của `keeper.yml`) — lưu lịch sử Deposited/Withdrawn/Claimed cho "
 
 ---
 
+## Trạng thái nghỉ 2026-09-07 (trưa) — sweep() "permissionless" chứ chưa từng "tự động"
+
+User sắp thuyết trình, nhờ rà lại quy luật "sau 3 ngày không claim thì tự động bắn tiền
+về ví người thắng" trước khi lên demo. Logic `sweep()` on-chain **đúng, không bug**
+(`require(block.timestamp >= e.drawnAt + SWEEP_DELAY)`, loop `e.winners`, skip người đã
+claim, settle đúng người đúng tiền) — nhưng phát hiện lỗ hổng thật: **`sweep()` chỉ
+"permissionless" (ai gọi cũng được), KHÔNG hề có ai/cái gì THỰC SỰ gọi nó cả.**
+Grep toàn bộ `automation/` + `keeper.yml` trước khi sửa: chỉ có 3 job
+`fund-yield`/`draw`/`index-history`, không job nào đụng tới `sweep`. Nghĩa là nếu người
+trúng không tự bấm Claim trong 3 ngày, tiền nằm im vĩnh viễn trong contract cho tới khi
+có người tự tay gọi `sweep()` qua admin page/Arcscan — **không tự động** như câu pitch
+đang nói.
+
+**Đã thêm `automation/src/sweep.ts`** (theo đúng pattern `draw.ts`: gas buffer 1.6x +
+`waitForSuccess` check status thật) + step **"Sweep unclaimed prizes past the 3-day
+window"** mới trong `keeper.yml`, chạy mỗi 6 tiếng như 3 job kia. Script quét TOÀN BỘ
+epoch đã quay (rẻ vì epoch theo tuần, vài chục epoch sau nhiều năm vẫn chỉ là vài lần
+đọc), epoch nào đã qua `drawnAt + 3 ngày` mà còn winner chưa claim mới thực sự gửi tx
+`sweep(epochId)` — epoch không cần sweep thì không tốn gas gì cả.
+
+Đã test local (`npm run sweep` bằng `automation/.env` thật, đọc chain thật): epoch 1
+(0 người trúng) và epoch 2 (2 người trúng, còn ~2.8 ngày nữa mới tới hạn) đều bị bỏ qua
+đúng như kỳ vọng, in "nothing to do" — **chưa test end-to-end 1 lần sweep thật xảy ra**
+(muốn test thật phải dùng `forceSweepReady` testnet-only, nhưng việc đó ép đóng sớm cửa
+sổ claim() của 2 người trúng thật của epoch 2 — CHƯA làm vì ảnh hưởng tới state thật,
+cần hỏi user trước).
+
+**Việc còn treo:** quyết định có forceSweepReady epoch 2 để test end-to-end trước demo
+hay không (đánh đổi: 2 ví đang chờ tự claim sẽ bị trả tiền qua sweep ngay thay vì chờ họ
+tự bấm).
+
+---
+
 ## Trạng thái nghỉ 2026-09-07 (sáng) — bug: epoch không xổ số, keeper báo xanh giả
 
 User báo thứ Hai sáng mà pool không quay số. Đào ra 2 lỗi lồng nhau:

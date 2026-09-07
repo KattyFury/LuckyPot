@@ -39,6 +39,17 @@ jobs:
           KEEPER_PRIVATE_KEY: ${{ secrets.KEEPER_PRIVATE_KEY }}
           POOL_ADDRESS: ${{ secrets.POOL_ADDRESS }}
 
+      # sweep() is permissionless (anyone can call it once the 3-day self-claim
+      # window closes) but that only means it CAN be called, not that it WILL be —
+      # nothing else in this repo calls it. Without this step, an unclaimed prize
+      # sits in the contract forever instead of actually landing in the winner's
+      # wallet the way the pitch describes it.
+      - name: Sweep unclaimed prizes past the 3-day window
+        run: npm run sweep
+        env:
+          KEEPER_PRIVATE_KEY: ${{ secrets.KEEPER_PRIVATE_KEY }}
+          POOL_ADDRESS: ${{ secrets.POOL_ADDRESS }}
+
       # Keeps luckypot-history (D1) caught up so the frontend's My History
       # reads a database instead of paging through eth_getLogs itself - see
       # automation/src/indexHistory.ts for why that moved off the client.
