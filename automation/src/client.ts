@@ -24,8 +24,14 @@ export const keeperAddress = account.address;
 // alone doesn't throw for that. Callers must check the receipt or use this helper,
 // otherwise a reverted keeper action silently reports success (this bit us for real:
 // a revealAndDraw ran out of gas mid-loop and the workflow still went green).
+//
+// Arc Testnet inclusion time is unreliable — a tx that eventually lands fine can sit
+// in the mempool for 50+ minutes (2026-09-08 run: confirmed after ~52min despite a
+// well-above-market maxFeePerGas). viem's default 180s timeout turns that into a
+// false-alarm workflow failure even though nothing is actually broken, so give it
+// real headroom here.
 export async function waitForSuccess(hash: `0x${string}`, label: string) {
-  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  const receipt = await publicClient.waitForTransactionReceipt({ hash, timeout: 600_000 });
   if (receipt.status !== "success") {
     throw new Error(`${label} reverted on-chain. tx=${hash}`);
   }
