@@ -21,6 +21,57 @@ sẵn của `keeper.yml`) — lưu lịch sử Deposited/Withdrawn/Claimed cho "
 
 ---
 
+## Trạng thái nghỉ 2026-09-09 — fix false-alarm keeper timeout, kiểm toán toàn dự án trước live
+
+User báo `keeper.yml` đỏ (job `fund-yield`, 3m18s). Đào log: `WaitForTransactionReceiptTimeoutError`
+ở `fundYield.ts` sau đúng 180s (default timeout của viem, không phải do code set). Verify thẳng
+on-chain bằng `eth_getTransactionReceipt`: tx `0x20d3a458...` **status success**, pot đã được fund
+đúng — tx chỉ kẹt mempool bất thường lâu (~52 phút, so khớp block timestamp vs lúc gửi), không
+phải chain đứng (block vẫn ra đều ~1s/block suốt lúc đó) và không phải do phí thấp (maxFeePerGas
+gửi lúc đó ~1376 gwei, cao hơn nhiều so với gas price hiện hành ~20 gwei). Kết luận: **false alarm
+thuần, không mất tiền, không cần retry logic** — script `fundYield.ts` vốn đã tự "self-healing"
+(tính lại `pendingYield` on-chain mỗi lần chạy, không cộng dồn sai dù 1 lần fail).
+
+**Fix (`automation/src/client.ts`):** `waitForSuccess()` — hàm dùng chung cho MỌI tx gửi đi
+(`draw.ts`/`drawNow.ts`/`fundYield.ts`/`sweep.ts`) — thêm `timeout: 600_000` (10 phút thay vì
+180s mặc định của viem) vào `waitForTransactionReceipt`, kèm comment giải thích vụ 52 phút này để
+lần sau khỏi tưởng nhầm là bug thật. Đã `npm install` (tiện tay sync lại `package-lock.json` còn
+sót tên cũ `@luckystaker/automation` từ hồi rebrand — package.json đã đúng `@luckypot` từ lâu,
+lockfile thì chưa) + `npx tsc --noEmit` sạch. **Đã commit + push cả 2** (`6836bca`, `871a30b`).
+
+### Kiểm toán toàn dự án (user yêu cầu, "sắp live rồi không muốn sơ suất")
+
+Đọc trọn `LuckyStakerPool.sol` (722 dòng), toàn bộ `automation/src`, `functions/api/*` +
+`schema.sql`, đối chiếu với `PROJECT.md`/`HANDOFF.md` sẵn có rồi verify lại bằng RPC call thật
+(không tin docs cũ) — không phải chỉ đọc code suông.
+
+**🔴 Xác nhận LIVE ngay lúc kiểm tra (`hasRole` gọi trực tiếp on-chain), không chỉ suy từ docs:**
+ví đơn `0xb0ea48A1979326BA9e0b5027D105C8DF9CCAA12E` hiện giữ **CẢ** `DEFAULT_ADMIN_ROLE` **VÀ**
+`KEEPER_ROLE` cùng lúc, song song với Safe 2-of-2 (`0x0f5514fCA...`). Đây chính là việc
+`PROJECT.md` mục 10.4 đã liệt là điều kiện "sẵn sàng thật" — tính đến giờ **vẫn chưa dọn**.
+**User đã trả lời khi nghe báo cáo: "mai hoặc mốt anh chuyển qua multi sig rồi yên tâm"** — tự
+làm, KHÔNG nhờ Claude dựng nút revoke trên `/app/admin` (đã hỏi, user từ chối, chỉ muốn ghi
+nhận). Nhớ verify lại bằng `hasRole` on-chain ở phiên sau trước khi coi là đã xong, đừng tin lời
+kể hay docs cũ.
+
+**🟠 Đã biết từ trước, nhắc lại vì vẫn mở, không phát hiện mới:**
+- `forceEndEpoch`/`forceSweepReady` dùng chung `KEEPER_ROLE` với automation thật → không revoke
+  riêng được (đã ghi ở mục "Deploy lại từ đầu" bên dưới, việc 7).
+- Vòng lặp `participants` không giới hạn trong `revealAndDraw`/`forceWithdrawAll` → gas scale
+  theo tổng số ví từng gửi tiền, có thể vượt block gas limit khi pool đông (mục "Giới hạn kỹ
+  thuật đã biết" #8 trong `PROJECT.md`).
+- Randomness commit-reveal + `blockhash`, không phải VRF (roadmap đã có mục VRF migration).
+
+**🟡 Phát hiện mới, mức độ thấp:** `functions/api/swap.js` không rate-limit/check Origin — ai
+cũng spam gọi được để đốt quota `KIT_KEY` (Circle API), không lấy được tiền (chỉ trả quote, ký
+vẫn cần ví thật). Chưa fix, chưa được yêu cầu fix.
+
+**✅ Sạch:** mọi query D1 đều dùng `.bind()` (không SQL injection), reentrancy guard +
+checks-effects-interactions đúng chuẩn xuyên suốt, không tìm thấy lỗ hổng mất-tiền mới nào
+ngoài 2 điều đã biết ở trên.
+
+---
+
 ## Trạng thái nghỉ 2026-09-07 (trưa) — sweep() "permissionless" chứ chưa từng "tự động"
 
 User sắp thuyết trình, nhờ rà lại quy luật "sau 3 ngày không claim thì tự động bắn tiền
