@@ -16,8 +16,54 @@ hẳn** — đừng nhầm khi tra cứu lịch sử/lệnh cũ trong chat trư�
 **Spec gốc:** [`arc-prize-pool-spec.md`](./arc-prize-pool-spec.md) — đã có trong repo, encoding sạch
 **Database:** Cloudflare D1 `luckypot-history` (đọc qua binding `HISTORY_DB` khai báo trong
 `wrangler.toml` ở gốc repo, ghi bởi `automation/src/indexHistory.ts` chạy trên lịch cron có
-sẵn của `keeper.yml`) — lưu lịch sử Deposited/Withdrawn/Claimed cho "My history". Chi tiết
-đầy đủ ở mục "My history chuyển sang D1" bên dưới.
+sẵn của `keeper.yml`) — lưu lịch sử Deposited/Withdrawn/Won/Claimed cho "My history". `Won` ghi
+ngay lúc event `Drawn` bắn (gross prize, trước khi claim), `Claimed` ghi lúc `Claimed`/`Swept`
+bắn (net, sau 5% referral cut) — 2 dòng riêng, xem mục "Won ghi vào history ngay lúc quay" bên
+dưới. Chi tiết đầy đủ ở mục "My history chuyển sang D1" bên dưới.
+
+---
+
+## Trạng thái nghỉ 2026-09-09 (chiều) — "Won" ghi vào history ngay lúc quay, sửa lệch info icon
+
+User báo "My history vẫn lỗi, chưa thấy hiện lịch sử" + muốn kết quả đã cào ra phải lưu vào
+lịch sử ngay. API/D1 backend thật ra **chạy đúng** (test trực tiếp `curl luckypot.cc/api/history`
+cho nhiều ví đều ra kết quả đúng) — bug thật là **kiến trúc**: `history` table chỉ ghi dòng
+`"Won"` khi event `Claimed`/`Swept` bắn ra (tiền đã thật sự rời contract). Người trúng mà chưa
+bấm Claim thì "My history" đúng là trống trơn về phần thắng đó — không phải lỗi hiển thị, mà là
+chưa từng được ghi. Cào thẻ (`scratchState.ts`) chỉ là animation lưu `localStorage`, không phải
+tx on-chain, nên không thể dùng làm trigger ghi — phải bám vào event `Drawn` (epochId, winners[],
+weeklyYield, resultHash) mới đúng và bền (server-side, không phụ thuộc trình duyệt nào).
+
+**Đã sửa (`automation/src/indexHistory.ts`):** thêm decode event `Drawn`, tự tính lại
+`prizeForRank` y hệt contract (rank 0 = jackpot, còn lại chia đều) để biết prize GROSS của từng
+người trúng ngay từ event này — không cần gọi lại contract. Ghi 1 dòng `"Won"` cho mỗi winner tại
+đúng lúc quay số. Event `Claimed`/`Swept` sau đó đổi tên dòng ghi từ `"Won"` (cũ) sang **`"Claimed"`**
+(net, sau 5% referral cut) — 2 dòng riêng biệt kể đủ câu chuyện 1 lần trúng (trúng bao nhiêu lúc
+quay, nhận về tay bao nhiêu lúc claim) thay vì đè lên nhau.
+
+⚠️ **Đổi PK bảng `history`:** 1 log `Drawn` có thể liệt kê NHIỀU ví trúng khác nhau — khoá cũ
+`(tx_hash, log_index)` không đủ phân biệt (dòng thứ 2 trở đi bị `INSERT OR IGNORE` âm thầm bỏ
+qua). Đổi PK sang **`(tx_hash, log_index, wallet)`**, đã migrate bảng `luckypot-history` sống trên
+D1 (tạo bảng mới → copy → drop → rename → tạo lại index), verify đủ 27→27 dòng không mất dữ liệu.
+Cùng ví trúng 2 rank trong 1 lần quay (hiếm nhưng có thể) được gộp cộng dồn thành 1 dòng trước khi
+insert, tránh trùng PK.
+
+**Verify KHÔNG chỉ đọc code:** tự viết script tạm decode thật event `Drawn` của epoch 2
+(`0x14cc2275...`, block `60869340`) bằng viem, chạy `prizeForRank` y hệt bản mới viết — ra đúng
+**3173076 / 3173077** (gross), khớp 100% với số đã verify tay ở phiên trước (net sau cut là
+3014423/3014424). Đã chạy `npm run index-history` thật trên chain — sạch, không lỗi (không có
+`Drawn` mới nên chưa tạo dòng nào, nhưng code path không crash). Rows lịch sử cũ (2 dòng "Won" từ
+epoch 2, ghi trước khi sửa) giữ nguyên tên cũ — không backfill, chỉ áp dụng cho epoch tương lai vì
+`sync_state` đã lướt qua block cũ rồi, không quét lại.
+
+**Frontend:** `HistoryEntry.type` + `MyHistoryCard.tsx` thêm `"Claimed"`, cả `"Won"` lẫn `"Claimed"`
+đều tô xanh (positive), nhưng đếm số "win" ở header card chỉ tính `"Won"` (đúng số lần trúng thật,
+không đếm đúp lúc claim). Build + deploy `luckypot.cc` thành công.
+
+**Tiện tay sửa luôn:** icon info (ⓘ) cạnh số "0/0 USDC" bị lệch cao — do `align-self: center`
+canh giữa theo hàng có số fs-4 to, trong khi hàng dùng `align-items: baseline`. Đổi sang
+`align-self: baseline` + `top: 0.15em`. Verify bằng screenshot Chrome headless zoom 3x trước/sau,
+gửi ảnh ra Desktop cho user — không đoán mù CSS.
 
 ---
 
