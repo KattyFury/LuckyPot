@@ -37,6 +37,9 @@ const depositedEvent = parseAbiItem(
 const withdrawnEvent = parseAbiItem(
   "event Withdrawn(address indexed user, uint256 amount, uint256 newBalance, bool forfeitedTicket)"
 );
+const drawnEvent = parseAbiItem(
+  "event Drawn(uint256 indexed epochId, address[] winners, uint256 weeklyYield, bytes32 resultHash)"
+);
 const claimedEvent = parseAbiItem(
   "event Claimed(uint256 indexed epochId, address indexed winner, uint256 amount)"
 );
@@ -49,12 +52,26 @@ const referralAccruedEvent = parseAbiItem("event ReferralAccrued(address indexed
 const historyAbi = [
   depositedEvent,
   withdrawnEvent,
+  drawnEvent,
   claimedEvent,
   sweptEvent,
   referrerSetEvent,
   referralPaidEvent,
   referralAccruedEvent,
 ];
+
+// Mirrors LuckyStakerPool.sol's prizeForRank exactly (rank 0 = jackpot) so the
+// Drawn event alone is enough to know each winner's gross prize, without a
+// contract call. Gross, not net - the 5% referral cut is only known once
+// _settle() actually runs at claim/sweep time, which is why 'Won' (this) and
+// 'Claimed' (below) are two separate history rows instead of one.
+function prizeForRank(rank: number, numWinners: number, weeklyPrizePool: bigint): bigint {
+  if (numWinners === 0) return 0n;
+  if (numWinners === 1) return rank === 0 ? weeklyPrizePool : 0n;
+  const jackpot = weeklyPrizePool / 2n;
+  if (rank === 0) return jackpot;
+  return (weeklyPrizePool - jackpot) / BigInt(numWinners - 1);
+}
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -84,7 +101,7 @@ async function getLogsWithRetry(fromBlock: bigint, toBlock: bigint, attempt = 0)
 
 type Row = {
   wallet: string;
-  type: "Deposited" | "Withdrawn" | "Won";
+  type: "Deposited" | "Withdrawn" | "Won" | "Claimed";
   amount: string;
   blockNumber: string;
   txHash: `0x${string}`;
@@ -136,12 +153,36 @@ function toRows(logs: Log[]): { history: Row[]; referrals: ReferralRow[]; earnin
         logIndex: log.logIndex!,
         timestamp,
       });
+    } else if (log.eventName === "Drawn") {
+      const args = log.args as { winners: `0x${string}`[]; weeklyYield: bigint };
+      const numWinners = args.winners.length;
+      // A wallet can land more than one rank in the same draw (independent
+      // weighted picks) - sum into one row per wallet instead of colliding on
+      // the same (txHash, logIndex, wallet) primary key.
+      const byWallet = new Map<string, bigint>();
+      args.winners.forEach((winner, rank) => {
+        const prize = prizeForRank(rank, numWinners, args.weeklyYield);
+        if (prize === 0n) return;
+        const w = winner.toLowerCase();
+        byWallet.set(w, (byWallet.get(w) ?? 0n) + prize);
+      });
+      for (const [wallet, amount] of byWallet) {
+        history.push({
+          wallet,
+          type: "Won",
+          amount: amount.toString(),
+          blockNumber: log.blockNumber!.toString(),
+          txHash,
+          logIndex: log.logIndex!,
+          timestamp,
+        });
+      }
     } else if (log.eventName === "Claimed" || log.eventName === "Swept") {
       const args = log.args as { winner: `0x${string}`; amount: bigint };
       const winner = args.winner.toLowerCase();
       history.push({
         wallet: winner,
-        type: "Won",
+        type: "Claimed",
         amount: args.amount.toString(),
         blockNumber: log.blockNumber!.toString(),
         txHash,

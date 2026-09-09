@@ -16,7 +16,9 @@ function InfoButton({ label, onClick }: { label: string; onClick: () => void }) 
         lineHeight: 0,
         display: "inline-flex",
         alignItems: "center",
-        alignSelf: "center",
+        alignSelf: "baseline",
+        position: "relative",
+        top: "0.15em",
         flex: "none",
       }}
     >

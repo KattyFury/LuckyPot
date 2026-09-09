@@ -1,7 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 
 export type HistoryEntry = {
-  type: "Deposited" | "Withdrawn" | "Won";
+  // "Won" is recorded off the Drawn event (gross prize) the moment an epoch
+  // draws, so a win shows up here even before the winner claims. "Claimed" is
+  // the later Claimed/Swept event (net, after the 5% referral cut) - the two
+  // rows tell the full story of one win instead of one overwriting the other.
+  type: "Deposited" | "Withdrawn" | "Won" | "Claimed";
   amount: bigint;
   blockNumber: bigint;
   timestamp: number;

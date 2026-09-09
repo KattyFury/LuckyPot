@@ -32,13 +32,17 @@ export function MyHistoryList({ entries, connected }: { entries: HistoryEntry[];
   return (
     <>
       {entries.map((entry, i) => {
-        const won = entry.type === "Won";
+        // Both are money-in-your-favor events - "Won" fires the moment the
+        // epoch draws (gross prize), "Claimed" when it actually lands in the
+        // wallet (net, after the 5% referral cut). Same green treatment for
+        // both; "Won" alone is what the header's win count below is about.
+        const positive = entry.type === "Won" || entry.type === "Claimed";
         return (
           <div key={i} className="card-list__row">
             <span style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0 }}>
               <span
                 className="pair"
-                style={{ fontWeight: won ? 700 : 600, color: won ? "var(--color-primary)" : undefined }}
+                style={{ fontWeight: positive ? 700 : 600, color: positive ? "var(--color-primary)" : undefined }}
               >
                 {entry.type}
               </span>
@@ -51,7 +55,7 @@ export function MyHistoryList({ entries, connected }: { entries: HistoryEntry[];
             </span>
             <span
               className="num pair"
-              style={{ fontWeight: 600, color: won ? "var(--color-primary)" : undefined }}
+              style={{ fontWeight: 600, color: positive ? "var(--color-primary)" : undefined }}
             >
               {amount(entry.amount)}
             </span>

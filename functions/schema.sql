@@ -2,15 +2,23 @@
 -- (runs on the keeper's existing 6-hour GitHub Actions schedule) and read by
 -- functions/api/history.js. Addresses are stored lowercase throughout so
 -- lookups don't need a case-insensitive comparison.
+--
+-- 'Won' is recorded straight off the Drawn event (gross prizeForRank, before
+-- the 5% referral cut) so a win shows up in history the moment the epoch is
+-- drawn - not only once the winner claims. 'Claimed' is the later Claimed/
+-- Swept event (net amount, after the cut) - the two rows tell the full story
+-- of the same win instead of one overwriting the other. Wallet is part of
+-- the primary key (not just tx_hash+log_index) because a single Drawn event
+-- carries one log but can name several distinct winner wallets.
 CREATE TABLE IF NOT EXISTS history (
   wallet TEXT NOT NULL,
-  type TEXT NOT NULL,          -- 'Deposited' | 'Withdrawn' | 'Won'
+  type TEXT NOT NULL,          -- 'Deposited' | 'Withdrawn' | 'Won' | 'Claimed'
   amount TEXT NOT NULL,        -- base units (6 decimals), as a string - too big for a JS/SQLite number
   block_number TEXT NOT NULL,  -- string for the same reason
   tx_hash TEXT NOT NULL,
   log_index INTEGER NOT NULL,
   timestamp INTEGER NOT NULL,
-  PRIMARY KEY (tx_hash, log_index)
+  PRIMARY KEY (tx_hash, log_index, wallet)
 );
 CREATE INDEX IF NOT EXISTS idx_history_wallet ON history (wallet);
 
