@@ -20,6 +20,67 @@ sẵn của `keeper.yml`) — lưu lịch sử Deposited/Withdrawn/Won/Claimed c
 ngay lúc event `Drawn` bắn (gross prize, trước khi claim), `Claimed` ghi lúc `Claimed`/`Swept`
 bắn (net, sau 5% referral cut) — 2 dòng riêng, xem mục "Won ghi vào history ngay lúc quay" bên
 dưới. Chi tiết đầy đủ ở mục "My history chuyển sang D1" bên dưới.
+**Ngôn ngữ:** toggle **EN|VI** ở navbar (cạnh Enter App/Connect Wallet), dịch toàn bộ landing +
+app **trừ** `AdminPage.tsx` (tool nội bộ) và **trừ** giá trị countdown (`formatCountdown`, "4d
+16h 10m 28s" — chủ ý giữ nguyên, chỉ nhãn "Draw in"/"Quay số sau" quanh nó mới dịch). Xem mục
+"Thêm toggle EN|VI" bên dưới.
+
+---
+
+## Trạng thái nghỉ 2026-09-09 (tối) — thêm toggle EN|VI cho landing + app
+
+User yêu cầu 2 việc: (1) toggle EN|VI cạnh nút Enter App/Connect Wallet, dịch cả trang, riêng
+countdown giữ nguyên; (2) nhân tiện chỉnh lệch icon info (đã làm ở mục ngay dưới, cùng phiên).
+
+**Kiến trúc React app** (`frontend/src/i18n/`):
+- `en.ts` — dictionary gốc, tất cả string/hàm string thuần (KHÔNG chứa JSX — style/`<strong>`
+  vẫn nằm ở component, dictionary chỉ trả text để tránh trùng lặp style object).
+- `vi.ts` — cùng shape, ép kiểu bằng `satisfies typeof en` nên thiếu key là lỗi biên dịch, không
+  bao giờ âm thầm rơi về tiếng Anh.
+- `LanguageContext.tsx` — context React y hệt pattern `TokenUnitProvider` có sẵn (`config/
+  tokenUnit.tsx`), persist vào `localStorage` key **`luckypot:lang`**.
+- `useT()` trả nguyên dictionary của ngôn ngữ đang chọn; mọi component gọi `const t = useT()`.
+- Câu có số/chữ đậm chen giữa (VD "This week's yield goes to **3** winners out of **50**
+  players...") được tách thành nhiều key nhỏ (`summaryBefore`/`summaryMiddle`/`summaryAfter`)
+  đúng y cách JSX gốc đã tách bằng `{" "}`, KHÔNG viết JSX trong dictionary.
+- Số ít/nhiều tiếng Anh (`plural()` cũ) thay bằng hàm `t.common.winnerWord(n)` kiểu — tiếng Việt
+  không chia số nên hàm VI bỏ qua tham số, nhưng vẫn giữ chữ ký `(n) => string` để 2 ngôn ngữ
+  dùng chung 1 call site.
+- Ngày trong "My history" (`MyHistoryCard.tsx`) đổi theo `t.common.dateLocale` (`en-US`/`vi-VN`)
+  — số tiền/USDC thì CỐ Ý giữ nguyên định dạng en-US ở cả 2 ngôn ngữ (quy ước phổ biến khi hiển
+  thị stablecoin USD trong app crypto Việt, tránh gây hiểu lầm dấu phẩy/chấm).
+- `entry.type` (`"Won"`/`"Claimed"`/...) là GIÁ TRỊ DỮ LIỆU từ D1, không đổi — chỉ hiển thị qua
+  `t.myHistory.typeLabels[entry.type]`, so sánh logic (`=== "Won"`) vẫn dùng string gốc.
+- `ScratchCanvas.tsx` vẽ chữ "Scratch to reveal" bằng Canvas 2D `fillText` (không phải DOM text)
+  nên không tự đổi ngôn ngữ qua CSS/props re-render — thêm prop `prompt`, `ResultModal.tsx`
+  truyền `t.scratch.prompt` vào lúc mount. Chưa xử lý trường hợp đổi ngôn ngữ NGAY khi canvas
+  đang mở (hiếm, chấp nhận được).
+- **Cố ý bỏ qua `AdminPage.tsx`** — tool nội bộ, không có giá trị dịch, giữ nguyên tiếng Anh để
+  không tốn công vô ích. Nếu sau này cần dịch thì làm riêng, không nằm trong scope lần này.
+
+**Landing page** (`frontend/landing/index.html`, HTML/JS thuần, không qua Vite build):
+- Dictionary song song viết tay bằng JS thuần (`LANG.en`/`LANG.vi`), áp dụng qua `el.innerHTML`
+  (không phải `textContent`) để giữ nguyên `<strong>`/`<code>` trong vài đoạn.
+- Toggle dùng chung `localStorage` key `luckypot:lang` với app React — chọn ngôn ngữ ở 1 nơi thì
+  nơi kia cũng nhớ, dù 2 trang không chung 1 lần build.
+- Style pill toggle copy tay từ `.token-toggle` trong `global.css` (landing không import CSS của
+  app, phải tự chép — đã ghi rõ trong comment).
+- Live-stat (`Total pool`/`Last winner`/...) đọc thẳng từ chain qua 1 script `type="module"`
+  riêng — phần chữ tĩnh dịch qua `data-i18n`, còn 2 fallback "no winner"/"–" nằm trong dữ liệu
+  fetch async nên phải tách riêng: lưu kết quả fetch vào biến `lastResult`, expose hàm
+  `window.__renderLiveStats()` để toggle gọi lại render đúng ngôn ngữ mới mà KHÔNG cần fetch lại
+  chain.
+
+**Thuật ngữ tiếng Việt bám theo cách chính user đã viết về dự án này** (PROJECT.md/HANDOFF.md
+tiếng Việt sẵn có) — "gửi tiền"/"rút tiền" chứ không dịch cứng "deposit"/"withdraw", "kỳ" cho
+epoch, giữ nguyên "pool" như từ mượn (đúng cách PROJECT.md tự dùng).
+
+**Đã verify bằng screenshot thật** (Chrome headless), KHÔNG chỉ đọc code — cả landing lẫn app,
+cả 2 ngôn ngữ, xác nhận: toggle đổi đúng, countdown "0d 0h 0m 0s" giữ nguyên không dịch, chữ có
+`<strong>` không bị vỡ định dạng khi đổi ngôn ngữ. Gate check: grep toàn bộ file đã sửa tìm chuỗi
+tiếng Anh cứng còn sót — sạch, không có JSX text node nào lọt lưới.
+
+Build + deploy `luckypot.cc` thành công. Đã commit + push (`de13cca`).
 
 ---
 
