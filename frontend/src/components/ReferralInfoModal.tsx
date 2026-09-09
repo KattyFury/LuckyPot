@@ -4,7 +4,8 @@ import { poolAbi, POOL_ADDRESS } from "../lib/contract";
 import { usePendingReferral } from "../hooks/usePoolData";
 import { useReferralSummary } from "../hooks/useReferralSummary";
 import { useAmount } from "../config/tokenUnit";
-import { plural, shortAddress } from "../lib/format";
+import { shortAddress } from "../lib/format";
+import { useT } from "../i18n/LanguageContext";
 import { Modal } from "./Modal";
 
 export function ReferralInfoModal({ onClose }: { onClose: () => void }) {
@@ -12,6 +13,7 @@ export function ReferralInfoModal({ onClose }: { onClose: () => void }) {
   const { data: pendingRef } = usePendingReferral(address);
   const { data: summary } = useReferralSummary(address);
   const fmt = useAmount();
+  const t = useT();
   const [copied, setCopied] = useState(false);
 
   const { writeContract, data: hash, isPending } = useWriteContract();
@@ -27,12 +29,12 @@ export function ReferralInfoModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <Modal title="Invite & Earn" onClose={onClose}>
+    <Modal title={t.referral.modalTitle} onClose={onClose}>
       <div style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)", lineHeight: 1.5 }}>
         <p>
-          The platform takes a 5% fee on every prize won — 2.5% funds the reserve pool, 2.5% goes toward running
-          and growing the ecosystem. Invite a friend, though, and that second 2.5% is paid straight to{" "}
-          <strong style={{ color: "var(--color-text)" }}>your wallet</strong> instead, every time they win.
+          {t.referral.feeExplanationPart1}{" "}
+          <strong style={{ color: "var(--color-text)" }}>{t.referral.feeExplanationBold}</strong>{" "}
+          {t.referral.feeExplanationPart2}
         </p>
       </div>
 
@@ -64,21 +66,21 @@ export function ReferralInfoModal({ onClose }: { onClose: () => void }) {
         </div>
       ) : (
         <div style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>
-          Connect your wallet to get your personal invite link.
+          {t.referral.connectPrompt}
         </div>
       )}
 
       {pendingRef !== undefined && (pendingRef as bigint) > 0n && (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <span style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>
-            Unclaimed referral earnings: <strong style={{ color: "var(--color-text)" }}>{fmt(pendingRef as bigint)}</strong>
+            {t.referral.unclaimedLabel} <strong style={{ color: "var(--color-text)" }}>{fmt(pendingRef as bigint)}</strong>
           </span>
           <button
             className="pill-button pill-button--accent"
             disabled={isPending || isConfirming}
             onClick={() => writeContract({ address: POOL_ADDRESS, abi: poolAbi, functionName: "claimReferral" })}
           >
-            {isPending || isConfirming ? "Claiming..." : "Claim"}
+            {isPending || isConfirming ? t.common.claiming : t.common.claim}
           </button>
         </div>
       )}
@@ -90,14 +92,14 @@ export function ReferralInfoModal({ onClose }: { onClose: () => void }) {
             style={{ height: "auto", padding: "0 0 10px", boxShadow: "none", borderBottom: "1px solid var(--color-line)" }}
           >
             <span>
-              {summary?.referredCount ?? 0} {plural(summary?.referredCount ?? 0, "referral")}
+              {summary?.referredCount ?? 0} {t.common.referralWord(summary?.referredCount ?? 0)}
             </span>
-            <span className="num">Total earned: {fmt(summary?.totalEarned ?? 0n)}</span>
+            <span className="num">{t.referral.totalEarned} {fmt(summary?.totalEarned ?? 0n)}</span>
           </div>
           <div>
             {(summary?.referred.length ?? 0) === 0 ? (
               <div style={{ padding: "12px 0", fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>
-                Nobody yet — share your link above.
+                {t.referral.nobodyYet}
               </div>
             ) : (
               summary!.referred.map((r) => (

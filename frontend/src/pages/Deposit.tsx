@@ -6,6 +6,7 @@ import { poolAbi, POOL_ADDRESS, USDC_ADDRESS } from "../lib/contract";
 import { encodeAggregate3, MULTICALL3_FROM_ADDRESS } from "../lib/multicall3From";
 import { useReferrer, useUserPosition } from "../hooks/usePoolData";
 import { useAmount } from "../config/tokenUnit";
+import { useT } from "../i18n/LanguageContext";
 import { useCloseOnSuccess } from "../hooks/useCloseOnSuccess";
 import { clearPendingReferrer, getPendingReferrer } from "../lib/referralState";
 import { Modal } from "../components/Modal";
@@ -18,6 +19,7 @@ export function DepositModal({ onClose }: { onClose: () => void }) {
   const walletBalance = (position?.[3]?.result as bigint | undefined) ?? 0n;
   const { data: existingReferrer } = useReferrer(address);
   const fmt = useAmount();
+  const t = useT();
 
   const [amount, setAmount] = useState("");
   const { sendTransaction, data: hash, isPending, error } = useSendTransaction();
@@ -75,14 +77,14 @@ export function DepositModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <Modal title="Deposit" onClose={onClose}>
+    <Modal title={t.common.deposit} onClose={onClose}>
 
         <div style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>
-          Wallet balance: <strong style={{ color: "var(--color-text)" }}>{fmt(walletBalance)}</strong>
+          {t.common.walletBalance} <strong style={{ color: "var(--color-text)" }}>{fmt(walletBalance)}</strong>
         </div>
 
         <div>
-          <label style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>Amount (USDC)</label>
+          <label style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>{t.common.amountUsdcLabel}</label>
           <div
             style={{
               display: "flex",
@@ -122,14 +124,13 @@ export function DepositModal({ onClose }: { onClose: () => void }) {
                 color: "var(--color-primary)",
               }}
             >
-              MAX
+              {t.common.max}
             </button>
           </div>
         </div>
 
         <div style={{ fontSize: "var(--fs-1)" }}>
-          Tickets you'll receive once this sits in the pool from this epoch's start to its
-          end: <strong>{amount || "0"}</strong>
+          {t.deposit.ticketsPreview} <strong>{amount || "0"}</strong>
         </div>
 
         <button
@@ -137,7 +138,7 @@ export function DepositModal({ onClose }: { onClose: () => void }) {
           disabled={amountBase <= 0n || amountBase > walletBalance || isPending || isConfirming}
           onClick={handleConfirm}
         >
-          {isPending || isConfirming ? "Confirming..." : "Confirm"}
+          {isPending || isConfirming ? t.common.confirming : t.common.confirm}
         </button>
 
         {error && <div style={{ color: "#c0392b", fontSize: "var(--fs-1)" }}>{error.message.slice(0, 200)}</div>}

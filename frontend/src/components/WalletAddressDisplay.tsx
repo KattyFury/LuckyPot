@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { shortAddress } from "../lib/format";
+import { useT } from "../i18n/LanguageContext";
 
 export function WalletAddressDisplay({
   address,
@@ -18,6 +19,7 @@ export function WalletAddressDisplay({
   onMyReferral: () => void;
   onDisconnect: () => void;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -56,7 +58,7 @@ export function WalletAddressDisplay({
         <span className="num">{shortAddress(address)}</span>
         <span
           className={copied ? "icon icon-check" : "icon icon-copy"}
-          title="Copy address"
+          title={t.common.copyAddress}
           onClick={(e) => {
             e.stopPropagation();
             navigator.clipboard.writeText(address);
@@ -69,13 +71,13 @@ export function WalletAddressDisplay({
 
       {open && (
         <div className="wallet-menu">
-          <button onClick={() => pick(onDeposit)}>Deposit</button>
-          <button onClick={() => pick(onWithdraw)}>Withdraw</button>
-          <button onClick={() => pick(onDrawHistory)}>Draw history</button>
-          <button onClick={() => pick(onMyHistory)}>My history</button>
-          <button onClick={() => pick(onMyReferral)}>My referral</button>
+          <button onClick={() => pick(onDeposit)}>{t.common.deposit}</button>
+          <button onClick={() => pick(onWithdraw)}>{t.common.withdraw}</button>
+          <button onClick={() => pick(onDrawHistory)}>{t.common.drawHistory}</button>
+          <button onClick={() => pick(onMyHistory)}>{t.common.myHistory}</button>
+          <button onClick={() => pick(onMyReferral)}>{t.common.myReferral}</button>
           <button className="is-danger" onClick={() => pick(onDisconnect)}>
-            Disconnect
+            {t.common.disconnect}
           </button>
         </div>
       )}

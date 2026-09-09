@@ -7,6 +7,7 @@ import { arcTestnet } from "../chains/arcTestnet";
 import { encodeAggregate3, MULTICALL3_FROM_ADDRESS } from "../lib/multicall3From";
 import { buildSwapCalls, type SwapIntent } from "../lib/swapAdapter";
 import { AnnouncementBanner } from "./AnnouncementBanner";
+import { useT } from "../i18n/LanguageContext";
 
 const EURC_ADDRESS = "0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a" as const;
 const CIRBTC_ADDRESS = "0xf0c4a4ce82a5746abaad9425360ab04fbba432bf" as const;
@@ -36,6 +37,7 @@ async function fetchIntent(
 export function FaucetOrSellBanner() {
   const { address } = useAccount();
   const config = useConfig();
+  const t = useT();
   const { data: balances } = useReadContracts({
     contracts: address
       ? [
@@ -100,7 +102,7 @@ export function FaucetOrSellBanner() {
     // token IS USDC, so a wallet holding EURC/cirBTC but no USDC can't pay for
     // the swap that would get it any. A fresh Privy embedded wallet lands here.
     if (usdcBal === 0n) {
-      setError("This wallet has no USDC, and USDC is the gas token on Arc — faucet some first, then sell.");
+      setError(t.faucet.noUsdcError);
       return;
     }
     try {
@@ -113,7 +115,7 @@ export function FaucetOrSellBanner() {
         await swapLeg("cirBTC", CIRBTC_ADDRESS, cirbtcBal);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "sell failed");
+      setError(e instanceof Error ? e.message : t.faucet.sellFailed);
     } finally {
       setStatus("idle");
     }
@@ -122,10 +124,10 @@ export function FaucetOrSellBanner() {
   if (showSellBanner) {
     const text =
       status === "eurc"
-        ? "Selling EURC..."
+        ? t.faucet.sellingEurc
         : status === "cirbtc"
-          ? "Selling cirBTC..."
-          : "Click here to sell EURC and cirBTC to USDC";
+          ? t.faucet.sellingCirbtc
+          : t.faucet.clickToSell;
     return (
       <div style={{ position: "relative", height: "100%" }}>
         <AnnouncementBanner text={text} onClick={handleSell} status={status !== "idle"} />
@@ -157,8 +159,8 @@ export function FaucetOrSellBanner() {
 
   return (
     <AnnouncementBanner
-      lead="If you faucet EURC & cirBTC too, I can help turn them into USDC."
-      text="Tap here to faucet."
+      lead={t.faucet.lead}
+      text={t.faucet.tapToFaucet}
       href="https://faucet.circle.com"
       onClick={() => {
         if (address) navigator.clipboard.writeText(address);

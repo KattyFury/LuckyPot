@@ -1,5 +1,6 @@
-import { plural, shortAddress } from "../lib/format";
+import { shortAddress } from "../lib/format";
 import { useAmount } from "../config/tokenUnit";
+import { useT } from "../i18n/LanguageContext";
 import { prizeForRank } from "../lib/prize";
 import { Modal } from "./Modal";
 import type { EpochData } from "../hooks/usePoolData";
@@ -19,24 +20,26 @@ export function EpochDetailModal({
   onClose: () => void;
 }) {
   const amount = useAmount();
+  const t = useT();
   const mine = myAddress?.toLowerCase();
 
   return (
-    <Modal title={`Epoch #${epochId.toString().padStart(2, "0")}`} onClose={onClose}>
+    <Modal title={`${t.common.epochWord} #${epochId.toString().padStart(2, "0")}`} onClose={onClose}>
       <div style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>
-        Eligible pool:{" "}
+        {t.epochDetail.eligiblePool}{" "}
         <strong style={{ color: "var(--color-text)" }}>
           {amount(epoch.eligiblePoolSnapshot)}/{epoch.eligibleParticipants.toString()}{" "}
-          {plural(epoch.eligibleParticipants, "depositor")}
+          {t.common.depositorWord(epoch.eligibleParticipants)}
         </strong>{" "}
-        &nbsp;·&nbsp; Weekly yield:{" "}
-        <strong style={{ color: "var(--color-text)" }}>{amount(epoch.weeklyYield)}</strong> &nbsp;·&nbsp; Winners:{" "}
+        &nbsp;·&nbsp; {t.epochDetail.weeklyYield}{" "}
+        <strong style={{ color: "var(--color-text)" }}>{amount(epoch.weeklyYield)}</strong> &nbsp;·&nbsp;{" "}
+        {t.epochDetail.winners}{" "}
         <strong style={{ color: "var(--color-text)" }}>{epoch.numWinners.toString()}</strong>
       </div>
 
       {epoch.winners.length === 0 ? (
         <div style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>
-          No winners this epoch – not enough participants or yield funded yet.
+          {t.epochDetail.noWinners}
         </div>
       ) : (
         <div
@@ -48,7 +51,7 @@ export function EpochDetailModal({
               <>
                 <span>
                   <span style={{ color: isMine ? "rgba(4, 23, 14, 0.65)" : "var(--color-text-faint)" }}>#{i + 1}</span>{" "}
-                  {isMine ? "You" : shortAddress(winner)}
+                  {isMine ? t.common.you : shortAddress(winner)}
                 </span>
                 <span style={{ fontWeight: 700 }}>
                   {amount(prizeForRank(i, epoch.numWinners, epoch.weeklyYield))}

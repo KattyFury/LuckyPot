@@ -110,6 +110,20 @@
   .icon-down { -webkit-mask-image: url("icons/down.svg"); mask-image: url("icons/down.svg"); }
   .icon-chevron { -webkit-mask-image: url("icons/down2.svg"); mask-image: url("icons/down2.svg"); }
 
+  /* EN|VI toggle - same pill component as the app's TokenToggle.tsx
+     (frontend/src/components/TokenToggle.tsx + .token-toggle in global.css),
+     copied by hand since this page isn't part of the Vite build. */
+  .token-toggle {
+    display: inline-flex; align-items: center; border-radius: 999px;
+    background: var(--color-elevated); border: 1px solid var(--color-line); padding: 2px;
+  }
+  .token-toggle button {
+    padding: 3px 8px; border-radius: 999px; background: none; border: none;
+    color: var(--color-text-faint); font-size: var(--fs-0); font-weight: 600;
+    line-height: 1.2; white-space: nowrap; font-family: inherit; cursor: pointer;
+  }
+  .token-toggle button.is-active { background: var(--color-text); color: var(--color-surface); }
+
   /* Navbar – same look as the app's (Navbar.tsx / global.css), sticky since
      this page scrolls. nav.top stays full-bleed (background only) so it fully
      covers scrolling content; .nav-inner uses MARGIN (not padding) for its
@@ -291,134 +305,140 @@
   <nav class="top">
     <div class="nav-inner">
       <span class="brand"><img src="logo-full-dark.svg" alt="LuckyPot" /></span>
-      <a class="enter-app" href="/app/">Enter App</a>
+      <span style="display:flex;align-items:center;gap:10px;">
+        <span class="token-toggle" role="group" aria-label="Language" id="lang-toggle">
+          <button type="button" data-lang="en">EN</button>
+          <button type="button" data-lang="vi">VI</button>
+        </span>
+        <a class="enter-app" href="/app/" data-i18n="enterApp">Enter App</a>
+      </span>
     </div>
   </nav>
 
   <main>
     <section class="hero" style="border-top: none;">
-      <h1 class="condensed prose">
+      <h1 class="condensed prose" data-i18n="heroH1">
         Deposit USDC, hold it through a <strong>full epoch</strong>, and you're in the draw.
         The winners take the week's yield – everyone else loses nothing; <strong>their full principal remains intact</strong>.
       </h1>
       <div class="cta-row">
-        <a class="btn-primary" href="/app/">Enter App</a>
-        <a class="btn-secondary" href="#how-it-works">How it works <span class="icon icon-down"></span></a>
+        <a class="btn-primary" href="/app/" data-i18n="enterApp">Enter App</a>
+        <a class="btn-secondary" href="#how-it-works"><span data-i18n="howItWorks">How it works</span> <span class="icon icon-down"></span></a>
       </div>
     </section>
 
     <section id="how-it-works">
-      <h2>How it works</h2>
+      <h2 data-i18n="howItWorks">How it works</h2>
       <ol class="steps">
-        <li><span class="num">1</span><span>Deposit USDC into the pool.</span></li>
-        <li><span class="num">2</span><span>Hold it through a full epoch – Monday 00:00 UTC to the next Monday 00:00 UTC. That's what turns it into a ticket.</span></li>
-        <li><span class="num">3</span><span>At week's end, a winner is drawn – verifiable on-chain, nobody (not even the admin) can pick who wins ahead of time.</span></li>
-        <li><span class="num">4</span><span>Won? Scratch the card to claim. Didn't win? Withdraw your principal – any time, no conditions.</span></li>
+        <li><span class="num">1</span><span data-i18n="step1">Deposit USDC into the pool.</span></li>
+        <li><span class="num">2</span><span data-i18n="step2">Hold it through a full epoch – Monday 00:00 UTC to the next Monday 00:00 UTC. That's what turns it into a ticket.</span></li>
+        <li><span class="num">3</span><span data-i18n="step3">At week's end, a winner is drawn – verifiable on-chain, nobody (not even the admin) can pick who wins ahead of time.</span></li>
+        <li><span class="num">4</span><span data-i18n="step4">Won? Scratch the card to claim. Didn't win? Withdraw your principal – any time, no conditions.</span></li>
       </ol>
     </section>
 
     <section id="live">
-      <h2>Live right now</h2>
+      <h2 data-i18n="liveNow">Live right now</h2>
       <div class="live-card">
         <div class="live-grid">
           <div class="live-stat">
-            <div class="label"><span class="live-dot"></span>Total pool</div>
+            <div class="label"><span class="live-dot"></span><span data-i18n="totalPool">Total pool</span></div>
             <div class="value num" id="stat-pool">…</div>
           </div>
           <div class="live-stat">
-            <div class="label">Current epoch</div>
+            <div class="label" data-i18n="currentEpoch">Current epoch</div>
             <div class="value num" id="stat-epoch">…</div>
           </div>
           <div class="live-stat">
-            <div class="label">Last winner</div>
+            <div class="label" data-i18n="lastWinner">Last winner</div>
             <div class="value num" id="stat-winner">…</div>
           </div>
           <div class="live-stat">
-            <div class="label">Last prize</div>
+            <div class="label" data-i18n="lastPrize">Last prize</div>
             <div class="value num" id="stat-prize">…</div>
           </div>
         </div>
-        <div class="live-note">Read directly from the contract on Arc Testnet – not a screenshot, not a static number.</div>
+        <div class="live-note" data-i18n="liveNote">Read directly from the contract on Arc Testnet – not a screenshot, not a static number.</div>
       </div>
     </section>
 
     <section id="deep-dive">
-      <h2>Learn more</h2>
+      <h2 data-i18n="learnMore">Learn more</h2>
 
       <details class="deep">
-        <summary><span class="icon icon-chevron"></span>Tickets &amp; the draw</summary>
+        <summary><span class="icon icon-chevron"></span><span data-i18n="deep1Summary">Tickets &amp; the draw</span></summary>
         <div class="body">
-          <p>Every USDC you deposit becomes ticket weight proportional to your share of the pool.</p>
-          <p>You only have a ticket once your deposit has sat in the pool for a full epoch – and an epoch is a fixed calendar week, Monday 00:00 UTC to the next Monday 00:00 UTC, not any rolling seven days. Deposit on a Wednesday and it waits out the rest of that epoch, becomes a ticket at Monday's boundary, and runs for the epoch after. Withdraw mid-epoch and you forfeit that epoch's ticket – never your money.</p>
-          <p>Randomness is two-layer commit-reveal: the keeper commits a hashed secret at the start of the week, reveals it at the end, and it's mixed with a future blockhash unknowable at commit time – so nobody, not even the keeper or the admin, can predict or steer the outcome.</p>
+          <p data-i18n="deep1P1">Every USDC you deposit becomes ticket weight proportional to your share of the pool.</p>
+          <p data-i18n="deep1P2">You only have a ticket once your deposit has sat in the pool for a full epoch – and an epoch is a fixed calendar week, Monday 00:00 UTC to the next Monday 00:00 UTC, not any rolling seven days. Deposit on a Wednesday and it waits out the rest of that epoch, becomes a ticket at Monday's boundary, and runs for the epoch after. Withdraw mid-epoch and you forfeit that epoch's ticket – never your money.</p>
+          <p data-i18n="deep1P3">Randomness is two-layer commit-reveal: the keeper commits a hashed secret at the start of the week, reveals it at the end, and it's mixed with a future blockhash unknowable at commit time – so nobody, not even the keeper or the admin, can predict or steer the outcome.</p>
         </div>
       </details>
 
       <details class="deep">
-        <summary><span class="icon icon-chevron"></span>Yield</summary>
+        <summary><span class="icon icon-chevron"></span><span data-i18n="deep2Summary">Yield</span></summary>
         <div class="body">
-          <pre>aprBps          = variable, read from the current yield source
+          <pre data-i18n="deep2Pre">aprBps          = variable, read from the current yield source
                 (USDC ~6%/year, $ARC ~3%/year – staking is
                 safer than lending, so it pays less)
 realYieldEarned = totalPool × aprBps / 10000 / 52
 weeklyPrizePool = eligibleBalance × aprBps / 10000 / 52
 surplus         = realYieldEarned − weeklyPrizePool → flows to the vault</pre>
-          <p><strong>Why only <code>eligibleBalance</code>, not the whole pool?</strong> The draw runs once an epoch, and only money that sat through the whole of that epoch has a ticket in it. The prize has to be computed on that exact same slice – not the whole pool – because counting fresh mid-week deposits would inflate the prize for people who don't yet have a shot at winning it. The yield those fresh deposits still earn is real – it just isn't split with anyone that week, so it flows into the vault instead.</p>
+          <p data-i18n="deep2P1"><strong>Why only <code>eligibleBalance</code>, not the whole pool?</strong> The draw runs once an epoch, and only money that sat through the whole of that epoch has a ticket in it. The prize has to be computed on that exact same slice – not the whole pool – because counting fresh mid-week deposits would inflate the prize for people who don't yet have a shot at winning it. The yield those fresh deposits still earn is real – it just isn't split with anyone that week, so it flows into the vault instead.</p>
         </div>
       </details>
 
       <details class="deep">
-        <summary><span class="icon icon-chevron"></span>Splitting the prize</summary>
+        <summary><span class="icon icon-chevron"></span><span data-i18n="deep3Summary">Splitting the prize</span></summary>
         <div class="body">
-          <pre>numWinners = max(1, floor(sqrt(eligibleBalance / 1000)))
+          <pre data-i18n="deep3Pre">numWinners = max(1, floor(sqrt(eligibleBalance / 1000)))
 
 numWinners = 1:  winner takes 100% of weeklyPrizePool
 numWinners > 1:  1st place takes 50%, the rest splits evenly
                 among (numWinners − 1) people</pre>
-          <p>Winner count and prize size scale automatically with pool size – no fixed thresholds, no contract changes needed as the pool grows.</p>
+          <p data-i18n="deep3P1">Winner count and prize size scale automatically with pool size – no fixed thresholds, no contract changes needed as the pool grows.</p>
         </div>
       </details>
 
       <details class="deep">
-        <summary><span class="icon icon-chevron"></span>Claiming</summary>
+        <summary><span class="icon icon-chevron"></span><span data-i18n="deep4Summary">Claiming</span></summary>
         <div class="body">
-          <pre>cut = prize × 5%
+          <pre data-i18n="deep4Pre">cut = prize × 5%
 has a referrer → referrer gets the cut
 no referrer    → cut splits evenly into vaultReserve / vaultDev</pre>
         </div>
       </details>
 
       <details class="deep">
-        <summary><span class="icon icon-chevron"></span>The vault</summary>
+        <summary><span class="icon icon-chevron"></span><span data-i18n="deep5Summary">The vault</span></summary>
         <div class="body">
-          <p><strong>vaultReserve</strong> – withdrawable only while the contract is paused, reserved for compensating an incident (a hack, a bug that loses funds). There's no way to withdraw it for any other purpose.</p>
-          <p><strong>vaultDev</strong> – withdrawable normally, funds ongoing costs: servers, community, marketing.</p>
+          <p data-i18n="deep5P1"><strong>vaultReserve</strong> – withdrawable only while the contract is paused, reserved for compensating an incident (a hack, a bug that loses funds). There's no way to withdraw it for any other purpose.</p>
+          <p data-i18n="deep5P2"><strong>vaultDev</strong> – withdrawable normally, funds ongoing costs: servers, community, marketing.</p>
         </div>
       </details>
 
       <details class="deep">
-        <summary><span class="icon icon-chevron"></span>Where the yield comes from (once Arc has real DeFi)</summary>
+        <summary><span class="icon icon-chevron"></span><span data-i18n="deep6Summary">Where the yield comes from (once Arc has real DeFi)</span></summary>
         <div class="body">
-          <p>Spread across multiple reputable lending markets (Aave, Morpho, Compound...) instead of concentrated in one – if one has an issue, only that slice is affected; the vault and the rest of the yield sources keep standing. Today (no sufficiently trustworthy DeFi on Arc Testnet yet), the admin funds the pool by hand, following the exact formula above.</p>
+          <p data-i18n="deep6P1">Spread across multiple reputable lending markets (Aave, Morpho, Compound...) instead of concentrated in one – if one has an issue, only that slice is affected; the vault and the rest of the yield sources keep standing. Today (no sufficiently trustworthy DeFi on Arc Testnet yet), the admin funds the pool by hand, following the exact formula above.</p>
         </div>
       </details>
 
       <details class="deep">
-        <summary><span class="icon icon-chevron"></span>What never changes, no matter how big the pool gets</summary>
+        <summary><span class="icon icon-chevron"></span><span data-i18n="deep7Summary">What never changes, no matter how big the pool gets</span></summary>
         <div class="body">
           <ul class="invariant-list">
-            <li>Principal is never at risk and withdrawable any time – no lockups.</li>
-            <li>No hidden fees – every cut is shown publicly.</li>
-            <li><strong>Scratching the card is just for fun – it's never a condition for getting paid.</strong> Winnings always land in the winner's wallet: scratch immediately for the suspense, or don't bother – after 3 days, anyone (not just the admin) can call <code>sweep()</code> to push the prize to the winner automatically. No deadline ever costs you a prize.</li>
-            <li>Pausing only blocks new deposits and new draws – it never locks withdrawals.</li>
+            <li data-i18n="deep7Li1">Principal is never at risk and withdrawable any time – no lockups.</li>
+            <li data-i18n="deep7Li2">No hidden fees – every cut is shown publicly.</li>
+            <li data-i18n="deep7Li3"><strong>Scratching the card is just for fun – it's never a condition for getting paid.</strong> Winnings always land in the winner's wallet: scratch immediately for the suspense, or don't bother – after 3 days, anyone (not just the admin) can call <code>sweep()</code> to push the prize to the winner automatically. No deadline ever costs you a prize.</li>
+            <li data-i18n="deep7Li4">Pausing only blocks new deposits and new draws – it never locks withdrawals.</li>
           </ul>
         </div>
       </details>
     </section>
 
     <section id="honesty">
-      <h2>Honest boundaries</h2>
-      <div class="honesty">
+      <h2 data-i18n="honestBoundaries">Honest boundaries</h2>
+      <div class="honesty" data-i18n="honestyBody">
         Running on Arc Testnet. Current yield follows a fixed formula – it's not real DeFi yield yet, and nothing is
         deposited into a lending market. Not audited. A 2-of-2 Safe holds admin, but a single developer wallet still
         holds the same rights beside it – with no real money in the contract that hasn't been tightened yet, and it
@@ -439,6 +459,164 @@ no referrer    → cut splits evenly into vaultReserve / vaultDev</pre>
     </a>
   </footer>
 </div>
+
+<script>
+// EN|VI toggle. Same localStorage key the React app's LanguageContext.tsx
+// reads/writes (frontend/src/i18n/) - picking a language on one surface
+// carries over to the other without a shared build step between them.
+// Values are innerHTML (not textContent) so the few strings with <strong>/
+// <code> stay intact across a swap.
+(function () {
+  const STORAGE_KEY = "luckypot:lang";
+  const LANG = {
+    en: {
+      enterApp: "Enter App",
+      howItWorks: "How it works",
+      heroH1: 'Deposit USDC, hold it through a <strong>full epoch</strong>, and you\'re in the draw. The winners take the week\'s yield – everyone else loses nothing; <strong>their full principal remains intact</strong>.',
+      step1: "Deposit USDC into the pool.",
+      step2: "Hold it through a full epoch – Monday 00:00 UTC to the next Monday 00:00 UTC. That's what turns it into a ticket.",
+      step3: "At week's end, a winner is drawn – verifiable on-chain, nobody (not even the admin) can pick who wins ahead of time.",
+      step4: "Won? Scratch the card to claim. Didn't win? Withdraw your principal – any time, no conditions.",
+      liveNow: "Live right now",
+      totalPool: "Total pool",
+      currentEpoch: "Current epoch",
+      lastWinner: "Last winner",
+      lastPrize: "Last prize",
+      liveNote: "Read directly from the contract on Arc Testnet – not a screenshot, not a static number.",
+      learnMore: "Learn more",
+      deep1Summary: "Tickets &amp; the draw",
+      deep1P1: "Every USDC you deposit becomes ticket weight proportional to your share of the pool.",
+      deep1P2: "You only have a ticket once your deposit has sat in the pool for a full epoch – and an epoch is a fixed calendar week, Monday 00:00 UTC to the next Monday 00:00 UTC, not any rolling seven days. Deposit on a Wednesday and it waits out the rest of that epoch, becomes a ticket at Monday's boundary, and runs for the epoch after. Withdraw mid-epoch and you forfeit that epoch's ticket – never your money.",
+      deep1P3: "Randomness is two-layer commit-reveal: the keeper commits a hashed secret at the start of the week, reveals it at the end, and it's mixed with a future blockhash unknowable at commit time – so nobody, not even the keeper or the admin, can predict or steer the outcome.",
+      deep2Summary: "Yield",
+      deep2Pre: `aprBps          = variable, read from the current yield source
+                (USDC ~6%/year, $ARC ~3%/year – staking is
+                safer than lending, so it pays less)
+realYieldEarned = totalPool × aprBps / 10000 / 52
+weeklyPrizePool = eligibleBalance × aprBps / 10000 / 52
+surplus         = realYieldEarned − weeklyPrizePool → flows to the vault`,
+      deep2P1: "<strong>Why only <code>eligibleBalance</code>, not the whole pool?</strong> The draw runs once an epoch, and only money that sat through the whole of that epoch has a ticket in it. The prize has to be computed on that exact same slice – not the whole pool – because counting fresh mid-week deposits would inflate the prize for people who don't yet have a shot at winning it. The yield those fresh deposits still earn is real – it just isn't split with anyone that week, so it flows into the vault instead.",
+      deep3Summary: "Splitting the prize",
+      deep3Pre: `numWinners = max(1, floor(sqrt(eligibleBalance / 1000)))
+
+numWinners = 1:  winner takes 100% of weeklyPrizePool
+numWinners > 1:  1st place takes 50%, the rest splits evenly
+                among (numWinners − 1) people`,
+      deep3P1: "Winner count and prize size scale automatically with pool size – no fixed thresholds, no contract changes needed as the pool grows.",
+      deep4Summary: "Claiming",
+      deep4Pre: `cut = prize × 5%
+has a referrer → referrer gets the cut
+no referrer    → cut splits evenly into vaultReserve / vaultDev`,
+      deep5Summary: "The vault",
+      deep5P1: "<strong>vaultReserve</strong> – withdrawable only while the contract is paused, reserved for compensating an incident (a hack, a bug that loses funds). There's no way to withdraw it for any other purpose.",
+      deep5P2: "<strong>vaultDev</strong> – withdrawable normally, funds ongoing costs: servers, community, marketing.",
+      deep6Summary: "Where the yield comes from (once Arc has real DeFi)",
+      deep6P1: "Spread across multiple reputable lending markets (Aave, Morpho, Compound...) instead of concentrated in one – if one has an issue, only that slice is affected; the vault and the rest of the yield sources keep standing. Today (no sufficiently trustworthy DeFi on Arc Testnet yet), the admin funds the pool by hand, following the exact formula above.",
+      deep7Summary: "What never changes, no matter how big the pool gets",
+      deep7Li1: "Principal is never at risk and withdrawable any time – no lockups.",
+      deep7Li2: "No hidden fees – every cut is shown publicly.",
+      deep7Li3: "<strong>Scratching the card is just for fun – it's never a condition for getting paid.</strong> Winnings always land in the winner's wallet: scratch immediately for the suspense, or don't bother – after 3 days, anyone (not just the admin) can call <code>sweep()</code> to push the prize to the winner automatically. No deadline ever costs you a prize.",
+      deep7Li4: "Pausing only blocks new deposits and new draws – it never locks withdrawals.",
+      honestBoundaries: "Honest boundaries",
+      honestyBody: "Running on Arc Testnet. Current yield follows a fixed formula – it's not real DeFi yield yet, and nothing is deposited into a lending market. Not audited. A 2-of-2 Safe holds admin, but a single developer wallet still holds the same rights beside it – with no real money in the contract that hasn't been tightened yet, and it will be before any of this touches real funds. See the exact formulas and contract source on GitHub.",
+      noWinner: "no winner",
+      dash: "–",
+    },
+    vi: {
+      enterApp: "Vào ứng dụng",
+      howItWorks: "Cách hoạt động",
+      heroH1: 'Gửi USDC, giữ nguyên trọn 1 <strong>kỳ (epoch)</strong>, thế là bạn có vé quay số. Người trúng nhận trọn lãi của tuần đó – còn lại không ai mất gì cả; <strong>toàn bộ tiền gốc vẫn nguyên vẹn</strong>.',
+      step1: "Gửi USDC vào pool.",
+      step2: "Giữ nguyên trọn 1 kỳ – từ 00:00 UTC thứ Hai tới 00:00 UTC thứ Hai kế tiếp. Đó là điều biến nó thành 1 vé.",
+      step3: "Cuối tuần, hệ thống quay số chọn người trúng – verify được on-chain, không ai (kể cả admin) chọn trước được ai sẽ trúng.",
+      step4: "Trúng? Cào thẻ để nhận thưởng. Không trúng? Rút tiền gốc – bất cứ lúc nào, không điều kiện gì cả.",
+      liveNow: "Đang chạy thật ngay lúc này",
+      totalPool: "Tổng pool",
+      currentEpoch: "Kỳ hiện tại",
+      lastWinner: "Người trúng gần nhất",
+      lastPrize: "Giải gần nhất",
+      liveNote: "Đọc trực tiếp từ contract trên Arc Testnet – không phải ảnh chụp, không phải số tĩnh.",
+      learnMore: "Tìm hiểu thêm",
+      deep1Summary: "Vé &amp; lượt quay số",
+      deep1P1: "Mỗi USDC bạn gửi sẽ trở thành trọng số vé, tỉ lệ theo phần bạn chiếm trong pool.",
+      deep1P2: "Bạn chỉ có vé khi tiền gửi đã nằm trong pool đủ trọn 1 kỳ – và 1 kỳ là 1 tuần lịch cố định, từ 00:00 UTC thứ Hai tới 00:00 UTC thứ Hai kế tiếp, không phải 7 ngày tính trôi bất kỳ lúc nào. Gửi vào thứ Tư thì phải chờ hết phần còn lại của kỳ đó, thành vé đúng vào mốc thứ Hai, rồi tính cho kỳ kế tiếp. Rút tiền giữa kỳ thì mất vé của kỳ đó – không bao giờ mất tiền.",
+      deep1P3: "Randomness dùng commit-reveal 2 lớp: bot commit 1 số bí mật đã hash vào đầu tuần, cuối tuần mới reveal số gốc, trộn với blockhash tương lai mà lúc commit chưa ai biết được – nên không ai, kể cả bot hay admin, đoán trước hay chi phối được kết quả.",
+      deep2Summary: "Lãi suất",
+      deep2Pre: `aprBps          = biến số, đọc từ nguồn lãi hiện tại
+                (USDC ~6%/năm, $ARC ~3%/năm – staking an toàn
+                hơn lending nên trả lãi thấp hơn)
+realYieldEarned = totalPool × aprBps / 10000 / 52
+weeklyPrizePool = eligibleBalance × aprBps / 10000 / 52
+surplus         = realYieldEarned − weeklyPrizePool → chảy vào vault`,
+      deep2P1: "<strong>Vì sao chỉ tính trên <code>eligibleBalance</code>, không phải cả pool?</strong> Lượt quay chạy 1 lần mỗi kỳ, và chỉ tiền đã nằm đủ trọn kỳ đó mới có vé. Giải thưởng phải tính đúng trên phần đó – không phải cả pool – vì nếu tính luôn tiền mới gửi giữa tuần sẽ làm giải bị thổi phồng cho những người còn chưa có cơ hội trúng. Lãi từ tiền mới gửi đó vẫn có thật – chỉ là tuần đó chưa chia cho ai, nên nó chảy vào vault thay vì mất đi.",
+      deep3Summary: "Chia giải thưởng",
+      deep3Pre: `numWinners = max(1, floor(sqrt(eligibleBalance / 1000)))
+
+numWinners = 1:  người trúng nhận 100% weeklyPrizePool
+numWinners > 1:  giải nhất nhận 50%, phần còn lại chia đều
+                cho (numWinners − 1) người`,
+      deep3P1: "Số người trúng và độ lớn giải thưởng tự động tăng theo quy mô pool – không có ngưỡng cố định, không cần sửa contract khi pool lớn lên.",
+      deep4Summary: "Nhận thưởng",
+      deep4Pre: `cut = prize × 5%
+có người giới thiệu       → người giới thiệu nhận cut
+không có người giới thiệu → cut chia đều vào vaultReserve / vaultDev`,
+      deep5Summary: "Vault",
+      deep5P1: "<strong>vaultReserve</strong> – chỉ rút được khi contract đang pause, dành để đền bù sự cố (bị hack, bug làm mất tiền). Không có cách nào rút ra cho mục đích khác.",
+      deep5P2: "<strong>vaultDev</strong> – rút bình thường, dùng để duy trì chi phí: server, cộng đồng, marketing.",
+      deep6Summary: "Lãi lấy từ đâu (khi Arc có DeFi thật)",
+      deep6P1: "Rải vào nhiều thị trường lending uy tín (Aave, Morpho, Compound...) thay vì dồn vào 1 chỗ – nếu 1 nơi gặp sự cố thì chỉ phần đó bị ảnh hưởng; vault và các nguồn lãi còn lại vẫn đứng vững. Hiện tại (Arc Testnet chưa có DeFi đủ tin cậy), admin tự bơm tiền vào pool bằng tay, theo đúng công thức ở trên.",
+      deep7Summary: "Điều không bao giờ đổi, dù pool lớn tới đâu",
+      deep7Li1: "Tiền gốc không bao giờ gặp rủi ro và rút được bất cứ lúc nào – không khoá.",
+      deep7Li2: "Không phí ẩn – mọi khoản trừ đều công khai.",
+      deep7Li3: "<strong>Cào thẻ chỉ để cho vui – không bao giờ là điều kiện để nhận tiền.</strong> Tiền thắng luôn về ví người trúng: cào ngay để hồi hộp, hoặc không cào cũng được – sau 3 ngày, bất kỳ ai (không chỉ admin) có thể gọi <code>sweep()</code> để tự động đẩy tiền về ví người trúng. Không có hạn chót nào khiến bạn mất giải.",
+      deep7Li4: "Tạm dừng (pause) chỉ chặn gửi tiền mới và quay số mới – không bao giờ khoá rút tiền.",
+      honestBoundaries: "Ranh giới trung thực",
+      honestyBody: "Đang chạy trên Arc Testnet. Lãi hiện tại theo công thức cố định – chưa phải lãi DeFi thật, chưa có tiền nào được gửi vào thị trường lending nào cả. Chưa được audit. Quyền admin do Safe 2-of-2 nắm giữ, nhưng vẫn còn 1 ví dev đơn lẻ giữ quyền ngang hàng bên cạnh – vì contract chưa có tiền thật nên chưa siết lại, và sẽ được siết trước khi có tiền thật chạm vào. Xem công thức chính xác và mã nguồn contract trên GitHub.",
+      noWinner: "chưa có ai trúng",
+      dash: "–",
+    },
+  };
+
+  function getInitialLang() {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored === "en" || stored === "vi") return stored;
+    } catch {}
+    return "en";
+  }
+
+  let lang = getInitialLang();
+
+  function applyLanguage() {
+    const dict = LANG[lang];
+    document.querySelectorAll("[data-i18n]").forEach((el) => {
+      const key = el.getAttribute("data-i18n");
+      if (dict[key] !== undefined) el.innerHTML = dict[key];
+    });
+    document.querySelectorAll("#lang-toggle button").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.lang === lang);
+    });
+    document.documentElement.lang = lang;
+    // Re-render the live-stat fallback text ("no winner" / "–") in the newly
+    // active language using whatever was last fetched, instead of waiting on
+    // another chain read.
+    if (window.__renderLiveStats) window.__renderLiveStats();
+  }
+
+  document.querySelectorAll("#lang-toggle button").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      lang = btn.dataset.lang;
+      try {
+        localStorage.setItem(STORAGE_KEY, lang);
+      } catch {}
+      applyLanguage();
+    });
+  });
+
+  window.__getLang = () => LANG[lang];
+  applyLanguage();
+})();
+</script>
 
 <script type="module">
 import { createPublicClient, http, formatUnits } from "https://esm.sh/viem@2.21.0";
@@ -471,30 +649,49 @@ function shortAddr(a) {
   return a.slice(0, 6) + "…" + a.slice(-4);
 }
 
+// Raw fetch results, kept around so the EN|VI toggle (see the script above)
+// can redraw "no winner" / "–" in the newly-picked language without another
+// chain read - only the words around the numbers are language-dependent.
+let lastResult = null;
+
+function renderLiveStats() {
+  if (!lastResult) return;
+  const dict = window.__getLang();
+  const { pool, epochId, winnerAddr, prize, found } = lastResult;
+  document.getElementById("stat-pool").textContent = fmt(pool) + " USDC";
+  document.getElementById("stat-epoch").textContent = "#" + epochId.toString().padStart(2, "0");
+  if (found) {
+    document.getElementById("stat-winner").textContent = winnerAddr ? shortAddr(winnerAddr) : dict.noWinner;
+    document.getElementById("stat-prize").textContent = fmt(prize) + " USDC";
+  } else {
+    document.getElementById("stat-winner").textContent = dict.dash;
+    document.getElementById("stat-prize").textContent = dict.dash;
+  }
+}
+window.__renderLiveStats = renderLiveStats;
+
 (async () => {
   try {
     const [pool, epochId] = await Promise.all([
       client.readContract({ address: POOL, abi, functionName: "balancesTotal" }),
       client.readContract({ address: POOL, abi, functionName: "currentEpochId" }),
     ]);
-    document.getElementById("stat-pool").textContent = fmt(pool) + " USDC";
-    document.getElementById("stat-epoch").textContent = "#" + epochId.toString().padStart(2, "0");
 
     let found = false;
+    let winnerAddr = null;
+    let prize = 0n;
     for (let id = epochId - 1n; id >= 1n && epochId - id <= 10n; id--) {
       const e = await client.readContract({ address: POOL, abi, functionName: "getEpoch", args: [id] });
       if (e[8]) {
         const winners = e[9];
-        document.getElementById("stat-winner").textContent = winners.length ? shortAddr(winners[0]) : "no winner";
-        document.getElementById("stat-prize").textContent = fmt(e[5]) + " USDC";
+        winnerAddr = winners.length ? winners[0] : null;
+        prize = e[5];
         found = true;
         break;
       }
     }
-    if (!found) {
-      document.getElementById("stat-winner").textContent = "–";
-      document.getElementById("stat-prize").textContent = "–";
-    }
+    lastResult = { pool, epochId, winnerAddr, prize, found };
+    renderLiveStats();
   } catch (err) {
     console.error(err);
     ["stat-pool", "stat-epoch", "stat-winner", "stat-prize"].forEach((id) => {

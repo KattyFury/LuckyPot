@@ -4,6 +4,7 @@ import { formatUnits, parseUnits } from "viem";
 import { poolAbi, POOL_ADDRESS } from "../lib/contract";
 import { useUserPosition } from "../hooks/usePoolData";
 import { useAmount } from "../config/tokenUnit";
+import { useT } from "../i18n/LanguageContext";
 import { useCloseOnSuccess } from "../hooks/useCloseOnSuccess";
 import { Modal } from "../components/Modal";
 
@@ -13,6 +14,7 @@ export function WithdrawModal({ onClose }: { onClose: () => void }) {
   const balance = (position?.[0]?.result as bigint | undefined) ?? 0n;
   const eligible = (position?.[1]?.result as bigint | undefined) ?? 0n;
   const fmt = useAmount();
+  const t = useT();
 
   const [amount, setAmount] = useState("");
   const { writeContract, data: hash, isPending, error } = useWriteContract();
@@ -33,14 +35,14 @@ export function WithdrawModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <Modal title="Withdraw" onClose={onClose}>
+    <Modal title={t.common.withdraw} onClose={onClose}>
 
         <div style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>
-          Available: <strong style={{ color: "var(--color-text)" }}>{fmt(balance)}</strong>
+          {t.common.available} <strong style={{ color: "var(--color-text)" }}>{fmt(balance)}</strong>
         </div>
 
         <div>
-          <label style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>Amount (USDC)</label>
+          <label style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>{t.common.amountUsdcLabel}</label>
           <div
             style={{
               display: "flex",
@@ -80,14 +82,14 @@ export function WithdrawModal({ onClose }: { onClose: () => void }) {
                 color: "var(--color-primary)",
               }}
             >
-              MAX
+              {t.common.max}
             </button>
           </div>
         </div>
 
         {willForfeit && (
           <div className="card" style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>
-            Withdrawing now will remove you from this epoch's ticket draw.
+            {t.withdraw.forfeitWarning}
           </div>
         )}
 
@@ -96,7 +98,7 @@ export function WithdrawModal({ onClose }: { onClose: () => void }) {
           disabled={amountBase <= 0n || amountBase > balance || isPending || isConfirming}
           onClick={handleConfirm}
         >
-          {isPending || isConfirming ? "Confirming..." : "Confirm"}
+          {isPending || isConfirming ? t.common.confirming : t.common.confirm}
         </button>
 
         {error && <div style={{ color: "#c0392b", fontSize: "var(--fs-1)" }}>{error.message.slice(0, 200)}</div>}

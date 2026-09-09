@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { formatCountdown, plural } from "../lib/format";
+import { formatCountdown } from "../lib/format";
 import { TokenToggle } from "./TokenToggle";
+import { useT } from "../i18n/LanguageContext";
 import type { EpochData } from "../hooks/usePoolData";
 
 export function EpochCard({
@@ -14,6 +15,7 @@ export function EpochCard({
   numWinnersEstimate: bigint;
   participantCount: number;
 }) {
+  const t = useT();
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export function EpochCard({
         }}
       >
         <span className="pair">
-          Epoch <span style={{ color: "var(--color-primary)" }}>{idLabel}</span>
+          {t.common.epochWord} <span style={{ color: "var(--color-primary)" }}>{idLabel}</span>
         </span>
         <TokenToggle />
       </div>
@@ -45,7 +47,7 @@ export function EpochCard({
       {/* "Draw in" sits above the clock rather than beside it: at 430px the
           inline pair was the widest thing in the column. */}
       <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
-        <span className="eyebrow">Draw in</span>
+        <span className="eyebrow">{t.epoch.drawIn}</span>
         <span
           className="num pair"
           style={{ fontSize: "var(--fs-3)", fontWeight: 700, color: "var(--color-primary)" }}
@@ -58,13 +60,14 @@ export function EpochCard({
         className="prose"
         style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)", lineHeight: 1.55 }}
       >
-        This week&rsquo;s yield goes to{" "}
+        {t.epoch.summaryBefore}{" "}
         <strong style={{ color: "var(--color-text)", fontWeight: 600 }}>{numWinnersEstimate.toString()}</strong>{" "}
-        {plural(numWinnersEstimate, "winner")} out of{" "}
+        {t.common.winnerWord(Number(numWinnersEstimate))} {t.epoch.summaryMiddle}{" "}
         <strong style={{ color: "var(--color-text)", fontWeight: 600 }}>
           {participantCount.toLocaleString("en-US")}
         </strong>{" "}
-        {plural(participantCount, "player")}. Winners return 5% to the protocol.
+        {t.common.playerWord(participantCount)}
+        {t.epoch.summaryAfter}
       </div>
     </div>
   );

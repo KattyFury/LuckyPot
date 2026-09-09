@@ -24,8 +24,8 @@ import {
 } from "../hooks/usePoolData";
 import { useMyHistory } from "../hooks/useMyHistory";
 import { estimateNumWinners, projectedWeeklyYield } from "../lib/prize";
-import { plural } from "../lib/format";
 import { useTokenUnit } from "../config/tokenUnit";
+import { useT } from "../i18n/LanguageContext";
 import { wasScratched } from "../lib/scratchState";
 import type { EpochData } from "../hooks/usePoolData";
 
@@ -34,6 +34,7 @@ type Popup = "draw-history" | "my-history" | "deposit" | "withdraw" | "referral"
 export function Dashboard() {
   const { address } = useAccount();
   const { unit } = useTokenUnit();
+  const t = useT();
   const { data: currentEpochId } = useCurrentEpochId();
   const { data: currentEpoch } = useEpoch(currentEpochId as bigint | undefined);
   const { epochs } = useEpochHistory(currentEpochId as bigint | undefined);
@@ -91,11 +92,11 @@ export function Dashboard() {
 
         <div className="g-banner">
           {unit === "$ARC" ? (
-            <AnnouncementBanner text="$ARC isn't live yet – figures are the USDC pool." />
+            <AnnouncementBanner text={t.dashboard.arcNotLive} />
           ) : unscratchedResult ? (
             <AnnouncementBanner
-              lead={`Epoch #${unscratchedResult.id.toString().padStart(2, "0")} has been drawn —`}
-              text="scratch your card"
+              lead={`${t.common.epochWord} #${unscratchedResult.id.toString().padStart(2, "0")} ${t.dashboard.hasBeenDrawnSuffix}`}
+              text={t.dashboard.scratchCard}
               onClick={() => setResultEpochId(unscratchedResult.id)}
             />
           ) : (
@@ -129,8 +130,8 @@ export function Dashboard() {
         <div className="g-referral">
           <AnnouncementBanner
             variant="referral"
-            lead="Invite a friend and earn 2.5% each time they win."
-            text="Get your link"
+            lead={t.dashboard.referralLead}
+            text={t.dashboard.getYourLink}
             onClick={() => setPopup("referral")}
           />
         </div>
@@ -147,11 +148,11 @@ export function Dashboard() {
             the desktop box shows in its header, so collapsing the box doesn't
             cost the reader the one fact visible at a glance. */}
         <button className="history-button g-draw-history-btn" onClick={() => setPopup("draw-history")}>
-          <span>Draw history</span>
+          <span>{t.common.drawHistory}</span>
           <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {epochs.length > 0 && (
               <span className="eyebrow">
-                {epochs.length} {plural(epochs.length, "draw")}
+                {epochs.length} {t.common.drawWord(epochs.length)}
               </span>
             )}
             <Chevron />
@@ -159,11 +160,11 @@ export function Dashboard() {
         </button>
 
         <button className="history-button g-my-history-btn" onClick={() => setPopup("my-history")}>
-          <span>My history</span>
+          <span>{t.common.myHistory}</span>
           <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {myWins > 0 && (
               <span className="tag">
-                {myWins} {plural(myWins, "win")}
+                {myWins} {t.common.winWord(myWins)}
               </span>
             )}
             <Chevron />
@@ -176,13 +177,13 @@ export function Dashboard() {
       {popup === "withdraw" && <WithdrawModal onClose={() => setPopup(null)} />}
 
       {popup === "draw-history" && (
-        <Modal title="Draw history" onClose={() => setPopup(null)}>
+        <Modal title={t.common.drawHistory} onClose={() => setPopup(null)}>
           <DrawHistoryList epochs={epochs} onSelect={openEpoch} />
         </Modal>
       )}
 
       {popup === "my-history" && (
-        <Modal title="My history" onClose={() => setPopup(null)}>
+        <Modal title={t.common.myHistory} onClose={() => setPopup(null)}>
           <MyHistoryList entries={historyEntries} connected={Boolean(address)} />
         </Modal>
       )}

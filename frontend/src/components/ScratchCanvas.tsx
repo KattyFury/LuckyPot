@@ -1,6 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 
-export function ScratchCanvas({ onRevealed, children }: { onRevealed: () => void; children: React.ReactNode }) {
+export function ScratchCanvas({
+  onRevealed,
+  children,
+  prompt = "Scratch to reveal",
+}: {
+  onRevealed: () => void;
+  children: React.ReactNode;
+  /** Drawn straight onto the canvas (it's a 2D-context fillText, not DOM text)
+   *  so it can't pick up a language change via CSS/props re-render alone -
+   *  callers pass the translated string in directly. */
+  prompt?: string;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [revealed, setRevealed] = useState(false);
@@ -19,7 +30,7 @@ export function ScratchCanvas({ onRevealed, children }: { onRevealed: () => void
     ctx.font = '600 16px Inter, sans-serif';
     ctx.fillStyle = "#cbcde1";
     ctx.textAlign = "center";
-    ctx.fillText("Scratch to reveal", width / 2, height / 2);
+    ctx.fillText(prompt, width / 2, height / 2);
 
     let scratching = false;
 

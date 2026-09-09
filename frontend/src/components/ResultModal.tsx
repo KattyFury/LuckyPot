@@ -5,6 +5,7 @@ import { useAmount } from "../config/tokenUnit";
 import { rememberScratched, wasScratched } from "../lib/scratchState";
 import { useCloseOnSuccess } from "../hooks/useCloseOnSuccess";
 import { useEpoch, useSweepDelay } from "../hooks/usePoolData";
+import { useT } from "../i18n/LanguageContext";
 import { Modal } from "./Modal";
 import { ScratchCanvas } from "./ScratchCanvas";
 
@@ -18,6 +19,7 @@ export function ResultModal({
   onClose: () => void;
 }) {
   const amount = useAmount();
+  const t = useT();
   const { data } = useReadContracts({
     contracts: [
       { address: POOL_ADDRESS, abi: poolAbi, functionName: "owedTo", args: [epochId, address] },
@@ -68,16 +70,16 @@ export function ResultModal({
     >
       {won ? (
         <>
-          <span style={{ fontSize: "var(--fs-1)", fontWeight: 700, textTransform: "uppercase" }}>You won</span>
+          <span style={{ fontSize: "var(--fs-1)", fontWeight: 700, textTransform: "uppercase" }}>{t.result.youWon}</span>
           <span style={{ fontSize: "var(--fs-4)", fontWeight: 700, fontFamily: "var(--font-display)" }}>
             {amount(owed)}
           </span>
         </>
       ) : (
         <>
-          <span style={{ fontSize: "var(--fs-2)", fontWeight: 700 }}>Good luck next epoch</span>
+          <span style={{ fontSize: "var(--fs-2)", fontWeight: 700 }}>{t.result.goodLuck}</span>
           <span style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>
-            Your principal is safe and still deposited.
+            {t.result.principalSafe}
           </span>
         </>
       )}
@@ -85,8 +87,17 @@ export function ResultModal({
   );
 
   return (
-    <Modal title={`Epoch #${epochId.toString().padStart(2, "0")} – your result`} onClose={onClose}>
-      {revealed ? <div style={{ height: 200 }}>{panel}</div> : <ScratchCanvas onRevealed={handleReveal}>{panel}</ScratchCanvas>}
+    <Modal
+      title={`${t.common.epochWord} #${epochId.toString().padStart(2, "0")} – ${t.result.modalTitleSuffix}`}
+      onClose={onClose}
+    >
+      {revealed ? (
+        <div style={{ height: 200 }}>{panel}</div>
+      ) : (
+        <ScratchCanvas onRevealed={handleReveal} prompt={t.scratch.prompt}>
+          {panel}
+        </ScratchCanvas>
+      )}
 
       {revealed && won && !hasClaimed && (
         <>
@@ -102,17 +113,17 @@ export function ResultModal({
               })
             }
           >
-            {isPending || isConfirming ? "Confirming..." : pastClaimWindow ? "Release prize" : "Claim now"}
+            {isPending || isConfirming ? t.common.confirming : pastClaimWindow ? t.result.releasePrize : t.result.claimNow}
           </button>
           {pastClaimWindow && (
             <div style={{ fontSize: "var(--fs-0)", color: "var(--color-text-faint)", textAlign: "center" }}>
-              The 3-day self-claim window passed, but your prize is still there — this releases it.
+              {t.result.pastWindowNote}
             </div>
           )}
         </>
       )}
       {revealed && won && hasClaimed && (
-        <div style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>Already claimed.</div>
+        <div style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>{t.result.alreadyClaimed}</div>
       )}
     </Modal>
   );

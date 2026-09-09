@@ -1,11 +1,13 @@
 import { usePrivy } from "@privy-io/react-auth";
 import { useAccount } from "wagmi";
 import { WalletAddressDisplay } from "./WalletAddressDisplay";
+import { useT } from "../i18n/LanguageContext";
 import type { WalletMenuActions } from "./Navbar";
 
 export function NavbarPrivy(actions: WalletMenuActions) {
   const { ready, authenticated, login, logout } = usePrivy();
   const { address } = useAccount();
+  const t = useT();
 
   if (ready && authenticated && address) {
     return <WalletAddressDisplay address={address} {...actions} onDisconnect={logout} />;
@@ -24,7 +26,7 @@ export function NavbarPrivy(actions: WalletMenuActions) {
         fontWeight: 700,
       }}
     >
-      Connect Wallet
+      {t.common.connectWallet}
     </button>
   );
 }

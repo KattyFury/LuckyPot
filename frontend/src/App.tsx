@@ -3,6 +3,7 @@ import { Dashboard } from "./pages/Dashboard";
 import { AdminPage } from "./pages/AdminPage";
 import { useAutoSwitchNetwork } from "./hooks/useAutoSwitchNetwork";
 import { TokenUnitProvider } from "./config/tokenUnit";
+import { LanguageProvider } from "./i18n/LanguageContext";
 import { captureReferrerFromUrl } from "./lib/referralState";
 
 export default function App() {
@@ -16,5 +17,9 @@ export default function App() {
   // visit to /app/admin resolve here instead of Pages' 404.
   const isAdmin = ["/app/admin", "/app/admin/"].includes(window.location.pathname);
 
-  return <TokenUnitProvider>{isAdmin ? <AdminPage /> : <Dashboard />}</TokenUnitProvider>;
+  return (
+    <LanguageProvider>
+      <TokenUnitProvider>{isAdmin ? <AdminPage /> : <Dashboard />}</TokenUnitProvider>
+    </LanguageProvider>
+  );
 }

@@ -1,12 +1,14 @@
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { arcTestnet } from "../chains/arcTestnet";
 import { WalletAddressDisplay } from "./WalletAddressDisplay";
+import { useT } from "../i18n/LanguageContext";
 import type { WalletMenuActions } from "./Navbar";
 
 export function NavbarInjected(actions: WalletMenuActions) {
   const { address, isConnected } = useAccount();
   const { connect, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
+  const t = useT();
 
   if (isConnected && address) {
     return <WalletAddressDisplay address={address} {...actions} onDisconnect={disconnect} />;
@@ -25,7 +27,7 @@ export function NavbarInjected(actions: WalletMenuActions) {
         fontWeight: 700,
       }}
     >
-      {isPending ? "Connecting..." : "Connect Wallet"}
+      {isPending ? t.common.connecting : t.common.connectWallet}
     </button>
   );
 }

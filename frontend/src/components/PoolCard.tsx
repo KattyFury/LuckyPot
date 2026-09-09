@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { formatUSDC } from "../lib/format";
 import { useAmount, useTokenUnit } from "../config/tokenUnit";
+import { useT } from "../i18n/LanguageContext";
 import { Modal } from "./Modal";
 
 /** The little "why is this number what it is?" affordance beside a figure. */
@@ -53,6 +54,7 @@ export function PoolCard({
 }) {
   const amount = useAmount();
   const { unit } = useTokenUnit();
+  const t = useT();
   const [showEligibleInfo, setShowEligibleInfo] = useState(false);
   const [showMyEligibleInfo, setShowMyEligibleInfo] = useState(false);
 
@@ -60,10 +62,10 @@ export function PoolCard({
     <div className="card card-rows">
       <div className="two-col box-header">
         <span className="eyebrow pair" style={{ color: "var(--color-primary)" }}>
-          Total tickets <span style={{ color: "var(--color-text-faint)" }}>/ pool</span>
+          {t.pool.totalTickets} <span style={{ color: "var(--color-text-faint)" }}>{t.pool.slashPool}</span>
         </span>
         <span className="eyebrow pair" style={{ color: "var(--color-primary)" }}>
-          My tickets <span style={{ color: "var(--color-text-faint)" }}>/ deposit</span>
+          {t.pool.myTickets} <span style={{ color: "var(--color-text-faint)" }}>{t.pool.slashDeposit}</span>
         </span>
       </div>
 
@@ -87,7 +89,7 @@ export function PoolCard({
             {unit}
           </span>
           <InfoButton
-            label="How much money does the pool actually hold?"
+            label={t.pool.eligibleInfoLabel}
             onClick={() => setShowEligibleInfo(true)}
           />
         </div>
@@ -107,63 +109,58 @@ export function PoolCard({
             {unit}
           </span>
           <InfoButton
-            label="Why is my ticket count different from what I deposited?"
+            label={t.pool.myEligibleInfoLabel}
             onClick={() => setShowMyEligibleInfo(true)}
           />
         </div>
       </div>
 
       {showEligibleInfo && (
-        <Modal title="What's a ticket?" onClose={() => setShowEligibleInfo(false)}>
+        <Modal title={t.pool.eligibleModalTitle} onClose={() => setShowEligibleInfo(false)}>
           <div
             className="prose"
             style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)", lineHeight: 1.6 }}
           >
             <p>
-              "Tickets" is every $1 that sat in the pool through a whole epoch &mdash; Monday 00:00 UTC to the
-              next Monday 00:00 UTC &mdash; and so counts toward this draw. The pool actually holds{" "}
+              {t.pool.eligibleBodyPart1}{" "}
               <strong className="pair" style={{ color: "var(--color-text)" }}>
                 {amount(totalPool)}
               </strong>{" "}
-              in total, always withdrawable — but only{" "}
+              {t.pool.eligibleBodyPart2}{" "}
               <strong className="pair" style={{ color: "var(--color-text)" }}>
                 {formatUSDC(eligiblePoolTotal)}
               </strong>{" "}
-              of that has been in long enough to count; fresh deposits roll into tickets at the next Monday
-              boundary.
+              {t.pool.eligibleBodyPart3}
             </p>
-            <p>Tip: deposit just before a draw, so your money starts a full epoch immediately instead of
-              waiting out the rest of this one.</p>
+            <p>{t.pool.tip}</p>
           </div>
         </Modal>
       )}
 
       {showMyEligibleInfo && (
-        <Modal title="Why don't my tickets match my deposit?" onClose={() => setShowMyEligibleInfo(false)}>
+        <Modal title={t.pool.myEligibleModalTitle} onClose={() => setShowMyEligibleInfo(false)}>
           <div
             className="prose"
             style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)", lineHeight: 1.6 }}
           >
             <p>
-              You've deposited{" "}
+              {t.pool.myEligibleBodyPart1}{" "}
               <strong className="pair" style={{ color: "var(--color-text)" }}>
                 {amount(myDeposited)}
               </strong>
-              , always withdrawable. Only{" "}
+              {t.pool.myEligibleBodyPart2}{" "}
               <strong className="pair" style={{ color: "var(--color-text)" }}>
                 {formatUSDC(myEligible)}
               </strong>{" "}
-              of that sat through a whole epoch, so that's the only part counted as tickets for this draw &mdash;
-              the rest rolls in at the next Monday boundary.
+              {t.pool.myEligibleBodyPart3}
             </p>
-            <p>Tip: deposit just before a draw, so your money starts a full epoch immediately instead of
-              waiting out the rest of this one.</p>
+            <p>{t.pool.tip}</p>
           </div>
         </Modal>
       )}
 
       <div style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>
-        In your wallet:{" "}
+        {t.pool.inYourWallet}{" "}
         <strong className="num pair" style={{ color: "var(--color-text)", fontWeight: 600 }}>
           {amount(walletBalance)}
         </strong>
@@ -173,17 +170,17 @@ export function PoolCard({
           to invite. The other two read as the quieter siblings. */}
       <div style={{ display: "flex", gap: 10 }}>
         <button className="pill-button pill-button--accent" onClick={onDeposit}>
-          Deposit
+          {t.common.deposit}
         </button>
         <button className="pill-button pill-button--quiet" onClick={onWithdraw}>
-          Withdraw
+          {t.common.withdraw}
         </button>
         <button
           className="pill-button pill-button--quiet"
           onClick={onLatestResult}
           disabled={!latestResultAvailable}
         >
-          Latest result
+          {t.common.latestResult}
         </button>
       </div>
     </div>

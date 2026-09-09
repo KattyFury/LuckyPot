@@ -1,6 +1,7 @@
 import { USE_PRIVY } from "../config/authMode";
 import { NavbarInjected } from "./NavbarInjected";
 import { NavbarPrivy } from "./NavbarPrivy";
+import { LanguageToggle } from "./LanguageToggle";
 import logoUrl from "../assets/logo-full-dark.svg";
 
 export type WalletMenuActions = {
@@ -39,7 +40,10 @@ export function Navbar(actions: WalletMenuActions) {
       <a href="https://luckypot.cc/" className="brand">
         <img src={logoUrl} alt="LuckyPot" className="brand__lockup" />
       </a>
-      {USE_PRIVY ? <NavbarPrivy {...actions} /> : <NavbarInjected {...actions} />}
+      <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <LanguageToggle />
+        {USE_PRIVY ? <NavbarPrivy {...actions} /> : <NavbarInjected {...actions} />}
+      </span>
     </nav>
   );
 }

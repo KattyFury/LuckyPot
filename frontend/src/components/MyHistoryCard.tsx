@@ -1,27 +1,28 @@
-import { plural } from "../lib/format";
 import { useAmount } from "../config/tokenUnit";
+import { useT } from "../i18n/LanguageContext";
 import type { HistoryEntry } from "../hooks/useMyHistory";
 
 /** Short form on purpose: the row is one --row-h tall now, and the year adds
  *  nothing next to an epoch history that only runs weeks back. */
-function formatDate(timestamp: number): string {
+function formatDate(timestamp: number, locale: string): string {
   if (!timestamp) return "";
-  return new Date(timestamp * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return new Date(timestamp * 1000).toLocaleDateString(locale, { month: "short", day: "numeric" });
 }
 
 export function MyHistoryList({ entries, connected }: { entries: HistoryEntry[]; connected: boolean }) {
   const amount = useAmount();
+  const t = useT();
 
   if (!connected) {
     return (
       <div style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>
-        Connect your wallet to see your history.
+        {t.myHistory.connectPrompt}
       </div>
     );
   }
   if (entries.length === 0) {
     return (
-      <div style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>No activity yet.</div>
+      <div style={{ fontSize: "var(--fs-1)", color: "var(--color-text-secondary)" }}>{t.myHistory.noActivity}</div>
     );
   }
 
@@ -44,13 +45,13 @@ export function MyHistoryList({ entries, connected }: { entries: HistoryEntry[];
                 className="pair"
                 style={{ fontWeight: positive ? 700 : 600, color: positive ? "var(--color-primary)" : undefined }}
               >
-                {entry.type}
+                {t.myHistory.typeLabels[entry.type]}
               </span>
               <span
                 className="pair"
                 style={{ fontSize: "var(--fs-0)", color: "var(--color-text-faint)" }}
               >
-                {formatDate(entry.timestamp)}
+                {formatDate(entry.timestamp, t.common.dateLocale)}
               </span>
             </span>
             <span
@@ -67,15 +68,16 @@ export function MyHistoryList({ entries, connected }: { entries: HistoryEntry[];
 }
 
 export function MyHistoryCard({ entries, connected }: { entries: HistoryEntry[]; connected: boolean }) {
+  const t = useT();
   const wins = entries.filter((e) => e.type === "Won").length;
 
   return (
     <div className="card card-list">
       <div className="card-list__header">
-        <span>My history</span>
+        <span>{t.common.myHistory}</span>
         {wins > 0 && (
           <span className="tag">
-            {wins} {plural(wins, "win")}
+            {wins} {t.common.winWord(wins)}
           </span>
         )}
       </div>
