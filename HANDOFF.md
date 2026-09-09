@@ -6,7 +6,17 @@
 > đã gửi bất cứ lúc nào.
 
 **Repo:** https://github.com/KattyFury/LuckyPot (đổi tên từ `LuckyStaker` → `LuckyPot` ngày 2026-08-24, đổi thương hiệu — repo cũng đã chuyển **Private** cùng ngày vì user chưa muốn lộ dự án sớm)
-**Web đang chạy:** https://luckypot.cc (custom domain gắn vào Cloudflare Pages project `luckypot`) — landing page ở root, dashboard ở `/app`. Deploy tay bằng `cd frontend && npm run build:site && npx wrangler pages deploy dist-site --project-name=luckypot --branch=main` — **KHÔNG** auto-deploy từ GitHub. Project Cloudflare cũ `luckystaker`/`stableluck` vẫn còn tồn tại nhưng ngừng cập nhật.
+**Web đang chạy:** https://luckypot.cc (custom domain gắn vào Cloudflare Pages project `luckypot`) — landing page ở root, dashboard ở `/app`. **KHÔNG** auto-deploy từ GitHub. Project Cloudflare cũ `luckystaker`/`stableluck` vẫn còn tồn tại nhưng ngừng cập nhật.
+🔴 **Deploy PHẢI chạy từ GỐC REPO, không phải từ `frontend/`** — xem cảnh báo đầy đủ + lệnh
+đúng ở mục "Lệnh hay dùng" (`cd .. && npx wrangler pages deploy frontend/dist-site
+--project-name=luckypot --branch=main --commit-dirty=true`, hoặc đơn giản nhất: `npm run
+deploy` từ `frontend/`). Chạy `wrangler pages deploy dist-site` khi cwd đang ở `frontend/` sẽ
+**KHÔNG** upload Functions (`functions/` nằm ở gốc repo, wrangler tìm theo cwd) — toàn bộ
+`/api/*` âm thầm rớt về static fallback (trả HTML/404/405 tuỳ endpoint) dù `wrangler` vẫn báo
+"Deployment complete!" bình thường, không có lỗi nào hiện ra. Đã xảy ra thật 2 lần (xem mục
+"Deploy sai thư mục làm sập toàn bộ /api/\*" bên dưới) — **luôn kiểm tra output deploy có dòng
+"✨ Compiled Worker successfully" / "Uploading Functions bundle" hay không**, thiếu 2 dòng đó là
+sai ngay lập tức, đừng đợi user báo bug mới biết.
 ⚠️ **Contract Solidity CỐ Ý giữ nguyên tên `LuckyStakerPool`** dù sản phẩm tên LuckyPot — spec không yêu cầu tên contract khớp tên sản phẩm. Mọi chỗ trong repo nhắc tới `LuckyStakerPool.sol` / `LuckyStakerPool (proxy)` là tên kỹ thuật thật, không phải sai sót quên đổi.
 ⚠️ **Proxy đã đổi địa chỉ ngày 2026-08-31 — deploy lại từ đầu, KHÔNG phải cùng contract cũ.**
 Proxy hiện tại: **`0xBdE568986a009eBaAE31Cb78033470c334Fad698`** (deploy block `59715964`).
@@ -24,6 +34,43 @@ dưới. Chi tiết đầy đủ ở mục "My history chuyển sang D1" bên d�
 app **trừ** `AdminPage.tsx` (tool nội bộ) và **trừ** giá trị countdown (`formatCountdown`, "4d
 16h 10m 28s" — chủ ý giữ nguyên, chỉ nhãn "Draw in"/"Quay số sau" quanh nó mới dịch). Xem mục
 "Thêm toggle EN|VI" bên dưới.
+
+---
+
+## Sự cố 2026-09-09 (đêm) — Deploy sai thư mục làm sập toàn bộ /api/\* production ~3 tiếng
+
+**Điều đã xảy ra:** cả 2 lần deploy trong phiên hôm nay (sau khi fix My History, và sau khi
+thêm toggle EN|VI) đều chạy `cd frontend && npx wrangler pages deploy dist-site
+--project-name=luckypot --branch=main` — copy y nguyên theo dòng "Web đang chạy" ở đầu file
+này (dòng đó lúc đó vẫn ghi lệnh SAI, xem sửa lại ở trên). Cả 2 lần `wrangler` đều báo
+"✨ Deployment complete!" bình thường, KHÔNG có dấu hiệu lỗi nào. Nhưng vì chạy từ `frontend/`
+thay vì gốc repo, `wrangler` không tìm thấy thư mục `functions/` (nằm ở gốc repo) nên **không hề
+bundle bất kỳ Cloudflare Pages Function nào** — output không có dòng "Compiled Worker
+successfully"/"Uploading Functions bundle" (điều tôi lúc đó không để ý kiểm tra).
+
+**Hậu quả thật trên production** (không phải giả định): mọi route `/api/*`
+(`/api/history`, `/api/referrals`, `/api/swap`) rớt về static-fallback của Cloudflare Pages —
+GET trả nhầm HTML của landing page (status 200 nhưng sai nội dung, "My history" trong app đọc
+phải HTML rồi lỗi ngầm), POST/OPTIONS trả **405** (static handler không nhận method khác GET).
+User bắt được qua console lỗi `405` khi bấm nút bán EURC/cirBTC. Sự cố kéo dài từ lúc deploy đầu
+tiên (~15h30) tới lúc phát hiện + sửa (~16h55) — khoảng **~3 tiếng "My history" và nút bán đều
+âm thầm hỏng trên production thật**, không phải trên bản test.
+
+**Bài học cay nhất:** đúng gotcha này **đã được 1 phiên trước ghi lại y hệt, chi tiết, kèm cả
+triệu chứng `/api/swap` 405**, nằm sẵn trong mục "Lệnh hay dùng" phía dưới — nhưng nằm ở dòng
+1400+ của file 1500+ dòng, còn dòng "Web đang chạy" ở ĐẦU file (thứ đọc đầu tiên mỗi lần login)
+lại ghi lệnh SAI. Tôi đọc dòng đầu, tin luôn, không grep lại toàn file tìm cảnh báo deploy trước
+khi chạy. **Đã sửa: đưa cảnh báo lên đầu file (dòng "Web đang chạy"), không chỉ chôn ở mục lệnh
+hay dùng nữa** — một file HANDOFF chỉ hữu ích nếu cảnh báo quan trọng nhất nằm ở chỗ chắc chắn
+được đọc, không phải chỗ đúng-về-mặt-kỹ-thuật-nhưng-không-ai-lướt-tới.
+
+**Đã fix:** redeploy lại đúng cách từ gốc repo (`cd luckypot && npx wrangler pages deploy
+frontend/dist-site --project-name=luckypot --branch=main --commit-dirty=true`) — output lần này
+CÓ "✨ Compiled Worker successfully" + "Uploading Functions bundle". Verify lại bằng curl thật:
+`/api/history` trả đúng JSON, `/api/swap` OPTIONS trả 200 đúng CORS header, POST trả 500 đúng
+kiểu lỗi thật của `swap.js` (test bằng ví rác nên Circle Stablecoin Kit từ chối — không phải
+405 nữa). Không cần rollback gì thêm vì không có tx/tiền nào bị ảnh hưởng, chỉ là 2 tính năng
+đọc/gọi API bị gãy tạm thời.
 
 ---
 
