@@ -36,9 +36,9 @@ export const vi = {
   },
   epoch: {
     drawIn: "Quay số sau",
-    summaryBefore: "Phần thưởng tuần này chia cho",
+    summaryBefore: "Tuần này, tiền thưởng chia cho",
     summaryMiddle: "trong số",
-    summaryAfter: ". Người trúng trả lại 5% cho giao thức.",
+    summaryAfter: ". Người trúng trích lại 5% cho nền tảng.",
   },
   pool: {
     totalTickets: "Tổng vé",
@@ -46,23 +46,22 @@ export const vi = {
     myTickets: "Vé của tôi",
     slashDeposit: "/ đã gửi",
     inYourWallet: "Trong ví của bạn:",
-    eligibleInfoLabel: "Pool thực sự đang giữ bao nhiêu tiền?",
-    myEligibleInfoLabel: "Vì sao số vé của tôi khác với số tiền đã gửi?",
+    eligibleInfoLabel: "Pool đang thực sự giữ bao nhiêu tiền?",
+    myEligibleInfoLabel: "Sao số vé của tôi lại khác số tiền đã gửi?",
     eligibleModalTitle: "Vé là gì?",
-    myEligibleModalTitle: "Vì sao vé không khớp với tiền đã gửi?",
+    myEligibleModalTitle: "Sao vé không khớp với tiền đã gửi?",
     eligibleBodyPart1:
-      "“Vé” là mỗi 1 USD đã nằm trong pool trọn 1 kỳ — từ 00:00 UTC thứ Hai tới 00:00 UTC thứ Hai kế tiếp — nên được tính vào lượt quay này. Pool hiện đang giữ thật",
-    eligibleBodyPart2: "tổng cộng, lúc nào cũng rút được — nhưng chỉ",
-    eligibleBodyPart3:
-      "trong số đó đã nằm đủ lâu để được tính; tiền mới gửi sẽ tự chuyển thành vé vào mốc thứ Hai kế tiếp.",
+      "Cứ 1 USD bạn gửi vào và giữ đủ 1 tuần (từ 0h thứ Hai tới 0h thứ Hai tuần sau, giờ UTC) là thành 1 vé, được tính vào lượt quay này. Pool hiện đang giữ",
+    eligibleBodyPart2: "tất cả, lúc nào cũng rút được. Nhưng chỉ có",
+    eligibleBodyPart3: "là đã nằm đủ lâu để tính vé; tiền mới gửi sẽ tự thành vé vào đúng 0h thứ Hai tuần sau.",
     myEligibleBodyPart1: "Bạn đã gửi",
-    myEligibleBodyPart2: ", lúc nào cũng rút được. Chỉ",
+    myEligibleBodyPart2: ", lúc nào cũng rút được. Nhưng chỉ",
     myEligibleBodyPart3:
-      "trong số đó đã nằm đủ trọn 1 kỳ, nên chỉ phần đó được tính vé cho lượt quay này — phần còn lại sẽ tự chuyển vào mốc thứ Hai kế tiếp.",
-    tip: "Mẹo: gửi tiền ngay trước lúc quay số để tiền bắt đầu tính kỳ mới ngay, thay vì phải chờ hết kỳ hiện tại.",
+      "là đã nằm đủ 1 tuần, nên chỉ phần này được tính vé cho lượt quay này. Phần còn lại sẽ tự thành vé vào tuần sau.",
+    tip: "Mẹo: gửi tiền ngay sát giờ quay số thì gần như được tính vé ngay, khỏi phải chờ gần hết cả tuần.",
   },
   dashboard: {
-    arcNotLive: "$ARC chưa hoạt động – số liệu đang hiển thị là pool USDC.",
+    arcNotLive: "$ARC chưa ra mắt – số bạn đang xem là của pool USDC.",
     hasBeenDrawnSuffix: "đã quay xong —",
     scratchCard: "cào thẻ của bạn",
     referralLead: "Mời bạn bè và nhận 2.5% mỗi khi họ trúng thưởng.",
@@ -82,7 +81,7 @@ export const vi = {
     } as Record<"Deposited" | "Withdrawn" | "Won" | "Claimed", string>,
   },
   faucet: {
-    noUsdcError: "Ví này chưa có USDC, mà USDC lại là token trả gas trên Arc — faucet USDC trước rồi mới bán được.",
+    noUsdcError: "Ví này chưa có USDC – mà USDC chính là loại tiền dùng trả phí gas trên Arc. Bạn cần faucet ít USDC trước, rồi mới bán được.",
     sellFailed: "bán thất bại",
     sellingEurc: "Đang bán EURC...",
     sellingCirbtc: "Đang bán cirBTC...",
@@ -93,7 +92,7 @@ export const vi = {
   referral: {
     modalTitle: "Mời bạn & Nhận thưởng",
     feeExplanationPart1:
-      "Nền tảng thu 5% phí trên mỗi giải thưởng — 2.5% vào quỹ dự trữ, 2.5% dùng để vận hành và phát triển hệ sinh thái. Nhưng nếu bạn mời được người khác, phần 2.5% thứ hai đó sẽ trả thẳng vào",
+      "Mỗi lần có người trúng thưởng, hệ thống giữ lại 5%: 2.5% để dự phòng rủi ro, 2.5% để duy trì và phát triển dự án. Nhưng nếu bạn mời được bạn bè tham gia, phần 2.5% thứ hai đó sẽ chuyển thẳng vào",
     feeExplanationBold: "ví của bạn",
     feeExplanationPart2: "mỗi khi họ trúng thưởng.",
     connectPrompt: "Kết nối ví để lấy link mời riêng của bạn.",
@@ -105,25 +104,25 @@ export const vi = {
     modalTitleSuffix: "kết quả của bạn",
     youWon: "Bạn đã trúng",
     goodLuck: "Chúc may mắn kỳ sau",
-    principalSafe: "Tiền gốc của bạn vẫn an toàn và còn nằm trong pool.",
-    releasePrize: "Giải phóng tiền thưởng",
+    principalSafe: "Tiền gốc của bạn vẫn an toàn, vẫn còn nguyên trong pool.",
+    releasePrize: "Đẩy thưởng về ví",
     claimNow: "Nhận ngay",
-    pastWindowNote: "Đã qua 3 ngày tự nhận, nhưng tiền thưởng vẫn còn đó — bấm để giải phóng nó về ví bạn.",
+    pastWindowNote: "Đã qua 3 ngày tự nhận, nhưng tiền thưởng vẫn còn nguyên – bấm nút trên để đẩy nó về ví bạn.",
     alreadyClaimed: "Đã nhận rồi.",
   },
   scratch: {
     prompt: "Cào để xem kết quả",
   },
   epochDetail: {
-    eligiblePool: "Pool hợp lệ:",
+    eligiblePool: "Số tiền tính vé:",
     weeklyYield: "Lãi tuần này:",
     winners: "Số người trúng:",
-    noWinners: "Kỳ này không có ai trúng – chưa đủ người chơi hoặc chưa bơm đủ lãi.",
+    noWinners: "Kỳ này không ai trúng cả – có thể do chưa đủ người chơi, hoặc lãi chưa được bơm vào.",
   },
   deposit: {
-    ticketsPreview: "Số vé bạn sẽ nhận nếu tiền này nằm trong pool trọn từ đầu tới cuối kỳ này:",
+    ticketsPreview: "Nếu giữ tiền này trong pool đủ hết kỳ này, bạn sẽ được tính vé:",
   },
   withdraw: {
-    forfeitWarning: "Rút tiền bây giờ sẽ loại bạn khỏi lượt quay số của kỳ này.",
+    forfeitWarning: "Rút tiền bây giờ sẽ mất vé quay số của kỳ này – tiền thì vẫn lấy lại đủ, chỉ mất cơ hội trúng thôi.",
   },
 } satisfies typeof en;
