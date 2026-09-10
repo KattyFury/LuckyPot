@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useReadContracts, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { poolAbi, POOL_ADDRESS } from "../lib/contract";
 import { useAmount } from "../config/tokenUnit";
+import { prizeForRank } from "../lib/prize";
 import { rememberScratched, wasScratched } from "../lib/scratchState";
 import { useCloseOnSuccess } from "../hooks/useCloseOnSuccess";
 import { useEpoch, useSweepDelay } from "../hooks/usePoolData";
@@ -22,13 +23,11 @@ export function ResultModal({
   const t = useT();
   const { data } = useReadContracts({
     contracts: [
-      { address: POOL_ADDRESS, abi: poolAbi, functionName: "owedTo", args: [epochId, address] },
       { address: POOL_ADDRESS, abi: poolAbi, functionName: "hasClaimed", args: [epochId, address] },
     ],
   });
 
-  const owed = (data?.[0]?.result as bigint | undefined) ?? 0n;
-  const hasClaimed = (data?.[1]?.result as boolean | undefined) ?? false;
+  const hasClaimed = (data?.[0]?.result as boolean | undefined) ?? false;
 
   // claim() only works within SWEEP_DELAY of the draw; after that it reverts with
   // "past claim window, use sweep" and sweep() (permissionless, pays every unclaimed
@@ -39,6 +38,20 @@ export function ResultModal({
     epoch !== undefined && sweepDelay !== undefined
       ? BigInt(Math.floor(Date.now() / 1000)) >= epoch.drawnAt + sweepDelay
       : false;
+
+  // owedTo() is "how much is still owed" and goes to 0 once claimed/swept, so it
+  // can't be used for the reveal amount — a winner whose prize already got swept to
+  // their wallet would scratch the card and see "$0". Recompute what they actually
+  // won from the winners list instead, which stays correct regardless of claim status.
+  const prize = epoch
+    ? epoch.winners.reduce(
+        (total, winner, rank) =>
+          winner.toLowerCase() === address.toLowerCase()
+            ? total + prizeForRank(rank, epoch.numWinners, epoch.weeklyYield)
+            : total,
+        0n
+      )
+    : 0n;
 
   const [revealed, setRevealed] = useState(() => wasScratched(epochId, address) || hasClaimed);
 
@@ -52,7 +65,7 @@ export function ResultModal({
     setRevealed(true);
   }
 
-  const won = owed > 0n || hasClaimed;
+  const won = prize > 0n || hasClaimed;
 
   const panel = (
     <div
@@ -72,7 +85,7 @@ export function ResultModal({
         <>
           <span style={{ fontSize: "var(--fs-1)", fontWeight: 700, textTransform: "uppercase" }}>{t.result.youWon}</span>
           <span style={{ fontSize: "var(--fs-4)", fontWeight: 700, fontFamily: "var(--font-display)" }}>
-            {amount(owed)}
+            {amount(prize)}
           </span>
         </>
       ) : (
