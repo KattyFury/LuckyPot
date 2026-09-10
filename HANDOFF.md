@@ -37,6 +37,58 @@ app **trừ** `AdminPage.tsx` (tool nội bộ) và **trừ** giá trị countdo
 
 ---
 
+## Trạng thái nghỉ 2026-09-11 — Slogan mới + fix cào thẻ hiện $0 + fix số dư không tự cập nhật
+
+Phiên này làm 3 việc riêng biệt, đã commit tách 3 (`7d10a67`, `c8c4a9f`, `88d582b`) và **push lên
+`main` rồi**.
+
+**1. Slogan "Your idle money can become lottery tickets – for free"** — thêm vào
+`README.md` (blockquote ngay dưới câu mô tả đầu), `frontend/landing/index.html` (dòng "kicker"
+màu xanh primary phía TRÊN h1 hero, cả EN lẫn VI qua dictionary `heroKicker`), và GitHub repo
+description. **Không** sửa H1 gốc của hero — code đã có comment ghi rõ đó là "dòng quan trọng
+nhất trang, đừng để gì tranh chỗ" — nên slogan chỉ đóng vai trò câu mồi phía trên, không thay thế.
+
+**2. Bug: cào thẻ hiện "You win 0 USDC (Prize already claimed)" dù trúng thật** —
+`frontend/src/components/ResultModal.tsx`. Root cause: `owedTo()`/`_payoutOwed()` bên contract
+trả về 0 **ngay khi `e.claimed[user] == true`** — đúng bản chất của nó là "còn nợ bao nhiêu",
+nhưng ResultModal lại tái dùng chính số đó để hiển thị **số đã thắng**. Vì `sweep()` permissionless
+sau 3 ngày tự set `claimed=true` và trả tiền hộ, bất kỳ ai bị/được sweep trước khi tự tay cào thẻ
+sẽ thấy "$0" vĩnh viễn dù tiền đã nằm trong ví thật từ trước — tức cơ chế tự động trả thưởng (rất
+tốt cho tiền) lại vô tình xoá luôn niềm vui "biết mình trúng" của người chơi. Fix: bỏ hẳn lệ thuộc
+vào `owedTo`, tính lại số đã thắng ở client từ `epoch.winners` + `prizeForRank()` — hàm pure có
+sẵn ở `frontend/src/lib/prize.ts` (đã dùng trong `EpochDetailModal.tsx`, chỉ tái dùng chứ không
+viết logic mới), không phụ thuộc trạng thái claimed nên luôn đúng bất kể đã sweep hay chưa.
+
+**3. "Số dư cập nhật quá chậm, gần như không cập nhật"** — không phải bug logic: deposit/withdraw
+đã có `useCloseOnSuccess` gọi `queryClient.invalidateQueries()` refetch ngay khi tx confirm, từ
+trước phiên này rồi. Root cause thật: đợt fix RPC-429 trước đó (mục "RPC 429" bên dưới) tắt
+`refetchOnWindowFocus` **toàn cục** trên `QueryClient` để tránh bão request mỗi lần refocus tab —
+nhưng vô tình giết luôn đúng khoảnh khắc user hay để ý số dư nhất: vừa deposit/withdraw, qua ví
+confirm, quay lại tab xem kết quả. Từ đó chỉ còn 1 cơ chế cập nhật thụ động cho những thay đổi
+KHÔNG do hành động của chính mình (người khác gửi/rút, ai đó sweep hộ, keeper tự quay số): poll
+15s (`BALANCE_POLL_MS` trong `frontend/src/hooks/usePoolData.ts`). Fix: bật lại
+`refetchOnWindowFocus: true` **chỉ** cho 2 hook `usePoolTotals`/`useUserPosition` — mỗi hook vẫn
+chỉ tốn đúng 1 multicall gộp khi refocus, không phải "bắn cả dashboard" như bug cũ đã fix.
+
+**Đã verify thật, không chỉ đọc code:**
+- `npx tsc -b --noEmit` sạch, `npm run build` pass.
+- Dựng dev server thật với `VITE_POOL_ADDRESS` = proxy thật đang chạy
+  (`0xBdE568986a009eBaAE31Cb78033470c334Fad698`), bỏ trống `VITE_PRIVY_APP_ID` (`USE_PRIVY` tự
+  fallback về wagmi/MetaMask connector, không cần đăng ký Privy để test đọc dữ liệu) — Playwright
+  chụp thật dashboard, thấy đúng số liệu on-chain (5,732/6,837 USDC, 14 depositors, epoch #03...),
+  không lỗi console, không request nào 4xx/5xx.
+- Test riêng cho fix #3: kịch bản refocus thật bằng Playwright (mở tab khác, đợi >10s cho data
+  qua `staleTime`, quay lại tab) — xác nhận có 3 request RPC mới bắn ra ngay lập tức lúc refocus,
+  đúng hành vi kỳ vọng (trước fix sẽ là 0, phải đợi hết nốt vòng poll 15s).
+- Trước khi push đã revert `frontend/package-lock.json` (bị `npm install` cục bộ sửa do prune
+  optional peer deps không liên quan, không phải thay đổi cố ý).
+
+**Việc KHÔNG làm trong phiên này** (không được yêu cầu, không tự ý đụng): quyền admin vẫn đang là
+2-of-2 Safe + 1 EOA ngang quyền (xem mục "Tightening" ở đầu file / `PROJECT.md`) — user hẹn tự tay
+chuyển hẳn sang multisig-only quanh 2026-09-10/11, chưa thấy xác nhận đã làm.
+
+---
+
 ## Sự cố 2026-09-09 (đêm) — Deploy sai thư mục làm sập toàn bộ /api/\* production ~3 tiếng
 
 **Điều đã xảy ra:** cả 2 lần deploy trong phiên hôm nay (sau khi fix My History, và sau khi
