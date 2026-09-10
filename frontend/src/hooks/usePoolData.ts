@@ -96,13 +96,23 @@ export function useEpochHistory(currentEpochId: bigint | undefined, count = 10) 
 // the public RPC (everything's already batched into one multicall per hook).
 const BALANCE_POLL_MS = 15_000;
 
+// The 429 fix (see HANDOFF.md "RPC 429") turned refetchOnWindowFocus off on the
+// QueryClient's defaults for every query, to stop a single refocus from refiring
+// the whole dashboard at once. That also killed the one moment a user is most
+// likely to be staring at their balance: they deposit/withdraw, tab away to
+// confirm in their wallet, and tab back expecting the number to already be
+// right. Opt back in just for the two balance-critical hooks below - each is
+// already a single batched multicall, so a refocus here costs one extra
+// request, not the "the lot" burst the global default was fixing.
+const BALANCE_QUERY_OPTS = { placeholderData: keepPreviousData, refetchInterval: BALANCE_POLL_MS, refetchOnWindowFocus: true } as const;
+
 export function usePoolTotals() {
   return useReadContracts({
     contracts: [
       { ...poolContract, functionName: "balancesTotal" },
       { ...poolContract, functionName: "participantCount" },
     ],
-    query: { placeholderData: keepPreviousData, refetchInterval: BALANCE_POLL_MS },
+    query: BALANCE_QUERY_OPTS,
   });
 }
 
@@ -167,7 +177,7 @@ export function useUserPosition(address: `0x${string}` | undefined) {
         args: address ? [address, POOL_ADDRESS] : undefined,
       },
     ],
-    query: { enabled: Boolean(address), placeholderData: keepPreviousData, refetchInterval: BALANCE_POLL_MS },
+    query: { ...BALANCE_QUERY_OPTS, enabled: Boolean(address) },
   });
 }
 
