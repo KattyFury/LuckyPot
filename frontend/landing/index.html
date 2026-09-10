@@ -171,6 +171,12 @@
   /* Deliberate exception to the 5-step scale (max token is --fs-4 at 20px) -
      this is the one line a visitor most needs to read, so it's allowed to run
      bigger. Down another 2pt with the rest of the scale. */
+  /* Small eyebrow above the h1 – a one-line hook, not competing with the h1
+     for attention (that's still "the one line a visitor most needs to read"). */
+  .hero .kicker {
+    color: var(--color-primary); font-weight: 600; font-size: var(--fs-3);
+    letter-spacing: 0.01em; margin: 0 0 14px;
+  }
   .hero h1 {
     font-size: 28px; line-height: 1.35; margin: 0 0 36px; font-weight: 500;
     letter-spacing: -0.02em;
@@ -317,6 +323,7 @@
 
   <main>
     <section class="hero" style="border-top: none;">
+      <p class="kicker" data-i18n="heroKicker">Your idle money can become lottery tickets – for free.</p>
       <h1 class="condensed prose" data-i18n="heroH1">
         Deposit USDC, hold it through a <strong>full epoch</strong>, and you're in the draw.
         The winners take the week's yield – everyone else loses nothing; <strong>their full principal remains intact</strong>.
@@ -472,6 +479,7 @@ no referrer    → cut splits evenly into vaultReserve / vaultDev</pre>
     en: {
       enterApp: "Enter App",
       howItWorks: "How it works",
+      heroKicker: "Your idle money can become lottery tickets – for free.",
       heroH1: 'Deposit USDC, hold it through a <strong>full epoch</strong>, and you\'re in the draw. The winners take the week\'s yield – everyone else loses nothing; <strong>their full principal remains intact</strong>.',
       step1: "Deposit USDC into the pool.",
       step2: "Hold it through a full epoch – Monday 00:00 UTC to the next Monday 00:00 UTC. That's what turns it into a ticket.",
@@ -525,6 +533,7 @@ no referrer    → cut splits evenly into vaultReserve / vaultDev`,
     vi: {
       enterApp: "Vào ứng dụng",
       howItWorks: "Cách hoạt động",
+      heroKicker: "Tiền nhàn rỗi của bạn có thể thành vé số – miễn phí.",
       heroH1: 'Bỏ USDC vào, giữ đủ <strong>1 tuần trọn vẹn</strong> là được vào vòng quay số. Ai trúng thì ẵm hết lãi của tuần đó, ai không trúng cũng chẳng mất gì – <strong>tiền gốc vẫn còn nguyên</strong>.',
       step1: "Bỏ USDC vào pool.",
       step2: "Giữ tiền đủ 1 tuần (từ 0h thứ Hai tới 0h thứ Hai tuần sau, giờ UTC) là tiền đó thành vé quay số.",

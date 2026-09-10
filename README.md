@@ -2,6 +2,8 @@
 
 **[luckypot.cc](https://luckypot.cc)** — a no-loss weekly USDC prize pool on [Arc](https://arc.io).
 
+> Your idle money can become lottery tickets – for free.
+
 Deposit USDC, hold it for one week, and you're in the draw. The winner(s) take that
 week's yield. Everyone else loses nothing — principal is withdrawable, in full, any time.
 
