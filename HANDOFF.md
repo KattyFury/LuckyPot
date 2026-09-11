@@ -87,6 +87,27 @@ chỉ tốn đúng 1 multicall gộp khi refocus, không phải "bắn cả dash
 2-of-2 Safe + 1 EOA ngang quyền (xem mục "Tightening" ở đầu file / `PROJECT.md`) — user hẹn tự tay
 chuyển hẳn sang multisig-only quanh 2026-09-10/11, chưa thấy xác nhận đã làm.
 
+**Quyết định đang chờ build (KHÔNG code hôm nay — hôm nay là ngày thiết trình, user chủ động
+hoãn):** user muốn đổi cơ chế quét thưởng, thấy chờ 3 ngày (`SWEEP_DELAY`, `claim()`/`sweep()`)
+bất hợp lý vì có người bận tới giữa tuần mới vào xem được. Giờ bug "cào thẻ hiện $0 khi đã bị
+sweep" đã fix (mục #2 phía trên — ResultModal tính số thắng độc lập `claimed`), quét sớm không
+còn giết niềm vui cào thẻ nữa, nên mở lại được câu hỏi này. 2 hướng đã bàn, **chưa chọn hướng
+nào**:
+- **A. Kéo dài cửa sổ claim/sweep** — vẫn giữ nguyên model pull (claim/sweep), chỉ đổi hằng số
+  `SWEEP_DELAY` (contract, dòng ~36) từ `3 days` lên gần hết tuần (vd `6 days 23 hours`, hoặc đổi
+  hẳn logic gate sweep theo "epoch kế tiếp đã quay xong" thay vì đếm giờ cứng). Rủi ro thấp, chỉ
+  cần redeploy implementation + upgrade proxy qua Safe, không đổi kiến trúc.
+- **B. Auto-push tiền ngay lúc có kết quả** — `revealAndDraw()` tự chuyển tiền cho từng winner
+  luôn, bỏ hẳn bước chờ. Rủi ro: `revealAndDraw()` hiện KHÔNG có transfer nào; nếu thêm vòng lặp
+  `_settle()` ngay trong đó mà không bọc `try/catch`, 1 winner bị lỗi transfer sẽ làm **sập cả
+  giao dịch quay số của TẤT CẢ người tham gia epoch đó** (cả hàm chung 1 tx, `nonReentrant`). Cần
+  fallback y như referral cut đã có (`pendingRef`) để 1 ví lỗi không kẹt cả draw. Đổi kiến trúc
+  nhiều hơn, cần test kỹ hơn A.
+
+Khuyến nghị: làm A trước (an toàn, ít đổi), để B lại nếu sau này thật sự muốn bỏ hẳn mô hình
+claim/sweep. Việc này **độc lập với `forceEndEpoch()`** (câu hỏi ban đầu của user) — sửa
+`SWEEP_DELAY` không phụ thuộc epoch đang chạy dở, làm trước/sau `forceEndEpoch()` đều được.
+
 ---
 
 ## Sự cố 2026-09-09 (đêm) — Deploy sai thư mục làm sập toàn bộ /api/\* production ~3 tiếng
